@@ -1,7 +1,9 @@
 from django.db import models
-
 from django.db.models import CharField, TextField, FileField
-from django.db.models import OneToOneField, ManyToManyField
+from django.db.models import OneToOneField, ManyToManyField, ForeignKey
+from hashlib import md5
+from datetime import datetime
+
 from vpc_api.models import APIClient
 
 
@@ -37,9 +39,25 @@ class Attachment(models.Model):
     raw = FileField(upload_to=".")
     
 
+def generateModuleId():
+    """ Ensure generating of unique module ID
+    """
+    sugar = ''
+    while True:
+        temp_id = md5(str(datetime.now) + sugar).hexdigest()
+        if len(Module.objects.filter(module_id=temp_id)) > 0:
+            sugar += '1'
+        else:
+            break
+    return temp_id
+
+
 class Module(models.Model):
+    module_id = CharField(max_length=32, default=generateModuleId)
     text = TextField()
     metadata = OneToOneField(Metadata)
-    attachment = OneToOneField(Attachment)
-    version = CharField(max_length=32)
+    attachment = ForeignKey(Attachment, null=True, blank=True, unique=True)
+    version = CharField(max_length=32, default='1')
     client_id = CharField(max_length=255)
+
+

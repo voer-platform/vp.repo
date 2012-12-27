@@ -22,6 +22,7 @@ class APIClient(models.Model):
         return "Client: %s (%s)" % (self.client_id, self.name)      
 
 
+# 
 class APIToken(models.Model):
     """ """
     client = models.ForeignKey(APIClient)
