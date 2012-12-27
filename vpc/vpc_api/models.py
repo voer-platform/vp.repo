@@ -1,6 +1,7 @@
 from django.db import models
 from datetime import datetime
 
+
 class Meta:
     app_label = 'VPC API'
     verbose_name = 'VPC API'
@@ -8,6 +9,7 @@ class Meta:
 
 # Create your models here.
 class APIClient(models.Model):
+    """ """
     client_id = models.CharField(max_length=128)
     name = models.CharField(max_length=256)
     organization = models.BooleanField()
@@ -17,11 +19,11 @@ class APIClient(models.Model):
         verbose_name = 'API Client'
 
     def __unicode__(self):
-        return "Client: %s (%s)" % (self.client_id, self.name)
-        
+        return "Client: %s (%s)" % (self.client_id, self.name)      
 
 
 class APIToken(models.Model):
+    """ """
     client = models.ForeignKey(APIClient)
     token = models.CharField(max_length=256)
     client_ip = models.CharField(max_length=48)

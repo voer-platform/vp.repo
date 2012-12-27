@@ -20,6 +20,7 @@ from vpc_api.models import APIToken as Token
 def api_root(request, format=None):
     """
     The entry endpoint of our API.
+    >> RENDERED BY RESTFRAMEWORK. NUKABLE!
     """
     return Response({
         'users': reverse('user-list', request=request),
@@ -141,6 +142,7 @@ def cleanOldTokens(client):
 
 def getRequestVersion(request):
     """ This function analizes and returns the version of called API
+        NOT BEING USED ATM.
     """
     version = ''
     #url = request.build_absolute_uri()
