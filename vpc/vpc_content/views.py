@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from hashlib import md5
 from datetime import datetime
 
-from models import Module
+import models
 
 def dispatchModuleCalls(request):
     """ Analyze the requests and call the appropriate function
@@ -46,6 +46,27 @@ def splitPath(path):
     return path
 
 
+def createAuthor(**kwargs):
+    """ Creates new author inside database, or
+        just returns object if existing
+    """
+    author = None 
+    try:
+        author = models.Author.objects.filter(id=author_id)
+        if len(author) > 0:
+            author = author[0]
+        else:
+            new_author = models.Author()
+            new_author.fullname = fullname
+            new_author.author_id = author_id
+            new_author.bio = bio
+            new_author.save()
+            author = new_author
+    except:
+        pass
+    return author
+
+
 def checkInModule(params):
     """ 
     """
@@ -60,20 +81,20 @@ def checkInModule(params):
 def createModule(params):
     """ Extract info from params and put into new module 
     """
-    module_id = ''
     try:
-        module = Module()
+        module = models.Module()
         module.text = params['text']
         module.version = '1'
+        module.author = createAuthor(params)
         module.save()
-        module_id = generateModuleId()
     except:
         pass
     return Response({'module':{
-                        'id': module_id,
+                        'id': module.module_id,
                         'title': params.title
                         }
                     })
+
 
 
 def deleteModule(request):
