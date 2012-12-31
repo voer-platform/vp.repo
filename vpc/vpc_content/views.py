@@ -104,25 +104,27 @@ def checkInModule(params):
         pass
 
 
-def createModule(text, meta, attachment, client_id):
+def createModule(text, metadata, attachment, client_id):
     """ Extract info from params and put into new module 
     """
+    module = None
     try:
-        module = Module.objects.create(
+        module = models.Module.objects.create(
             text       = text, 
-            metadata   = meta,
+            metadata   = metadata,
             attachment = attachment,
             client_id  = client_id
             )
         module.save()
     except:
-        pass
-    return Response({'module':{
-                        'id': module.module_id,
-                        'title': params.title
-                        }
-                    })
-
+        raise
+    return module
+    # this is for API response
+    # return Response({'module':{
+    #                    'id': module.module_id,
+    #                    'title': metadata.title
+    #                    }
+    #                })
 
 
 def deleteModule(request):

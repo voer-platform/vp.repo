@@ -8,8 +8,8 @@ Replace this with more appropriate tests for your application.
 from django.test import TestCase
 
 from vpc_api.models import APIClient
-from views import createAuthor, createEditor
-from models import Author
+from views import createAuthor, createEditor, createModule
+from models import Author, Metadata, Category
 
 
 class AuthorTestCase(TestCase):
@@ -73,8 +73,8 @@ class ModuleTestCase(TestCase):
         self.meta_params = {
             'title':'Sample module',
             'description':'Module description here',
-            'categories':createCategory(1)[0],
-            'authors':[createAuthor('John Lennon', 'john_lennon', 'Singer'),],
+            #'categories':createCategory(1)[0],
+            #'authors':[createAuthor('John Lennon', 'john_lennon', 'Singer')],
             'keywords':'hello, there, fine',
             'editor':createEditor('editor_one', client)
             }
@@ -88,7 +88,7 @@ class ModuleTestCase(TestCase):
             }
         self.module = createModule(**self.module_params) 
         
-    def createModule(self):
+    def testCreate(self):
         self.assertNotEqual(self.module, None)
         self.assertEqual(self.module.text, 'This is the content')
         self.assertEqual(self.module.metadata, self.meta)
