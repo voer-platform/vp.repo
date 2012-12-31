@@ -40,31 +40,57 @@ def dispatchModuleCalls(request):
 
 def splitPath(path):
     """ Return necessary elements in path
+        
+        >>> path = '/hello/from/paris/'
+        >>> splitPath(path)
+        ['hello', 'from', 'paris']
+
     """
     path = path.split('/')
     path = [item for item in path if len(item)>0]
     return path
 
 
-def createAuthor(**kwargs):
+def createAuthor(fullname, author_id, bio):
     """ Creates new author inside database, or
         just returns object if existing
     """
     author = None 
     try:
-        author = models.Author.objects.filter(id=author_id)
+        author = models.Author.objects.filter(author_id=author_id)
         if len(author) > 0:
             author = author[0]
         else:
             new_author = models.Author()
             new_author.fullname = fullname
-            new_author.author_id = author_id
+            new_author.author_id = author_id 
             new_author.bio = bio
             new_author.save()
             author = new_author
     except:
-        pass
+        raise
     return author
+
+
+def createEditor(editor_id, client):
+    """ Create new editor inside repository
+        Parameters:
+            e_id   ID of the editor in the client system
+            client      APIClient object which makes request
+    """
+    editor = None
+    try:
+        editor = models.Editor.objects.filter(editor_id=editor_id)
+        if len(editor) > 0:
+            editor = editor[0]
+        else:
+            editor = models.Editor()
+            editor.editor_id = editor_id
+            editor.client = client
+            editor.save()
+    except:
+        pass
+    return editor 
 
 
 def checkInModule(params):
@@ -78,14 +104,16 @@ def checkInModule(params):
         pass
 
 
-def createModule(params):
+def createModule(text, meta, attachment, client_id):
     """ Extract info from params and put into new module 
     """
     try:
-        module = models.Module()
-        module.text = params['text']
-        module.version = '1'
-        module.author = createAuthor(params)
+        module = Module.objects.create(
+            text       = text, 
+            metadata   = meta,
+            attachment = attachment,
+            client_id  = client_id
+            )
         module.save()
     except:
         pass
