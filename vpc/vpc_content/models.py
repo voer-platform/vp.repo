@@ -1,6 +1,6 @@
 from django.db import models
 from django.db.models import CharField, TextField, FileField
-from django.db.models import OneToOneField, ManyToManyField, ForeignKey
+from django.db.models import IntegerField, CommaSeparatedIntegerField
 from hashlib import md5
 from datetime import datetime
 
@@ -10,35 +10,19 @@ from vpc_api.models import APIClient
 # Create your models here.
 class Category(models.Model):
     name = CharField(max_length=255)
-    description = TextField()
+    parent = IntegerField(default=0)
+    description = TextField(blank=True)
 
 
 class Author(models.Model):
     fullname = CharField(max_length=255)
-    author_id = CharField(max_length=255)
-    bio = TextField()
+    bio = TextField(blank=True)
 
 
 class Editor(models.Model):
-    fullname = CharField(max_length=255, null=True)
-    editor_id = CharField(max_length=255)
-    client = OneToOneField(APIClient)
-    
+    fullname = CharField(max_length=255, blank=True)
+    client_id = IntegerField(default=0)
 
-class Metadata(models.Model):
-    title = CharField(max_length=255)
-    description = TextField()
-    categories = ManyToManyField(Category)
-    authors = ManyToManyField(Author)
-    keywords = TextField()
-    editor = OneToOneField(Editor)
-
-
-class Attachment(models.Model):
-    """Class for module attachment"""
-    data_type = CharField(max_length=255)
-    raw = FileField(upload_to=".")
-    
 
 def generateModuleId():
     """ Ensure generating of unique module ID
@@ -56,9 +40,14 @@ def generateModuleId():
 class Module(models.Model):
     module_id = CharField(max_length=32, default=generateModuleId)
     text = TextField()
-    metadata = OneToOneField(Metadata)
-    attachment = ForeignKey(Attachment, null=True, blank=True, unique=True)
+    file = FileField(upload_to=".")
+    file_type = CharField(max_length=64)
     version = CharField(max_length=32, default='1')
-    client_id = CharField(max_length=255)
-
+    title = CharField(max_length=255)
+    description = TextField()
+    categories = CommaSeparatedIntegerField(max_length=8)
+    authors = CommaSeparatedIntegerField(max_length=8)
+    keywords = TextField()
+    editor_id = IntegerField()
+    client_id = IntegerField()
 

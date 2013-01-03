@@ -22,18 +22,20 @@ class AuthorSerializer(serializers.ModelSerializer):
     """docstring for AuthorSerializer"""
     class Meta:
         model = models.Author
-        fields = ('fullname', 'author_id', 'bio')
+        fields = ('id', 'fullname', 'bio')
 
 
 class CategorySerializer(serializers.ModelSerializer):
     """docstring for CategorySerializer"""
     class Meta:
         model = models.Category
-        fields = ('id', 'name', 'description')
+        fields = ('id', 'name', 'parent', 'description')
+
 
 class EditorSerializer(serializers.ModelSerializer):
     """docstring for EditorSerializer"""
+    client = serializers.IntegerField()
     class Meta:
         model = models.Editor
-        fields = ('fullname', 'editor_id', 'client')
+        fields = ('id', 'fullname', 'client_id')
 

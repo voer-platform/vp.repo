@@ -12,7 +12,7 @@ urlpatterns = patterns('',
     url(r'^authors/$', content_views.AuthorList.as_view()),
     url(r'^authors/', content_views.AuthorDetail.as_view()),
     url(r'^categories/$', content_views.CategoryList.as_view()),
-    url(r'^categories/', content_views.CategoryDetail.as_view()),
+    url(r'^categories/(?P<pk>[0-9]+)/$', content_views.CategoryDetail.as_view()),
     url(r'^editors/$', content_views.EditorList.as_view()),
     url(r'^editors/', content_views.EditorDetail.as_view()),
     )

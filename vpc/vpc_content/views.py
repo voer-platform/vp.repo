@@ -152,19 +152,21 @@ class CategoryList(generics.ListCreateAPIView):
     serializer_class = serializers.CategorySerializer
 
 
-class CategoryDetail(generics.ListCreateAPIView):
+class CategoryDetail(generics.RetrieveUpdateDestroyAPIView):
     """docstring for CategoryDetail"""
 
-    def get_object(self, category_id):
-        try:
-            return models.Category.objects.get(id=category_id)
-        except models.Category.DoesNotExist:
-            raise Http404
-        
-    def get(self, request, category_id, format=None):
-        category = self.get_object(category_id)
-        sr = serializers.CategorySerializer(category)
-        return Response(sr.data)
+    model = models.Category
+    serializer_class = serializers.CategorySerializer
+    #def get_object(self, id):
+    #    try:
+    #        return models.Category.objects.get(id=id)
+    #    except models.Category.DoesNotExist:
+    #        raise Http404
+    #    
+    #def get(self, request, pk, format=None):
+    #    category = self.get_object(pk)
+    #    sr = serializers.CategorySerializer(category)
+    #    return Response(sr.data)
 
 
 # EDITOR CALLS
