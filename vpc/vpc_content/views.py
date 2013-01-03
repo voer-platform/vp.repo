@@ -3,11 +3,17 @@
 # from rest_framework import generics
 # from rest_framework.decorators import api_view
 # from rest_framework.reverse import reverse
+from django.http import Http404
+from rest_framework import status
+from rest_framework import generics
 from rest_framework.response import Response
+from rest_framework.decorators import api_view
+from rest_framework.views import APIView
 from hashlib import md5
 from datetime import datetime
 
 import models
+import serializers
 
 def dispatchModuleCalls(request):
     """ Analyze the requests and call the appropriate function
@@ -103,9 +109,9 @@ def checkInModule(params):
     except:
         pass
 
-
 def createModule(text, metadata, attachment, client_id):
     """ Extract info from params and put into new module 
+        This one doens't return API result, only Module object
     """
     module = None
     try:
@@ -119,13 +125,6 @@ def createModule(text, metadata, attachment, client_id):
     except:
         raise
     return module
-    # this is for API response
-    # return Response({'module':{
-    #                    'id': module.module_id,
-    #                    'title': metadata.title
-    #                    }
-    #                })
-
 
 def deleteModule(request):
     """ 
@@ -143,3 +142,66 @@ def getModuleMetadata(request):
     """ 
     """
     pass
+
+
+class AuthorList(generics.ListCreateAPIView):
+    """docstring for AuthorList"""
+    model = models.Author
+    serializer_class = serializers.AuthorSerializer
+
+
+class AuthorDetail(generics.ListCreateAPIView):
+    """docstring for AuthorDetail"""
+
+    def get_object(self, author_id):
+        try:
+            return models.Author.objects.get(author_id=author_id)
+        except models.Author.DoesNotExist:
+            raise Http404
+        
+    def get(self, request, author_id, format=None):
+        author = self.get_object(author_id)
+        sr = serializers.AuthorSerializer(author)
+        return Response(sr.data)
+
+# OLD CLASS BASED ON APIVIEW
+#class ModuleList(APIView):
+class ModuleList(generics.ListCreateAPIView):
+    """
+    Return list of modules or create a new one
+    """
+    model = models.Module
+    serializer_class = serializers.ModuleSerializer
+
+    #def get(self, request, format=None):
+    #    """docstring for get"""
+    #    modules = models.Module.objects.all()
+    #    sr = serializers.ModuleSerializer(modules)
+    #    return Response(sr.data)
+
+    def post(self, request, format=None):
+        """docstring for post"""
+        return Response(request.DATA)
+        #sr = serializers.ModuleSerializer(data=request.DATA)
+        #if sr.is_valid():
+        #    sr.save()
+        #    return Response(sr.data, status=status.HTTP_201_CREATED)
+        #return Response(sr.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class ModuleDetail(APIView):
+    """
+    Return module data, update/check-in it or delete it
+    """
+
+    def get_object(self, module_id):
+        try:
+            return models.Module.objects.get(module_id=module_id)     
+        except models.Module.DoesNotExist:
+            raise Http404
+
+    def get(self, request, module_id, format=None):
+        module = self.get_object(module_id)
+        sr = serializers.ModuleSerializer(module)
+        return Reponse(sr.data)
