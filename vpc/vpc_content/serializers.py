@@ -24,3 +24,16 @@ class AuthorSerializer(serializers.ModelSerializer):
         model = models.Author
         fields = ('fullname', 'author_id', 'bio')
 
+
+class CategorySerializer(serializers.ModelSerializer):
+    """docstring for CategorySerializer"""
+    class Meta:
+        model = models.Category
+        fields = ('id', 'name', 'description')
+
+class EditorSerializer(serializers.ModelSerializer):
+    """docstring for EditorSerializer"""
+    class Meta:
+        model = models.Editor
+        fields = ('fullname', 'editor_id', 'client')
+

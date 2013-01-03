@@ -144,6 +144,55 @@ def getModuleMetadata(request):
     pass
 
 
+# CATEGORY CALLS
+
+class CategoryList(generics.ListCreateAPIView):
+    """docstring for AuthorList"""
+    model = models.Category
+    serializer_class = serializers.CategorySerializer
+
+
+class CategoryDetail(generics.ListCreateAPIView):
+    """docstring for CategoryDetail"""
+
+    def get_object(self, category_id):
+        try:
+            return models.Category.objects.get(id=category_id)
+        except models.Category.DoesNotExist:
+            raise Http404
+        
+    def get(self, request, category_id, format=None):
+        category = self.get_object(category_id)
+        sr = serializers.CategorySerializer(category)
+        return Response(sr.data)
+
+
+# EDITOR CALLS
+
+class EditorList(generics.ListCreateAPIView):
+    """docstring for EditorList"""
+    model = models.Editor
+    serializer_class = serializers.EditorSerializer
+
+
+class EditorDetail(generics.ListCreateAPIView):
+    """docstring for EditorDetail"""
+
+    def get_object(self, category_id):
+        try:
+            return models.Editor.objects.get(id=editor_id)
+        except models.Editor.DoesNotExist:
+            raise Http404
+        
+    def get(self, request, editor_id, format=None):
+        edtior = self.get_object(editor_id)
+        sr = serializers.EditorSerializer(editor)
+        return Response(sr.data)
+
+
+
+# AUTHOR CALLS
+
 class AuthorList(generics.ListCreateAPIView):
     """docstring for AuthorList"""
     model = models.Author

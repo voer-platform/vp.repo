@@ -20,6 +20,7 @@ class Author(models.Model):
 
 
 class Editor(models.Model):
+    fullname = CharField(max_length=255, null=True)
     editor_id = CharField(max_length=255)
     client = OneToOneField(APIClient)
     
