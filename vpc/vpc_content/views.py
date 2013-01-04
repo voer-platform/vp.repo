@@ -154,19 +154,8 @@ class CategoryList(generics.ListCreateAPIView):
 
 class CategoryDetail(generics.RetrieveUpdateDestroyAPIView):
     """docstring for CategoryDetail"""
-
     model = models.Category
     serializer_class = serializers.CategorySerializer
-    #def get_object(self, id):
-    #    try:
-    #        return models.Category.objects.get(id=id)
-    #    except models.Category.DoesNotExist:
-    #        raise Http404
-    #    
-    #def get(self, request, pk, format=None):
-    #    category = self.get_object(pk)
-    #    sr = serializers.CategorySerializer(category)
-    #    return Response(sr.data)
 
 
 # EDITOR CALLS
@@ -177,20 +166,10 @@ class EditorList(generics.ListCreateAPIView):
     serializer_class = serializers.EditorSerializer
 
 
-class EditorDetail(generics.ListCreateAPIView):
+class EditorDetail(generics.RetrieveUpdateDestroyAPIView):
     """docstring for EditorDetail"""
-
-    def get_object(self, category_id):
-        try:
-            return models.Editor.objects.get(id=editor_id)
-        except models.Editor.DoesNotExist:
-            raise Http404
-        
-    def get(self, request, editor_id, format=None):
-        edtior = self.get_object(editor_id)
-        sr = serializers.EditorSerializer(editor)
-        return Response(sr.data)
-
+    model = models.Editor
+    serializer_class = serializers.EditorSerializer
 
 
 # AUTHOR CALLS
@@ -201,22 +180,14 @@ class AuthorList(generics.ListCreateAPIView):
     serializer_class = serializers.AuthorSerializer
 
 
-class AuthorDetail(generics.ListCreateAPIView):
+class AuthorDetail(generics.RetrieveUpdateDestroyAPIView):
     """docstring for AuthorDetail"""
+    model = models.Author
+    serializer_class = serializers.AuthorSerializer
 
-    def get_object(self, author_id):
-        try:
-            return models.Author.objects.get(author_id=author_id)
-        except models.Author.DoesNotExist:
-            raise Http404
-        
-    def get(self, request, author_id, format=None):
-        author = self.get_object(author_id)
-        sr = serializers.AuthorSerializer(author)
-        return Response(sr.data)
 
-# OLD CLASS BASED ON APIVIEW
-#class ModuleList(APIView):
+# MODULE
+
 class ModuleList(generics.ListCreateAPIView):
     """
     Return list of modules or create a new one
@@ -224,35 +195,9 @@ class ModuleList(generics.ListCreateAPIView):
     model = models.Module
     serializer_class = serializers.ModuleSerializer
 
-    #def get(self, request, format=None):
-    #    """docstring for get"""
-    #    modules = models.Module.objects.all()
-    #    sr = serializers.ModuleSerializer(modules)
-    #    return Response(sr.data)
-
-    def post(self, request, format=None):
-        """docstring for post"""
-        return Response(request.DATA)
-        #sr = serializers.ModuleSerializer(data=request.DATA)
-        #if sr.is_valid():
-        #    sr.save()
-        #    return Response(sr.data, status=status.HTTP_201_CREATED)
-        #return Response(sr.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-class ModuleDetail(APIView):
+class ModuleDetail(generics.RetrieveUpdateDestroyAPIView):
     """
     Return module data, update/check-in it or delete it
     """
-
-    def get_object(self, module_id):
-        try:
-            return models.Module.objects.get(module_id=module_id)     
-        except models.Module.DoesNotExist:
-            raise Http404
-
-    def get(self, request, module_id, format=None):
-        module = self.get_object(module_id)
-        sr = serializers.ModuleSerializer(module)
-        return Reponse(sr.data)
+    model = models.Module
+    serializer_class = serializers.ModuleSerializer

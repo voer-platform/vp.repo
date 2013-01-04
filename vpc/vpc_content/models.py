@@ -21,6 +21,7 @@ class Author(models.Model):
 
 class Editor(models.Model):
     fullname = CharField(max_length=255, blank=True)
+    user_id = CharField(max_length=64, blank=True)
     client_id = IntegerField(default=0)
 
 
@@ -40,14 +41,12 @@ def generateModuleId():
 class Module(models.Model):
     module_id = CharField(max_length=32, default=generateModuleId)
     text = TextField()
-    file = FileField(upload_to=".")
-    file_type = CharField(max_length=64)
     version = CharField(max_length=32, default='1')
     title = CharField(max_length=255)
     description = TextField()
     categories = CommaSeparatedIntegerField(max_length=8)
     authors = CommaSeparatedIntegerField(max_length=8)
-    keywords = TextField()
     editor_id = IntegerField()
-    client_id = IntegerField()
-
+    keywords = TextField()
+    file = FileField(upload_to=".", null=True)
+    file_type = CharField(max_length=64, blank=True)

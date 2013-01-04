@@ -15,7 +15,9 @@ class ModuleSerializer(serializers.ModelSerializer):
     #client_id = serializers.CharField()
     class Meta:
         model = models.Module
-        fields = ('module_id', 'version', 'client_id')
+        fields = ('module_id', 'text', 'version', 'title',
+                  'description', 'categories', 'authors',
+                  'editor_id', 'keywords', 'file', 'file_type')
         
 
 class AuthorSerializer(serializers.ModelSerializer):
@@ -34,8 +36,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class EditorSerializer(serializers.ModelSerializer):
     """docstring for EditorSerializer"""
-    client = serializers.IntegerField()
     class Meta:
         model = models.Editor
-        fields = ('id', 'fullname', 'client_id')
+        fields = ('id', 'fullname', 'user_id', 'client_id')
 
