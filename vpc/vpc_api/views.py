@@ -24,6 +24,12 @@ def api_root(request, format=None):
     return Response({
         'users': reverse('user-list', request=request),
         'groups': reverse('group-list', request=request),
+#        'auth': reverse('authenticate'),
+#        'token': reverse('test-token', request=request),
+        'authors': reverse('author-list', request=request),
+        'editors': reverse('editor-list', request=request),
+        'categories': reverse('category-list', request=request),
+        'modules': reverse('module-list', request=request),
     })
 
 
