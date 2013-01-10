@@ -98,50 +98,48 @@ def createEditor(editor_id, client):
         pass
     return editor 
 
-
-def checkInModule(params):
-    """ 
-    """
-    try:
-        path = params['path']
-        module_id = path[1]
-        module = Module.objects.get()
-    except:
-        pass
-
-def createModule(text, metadata, attachment, client_id):
-    """ Extract info from params and put into new module 
-        This one doens't return API result, only Module object
-    """
-    module = None
-    try:
-        module = models.Module.objects.create(
-            text       = text, 
-            metadata   = metadata,
-            attachment = attachment,
-            client_id  = client_id
-            )
-        module.save()
-    except:
-        raise
-    return module
-
-def deleteModule(request):
-    """ 
-    """
-    pass
-
-
-def downloadModule(request):
-    """ 
-    """
-    pass
-
-
-def getModuleMetadata(request):
-    """ 
-    """
-    pass
+## Not being used atm
+#def checkInModule(params):
+#    try:
+#        path = params['path']
+#        module_id = path[1]
+#        module = Module.objects.get()
+#    except:
+#        pass
+#
+#def createModule(text, metadata, attachment, client_id):
+#    """ Extract info from params and put into new module 
+#        This one doens't return API result, only Module object
+#    """
+#    module = None
+#    try:
+#        module = models.Material.objects.create(
+#            text       = text, 
+#            metadata   = metadata,
+#            attachment = attachment,
+#            client_id  = client_id
+#            )
+#        module.save()
+#    except:
+#        raise
+#    return module
+#
+#def deleteModule(request):
+#    """ 
+#    """
+#    pass
+#
+#
+#def downloadModule(request):
+#    """ 
+#    """
+#    pass
+#
+#
+#def getModuleMetadata(request):
+#    """ 
+#    """
+#    pass
 
 
 # CATEGORY CALLS
@@ -185,19 +183,73 @@ class AuthorDetail(generics.RetrieveUpdateDestroyAPIView):
     model = models.Author
     serializer_class = serializers.AuthorSerializer
 
-
 # MODULE
 
-class ModuleList(generics.ListCreateAPIView):
+class MaterialList(generics.ListCreateAPIView):
+    """ Return list of material or create a new one
     """
-    Return list of modules or create a new one
-    """
-    model = models.Module
-    serializer_class = serializers.ModuleSerializer
+    model = models.Material
+    serializer_class = serializers.MaterialSerializer
 
-class ModuleDetail(generics.RetrieveUpdateDestroyAPIView):
+    def list(self, request, *args, **kwargs):
+        """ Customized function for listing materials with same ID
+        """
+        try: 
+            self.object_list = self.model.objects.filter(material_id=kwargs['mid'])
+        except:
+            raise Http404()
+
+        # Default is to allow empty querysets.  This can be altered by setting
+        # `.allow_empty = False`, to raise 404 errors on empty querysets.
+        allow_empty = self.get_allow_empty()
+        if not allow_empty and len(self.object_list) == 0:
+            error_args = {'class_name': self.__class__.__name__}
+            raise Http404(self.empty_error % error_args)
+
+        # Pagination size is set by the `.paginate_by` attribute,
+        # which may be `None` to disable pagination.
+        page_size = self.get_paginate_by(self.object_list)
+        if page_size:
+            packed = self.paginate_queryset(self.object_list, page_size)
+            paginator, page, queryset, is_paginated = packed
+            serializer = self.get_pagination_serializer(page)
+        else:
+            serializer = self.get_serializer(self.object_list)
+
+        return Response(serializer.data)
+
+    #def get(self, request, *args, **kwargs):
+    #    """docstring for get"""
+    #    return Response({'a':'b'})
+
+class MaterialDetail(generics.RetrieveUpdateDestroyAPIView):
     """
-    Return module data, update/check-in it or delete it
+    Return material data, update/check-in it or delete it
     """
-    model = models.Module
-    serializer_class = serializers.ModuleSerializer
+    model = models.Material
+    serializer_class = serializers.MaterialSerializer
+
+    def get_object(self, material_id, version=''):
+        """ Customized get_object() function, used for Material objects
+            which will be get by ID and version.
+        """
+        try:
+            print version
+            args = {'material_id':material_id}
+            if version:
+                args['version'] = version
+            return self.model.objects.get(**args)
+        except:
+            raise Http404()
+
+    def retrieve(self, request, *args, **kwargs):
+        """ Customized to the Material objects """
+        self.object = self.get_object(material_id=kwargs.get('mid', ''),
+                                      version=kwargs.get('version', ''))
+        serializer = self.get_serializer(self.object)
+        return Response(serializer.data)
+
+    def get(self, request, *args, **kwargs):
+        """docstring for get"""
+        return self.retrieve(request, *args, **kwargs)
+

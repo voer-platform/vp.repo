@@ -1,24 +1,19 @@
 from rest_framework import serializers
-
 from vpc_content import models
 
 
-#class MetadataSerializer(serializers.ModelSerializer):
-#    title = serialize.Field()
-#    description = serialize.Field()
-#    keywords = serialize.Field()
+class MaterialSerializer(serializers.ModelSerializer):
+    material_id = serializers.Field()
+    version = serializers.Field()
+    modified = serializers.Field()
 
-
-class ModuleSerializer(serializers.ModelSerializer):
-    #module_id = serializers.CharField()
-    #version = serializers.CharField()
-    #client_id = serializers.CharField()
     class Meta:
-        model = models.Module
-        fields = ('module_id', 'text', 'version', 'title',
+        model = models.Material
+        fields = ('material_id', 'title', 'text', 'version',
                   'description', 'categories', 'authors',
-                  'editor_id', 'keywords', 'file', 'file_type')
-        
+                  'editor_id', 'keywords', 'file', 'file_type',
+                  'language', 'license_id', 'modified')
+
 
 class AuthorSerializer(serializers.ModelSerializer):
     """docstring for AuthorSerializer"""

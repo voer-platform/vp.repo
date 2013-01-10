@@ -29,7 +29,7 @@ def api_root(request, format=None):
         'authors': reverse('author-list', request=request),
         'editors': reverse('editor-list', request=request),
         'categories': reverse('category-list', request=request),
-        'modules': reverse('module-list', request=request),
+        'materials': reverse('material-list', request=request),
     })
 
 
