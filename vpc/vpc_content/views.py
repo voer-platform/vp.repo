@@ -195,7 +195,11 @@ class MaterialList(generics.ListCreateAPIView):
         """ Customized function for listing materials with same ID
         """
         try: 
-            self.object_list = self.model.objects.filter(material_id=kwargs['mid'])
+            m_objects = self.model.objects
+            if kwargs.get('mid', None):
+                self.object_list = m_objects.filter(material_id=kwargs['mid'])
+            else:
+                self.object_list = m_objects.all()
         except:
             raise Http404()
 
