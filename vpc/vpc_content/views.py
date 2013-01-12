@@ -238,11 +238,15 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView):
             which will be get by ID and version.
         """
         try:
-            print version
             args = {'material_id':material_id}
+            # get latest or specific version
+            object = self.model.objects
             if version:
                 args['version'] = version
-            return self.model.objects.get(**args)
+                object = object.get(**args)
+            else:
+                object = object.filter(**args).order_by('version').reverse()[0]
+            return object 
         except:
             raise Http404()
 
