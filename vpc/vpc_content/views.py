@@ -267,12 +267,31 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
         try: 
             serializer = self.get_serializer(data=request.DATA)
             if serializer.is_valid():
-                self.pre_save(serializer.object)
-                serializer.object.version = serializer.object.version+1
-                #import pdb;pdb.set_trace()
+                # check if valid editor or new material will be created
+                sobj = serializer.object
+                last_material = self.model.objects \
+                                    .filter(material_id=sobj.material_id) \
+                                    .order_by('version') \
+                                    .reverse()[0]
+                # new material will have new ID
+                if sobj.editor_id != last_material.editor_id:
+                    sobj.material_id = models.generateMaterialId()
+                    sobj.version = 1
+                else:
+                    sobj.version = sobj.version + 1
+                self.pre_save(sobj)
                 self.object = serializer.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)            
         except: 
             return Http404
 
+    def destroy(self, request, *args, **kwargs):
+        """ Delete the material """
+        try:
+            self.object = self.get_object(material_id=kwargs.get('mid', ''),
+                                          version=kwargs.get('version', ''))
+            self.object.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except:
+            return Http404

@@ -56,5 +56,6 @@ class Material(models.Model, MaterialBase):
     language = CharField(max_length=2, blank=True)
     license_id = IntegerField(null=True)
     modified = DateTimeField(default=datetime.now)
+    derived_from = CharField(max_length=64, blank=True)
 
 
