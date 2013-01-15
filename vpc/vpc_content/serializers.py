@@ -3,8 +3,8 @@ from vpc_content import models
 
 
 class MaterialSerializer(serializers.ModelSerializer):
-    material_id = serializers.Field()
-    version = serializers.Field()
+    #material_id = serializers.Field()
+    #version = serializers.Field()
     modified = serializers.Field()
 
     class Meta:

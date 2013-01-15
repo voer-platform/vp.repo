@@ -11,6 +11,7 @@ from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from hashlib import md5
 from datetime import datetime
+from rest_framework import mixins
 
 import models
 import serializers
@@ -57,46 +58,46 @@ def splitPath(path):
     return path
 
 
-def createAuthor(fullname, author_id, bio):
-    """ Creates new author inside database, or
-        just returns object if existing
-    """
-    author = None 
-    try:
-        author = models.Author.objects.filter(author_id=author_id)
-        if len(author) > 0:
-            author = author[0]
-        else:
-            new_author = models.Author()
-            new_author.fullname = fullname
-            new_author.author_id = author_id 
-            new_author.bio = bio
-            new_author.save()
-            author = new_author
-    except:
-        raise
-    return author
-
-
-def createEditor(editor_id, client):
-    """ Create new editor inside repository
-        Parameters:
-            e_id   ID of the editor in the client system
-            client      APIClient object which makes request
-    """
-    editor = None
-    try:
-        editor = models.Editor.objects.filter(editor_id=editor_id)
-        if len(editor) > 0:
-            editor = editor[0]
-        else:
-            editor = models.Editor()
-            editor.editor_id = editor_id
-            editor.client = client
-            editor.save()
-    except:
-        pass
-    return editor 
+#def createAuthor(fullname, author_id, bio):
+#    """ Creates new author inside database, or
+#        just returns object if existing
+#    """
+#    author = None 
+#    try:
+#        author = models.Author.objects.filter(author_id=author_id)
+#        if len(author) > 0:
+#            author = author[0]
+#        else:
+#            new_author = models.Author()
+#            new_author.fullname = fullname
+#            new_author.author_id = author_id 
+#            new_author.bio = bio
+#            new_author.save()
+#            author = new_author
+#    except:
+#        raise
+#    return author
+#
+#
+#def createEditor(editor_id, client):
+#    """ Create new editor inside repository
+#        Parameters:
+#            e_id   ID of the editor in the client system
+#            client      APIClient object which makes request
+#    """
+#    editor = None
+#    try:
+#        editor = models.Editor.objects.filter(editor_id=editor_id)
+#        if len(editor) > 0:
+#            editor = editor[0]
+#        else:
+#            editor = models.Editor()
+#            editor.editor_id = editor_id
+#            editor.client = client
+#            editor.save()
+#    except:
+#        pass
+#    return editor 
 
 ## Not being used atm
 #def checkInModule(params):
@@ -226,7 +227,7 @@ class MaterialList(generics.ListCreateAPIView):
     #    """docstring for get"""
     #    return Response({'a':'b'})
 
-class MaterialDetail(generics.RetrieveUpdateDestroyAPIView):
+class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMixin):
     """
     Return material data, update/check-in it or delete it
     """
@@ -260,4 +261,18 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView):
     def get(self, request, *args, **kwargs):
         """docstring for get"""
         return self.retrieve(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        """ Check in a material  """
+        try: 
+            serializer = self.get_serializer(data=request.DATA)
+            if serializer.is_valid():
+                self.pre_save(serializer.object)
+                serializer.object.version = serializer.object.version+1
+                #import pdb;pdb.set_trace()
+                self.object = serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)            
+        except: 
+            return Http404
 

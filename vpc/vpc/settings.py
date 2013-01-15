@@ -1,6 +1,7 @@
 # Django settings for vpc project.
 
 DEBUG = True
+DEVELOPMENT = True
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
@@ -93,7 +94,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    #'debug_toolbar.middleware.DebugToolbarMiddleware',
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
@@ -121,7 +122,8 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.admindocs',
     'south',
-    'debug_toolbar',
+    #'debug_toolbar',
+    'django_extensions',   
     'vpc_api',
     'vpc_content',
     'vpc_storage',
