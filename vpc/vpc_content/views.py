@@ -246,7 +246,7 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
                 args['version'] = version
                 object = object.get(**args)
             else:
-                object = object.filter(**args).order_by('version').reverse()[0]
+                object = getLatestMaterial(material_id)
             return object 
         except:
             raise Http404()
@@ -269,16 +269,21 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
             if serializer.is_valid():
                 # check if valid editor or new material will be created
                 sobj = serializer.object
-                last_material = self.model.objects \
-                                    .filter(material_id=sobj.material_id) \
-                                    .order_by('version') \
-                                    .reverse()[0]
+                last_material = getLatestMaterial(sobj.material_id)
+                last_editor = ""
+                try:    
+                    last_editor = last_material.editor_id
+                except AttributeError:
+                    pass 
                 # new material will have new ID
-                if sobj.editor_id != last_material.editor_id:
+                if sobj.editor_id != last_editor:
                     sobj.material_id = models.generateMaterialId()
                     sobj.version = 1
                 else:
-                    sobj.version = sobj.version + 1
+                    try:
+                        sobj.version = last_material.version + 1
+                    except AttributeError:
+                        sobj.version = 1
                 self.pre_save(sobj)
                 self.object = serializer.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -295,3 +300,14 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
             return Response(status=status.HTTP_204_NO_CONTENT)
         except:
             return Http404
+
+def getLatestMaterial(mid):
+    """ Returns the latest version of the material with given ID """
+    material = None
+    try:
+        material = models.Material.objects.filter(material_id=mid)\
+                                          .order_by('version') \
+                                          .reverse()[0]
+    except:
+        pass
+    return material 
