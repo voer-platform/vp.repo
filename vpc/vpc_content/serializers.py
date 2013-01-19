@@ -9,8 +9,8 @@ class MaterialSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Material
-        fields = ('material_id', 'title', 'text', 'version',
-                  'description', 'categories', 'authors',
+        fields = ('material_id', 'material_type', 'title', 'text', 
+                  'version', 'description', 'categories', 'authors',
                   'editor_id', 'keywords', 'file', 'file_type',
                   'language', 'license_id', 'modified', 'derived_from',)
 

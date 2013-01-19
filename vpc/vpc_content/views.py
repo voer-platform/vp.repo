@@ -191,6 +191,8 @@ class MaterialList(generics.ListCreateAPIView):
     """
     model = models.Material
     serializer_class = serializers.MaterialSerializer
+    br_fields = ('categories', 'authors', 'editors', 
+                 'language', 'material_type')
 
     def list(self, request, *args, **kwargs):
         """ Customized function for listing materials with same ID
@@ -201,6 +203,15 @@ class MaterialList(generics.ListCreateAPIView):
                 self.object_list = m_objects.filter(material_id=kwargs['mid'])
             else:
                 self.object_list = m_objects.all()
+            # do the filtering
+            browse_on = {}
+            fields = [item for item in request.GET if item in self.br_fields]
+            [browse_on.update({item:request.GET[item]}) for item in fields]
+            self.object_list = self.object_list.filter(**browse_on)
+            # continue with sorting
+            sort_fields = request.GET.get('sort_on', '')
+            if sort_fields:
+                self.object_list = self.object_list.order_by(sort_fields)
         except:
             raise Http404()
 

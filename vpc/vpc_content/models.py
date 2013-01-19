@@ -43,6 +43,7 @@ def generateMaterialId():
 
 class Material(models.Model, MaterialBase):
     material_id = CharField(max_length=64, default=generateMaterialId)
+    material_type = IntegerField(default=1)
     text = TextField()
     version = IntegerField(default=1)
     title = CharField(max_length=255)
