@@ -1,6 +1,9 @@
 Django 1.4.2
 djangorestframework 2.1.2
+django-haystack 1.2.7
+Whoosh 2.4.1
 celery 3.0.12
 django-celery 3.0.11
 redis 2.7.1
+
 

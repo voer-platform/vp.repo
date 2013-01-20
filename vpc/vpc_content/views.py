@@ -191,7 +191,7 @@ class MaterialList(generics.ListCreateAPIView):
     """
     model = models.Material
     serializer_class = serializers.MaterialSerializer
-    br_fields = ('categories', 'authors', 'editors', 
+    br_fields = ('categories', 'authors', 'editor_id', 
                  'language', 'material_type')
 
     def list(self, request, *args, **kwargs):
