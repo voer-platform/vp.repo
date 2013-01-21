@@ -8,10 +8,11 @@ admin.autodiscover()
 urlpatterns = patterns('vpc_api.views',
     url(r'^admin/', include(admin.site.urls)),
     url(r'^$', 'api_root'),
-    url(r'^users/$', UserList.as_view(), name='user-list'),
-    url(r'^users/(?P<pk>\d+)/$', UserDetail.as_view(), name='user-detail'),
-    url(r'^groups/$', GroupList.as_view(), name='group-list'),
-    url(r'^groups/(?P<pk>\d+)/$', GroupDetail.as_view(), name='group-detail'),
+    #url(r'^users/$', UserList.as_view(), name='user-list'),
+    #url(r'^users/(?P<pk>\d+)/$', UserDetail.as_view(), name='user-detail'),
+    #url(r'^groups/$', GroupList.as_view(), name='group-list'),
+    #url(r'^groups/(?P<pk>\d+)/$', GroupDetail.as_view(), name='group-detail'),
+    url(r'^search/', include('haystack.urls')),
 )
 
 # Format suffixes
