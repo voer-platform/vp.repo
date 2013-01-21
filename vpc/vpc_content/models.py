@@ -18,7 +18,7 @@ class Category(models.Model):
 
 class Author(models.Model):
     fullname = CharField(max_length=255)
-    bio = TextField(blank=True)
+    text = TextField(blank=True)
 
 
 class Editor(models.Model):
