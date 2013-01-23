@@ -19,7 +19,7 @@ class AuthorSerializer(serializers.ModelSerializer):
     """docstring for AuthorSerializer"""
     class Meta:
         model = models.Author
-        fields = ('id', 'fullname', 'bio')
+        fields = ('id', 'fullname', 'text')
 
 
 class CategorySerializer(serializers.ModelSerializer):

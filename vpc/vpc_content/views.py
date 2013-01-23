@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 from hashlib import md5
 from datetime import datetime
 from rest_framework import mixins
+from haystack.query import SearchQuerySet 
 
 import models
 import serializers
@@ -56,91 +57,6 @@ def splitPath(path):
     path = path.split('/')
     path = [item for item in path if len(item)>0]
     return path
-
-
-#def createAuthor(fullname, author_id, bio):
-#    """ Creates new author inside database, or
-#        just returns object if existing
-#    """
-#    author = None 
-#    try:
-#        author = models.Author.objects.filter(author_id=author_id)
-#        if len(author) > 0:
-#            author = author[0]
-#        else:
-#            new_author = models.Author()
-#            new_author.fullname = fullname
-#            new_author.author_id = author_id 
-#            new_author.bio = bio
-#            new_author.save()
-#            author = new_author
-#    except:
-#        raise
-#    return author
-#
-#
-#def createEditor(editor_id, client):
-#    """ Create new editor inside repository
-#        Parameters:
-#            e_id   ID of the editor in the client system
-#            client      APIClient object which makes request
-#    """
-#    editor = None
-#    try:
-#        editor = models.Editor.objects.filter(editor_id=editor_id)
-#        if len(editor) > 0:
-#            editor = editor[0]
-#        else:
-#            editor = models.Editor()
-#            editor.editor_id = editor_id
-#            editor.client = client
-#            editor.save()
-#    except:
-#        pass
-#    return editor 
-
-## Not being used atm
-#def checkInModule(params):
-#    try:
-#        path = params['path']
-#        module_id = path[1]
-#        module = Module.objects.get()
-#    except:
-#        pass
-#
-#def createModule(text, metadata, attachment, client_id):
-#    """ Extract info from params and put into new module 
-#        This one doens't return API result, only Module object
-#    """
-#    module = None
-#    try:
-#        module = models.Material.objects.create(
-#            text       = text, 
-#            metadata   = metadata,
-#            attachment = attachment,
-#            client_id  = client_id
-#            )
-#        module.save()
-#    except:
-#        raise
-#    return module
-#
-#def deleteModule(request):
-#    """ 
-#    """
-#    pass
-#
-#
-#def downloadModule(request):
-#    """ 
-#    """
-#    pass
-#
-#
-#def getModuleMetadata(request):
-#    """ 
-#    """
-#    pass
 
 
 # CATEGORY CALLS
@@ -311,6 +227,37 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
             return Response(status=status.HTTP_204_NO_CONTENT)
         except:
             return Http404
+
+class SearchMaterial(generics.ListAPIView):
+    """docstring for Search"""
+    model = models.Material
+    serializer_class= serializers.MaterialSerializer
+
+    def list(self, request, *args, **kwargs):
+        """docstring for list"""
+        try:
+            self.object_list = SearchQuerySet().filter(content=kwargs['keyword'])
+        except:
+            return Http404
+
+        # Default is to allow empty querysets.  This can be altered by setting
+        # `.allow_empty = False`, to raise 404 errors on empty querysets.
+        allow_empty = self.get_allow_empty()
+        if not allow_empty and len(self.object_list) == 0:
+            error_args = {'class_name': self.__class__.__name__}
+            raise Http404(self.empty_error % error_args)
+
+        # Pagination size is set by the `.paginate_by` attribute,
+        # which may be `None` to disable pagination.
+        page_size = self.get_paginate_by(self.object_list)
+        if page_size:
+            packed = self.paginate_queryset(self.object_list, page_size)
+            paginator, page, queryset, is_paginated = packed
+            serializer = self.get_pagination_serializer(page)
+        else:
+            serializer = self.get_serializer(self.object_list)
+
+        return Response(serializer.data) 
 
 def getLatestMaterial(mid):
     """ Returns the latest version of the material with given ID """
