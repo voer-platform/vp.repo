@@ -1,10 +1,11 @@
 import datetime
-from haystack.indexes import SearchIndex, CharField, DateTimeField
+from haystack.indexes import SearchIndex, RealTimeSearchIndex
+from haystack.indexes import CharField, DateTimeField
 from haystack import site
 from models import Author, Material
 
 
-class AuthorIndex(SearchIndex):
+class AuthorIndex(RealTimeSearchIndex):
     # the used template contains fullname and author bio
     # Zniper thinks this line below also is OK:
     # text = CharField(document=True, model_attr='text')
@@ -16,7 +17,7 @@ class AuthorIndex(SearchIndex):
         return Author.objects.all()
 
 
-class MaterialIndex(SearchIndex):
+class MaterialIndex(RealTimeSearchIndex):
     # "text" combines normal body, title, description and keywords
     text = CharField(document=True, use_template=True)
     material_id = CharField(model_attr='material_id')
