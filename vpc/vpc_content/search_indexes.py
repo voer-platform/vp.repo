@@ -1,5 +1,5 @@
 import datetime
-from haystack.indexes import SearchIndex, CharField
+from haystack.indexes import SearchIndex, CharField, DateTimeField
 from haystack import site
 from models import Author, Material
 
@@ -8,6 +8,7 @@ class AuthorIndex(SearchIndex):
     # the used template contains fullname and author bio
     # Zniper thinks this line below also is OK:
     # text = CharField(document=True, model_attr='text')
+    fullname = CharField(model_attr='fullname')
     text = CharField(document=True, use_template=True)
 
     def index_queryset(self):
@@ -19,6 +20,10 @@ class MaterialIndex(SearchIndex):
     # "text" combines normal body, title, description and keywords
     text = CharField(document=True, use_template=True)
     material_id = CharField(model_attr='material_id')
+    title = CharField(model_attr='title')
+    description = CharField(model_attr='description')
+    modified = DateTimeField(model_attr='modified')
+    material_type = DateTimeField(model_attr='modified')
 
     def index_queryset(self):
         """When entired index for model is updated"""

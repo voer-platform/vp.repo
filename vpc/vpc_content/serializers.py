@@ -35,3 +35,13 @@ class EditorSerializer(serializers.ModelSerializer):
         model = models.Editor
         fields = ('id', 'fullname', 'user_id', 'client_id')
 
+
+# SERIALIZERS FOR SEARCHING
+
+class MiniMaterialSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = models.Material
+        fields = ('material_id', 'material_type', 'title',
+                  'description', 'version', 'authors', 'editor_id',
+                  'modified')

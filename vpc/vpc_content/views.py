@@ -231,7 +231,7 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
 class SearchMaterial(generics.ListAPIView):
     """docstring for Search"""
     model = models.Material
-    serializer_class= serializers.MaterialSerializer
+    serializer_class= serializers.MiniMaterialSerializer
 
     def list(self, request, *args, **kwargs):
         """docstring for list"""
