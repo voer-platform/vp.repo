@@ -228,7 +228,7 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
         except:
             return Http404
 
-class SearchMaterial(generics.ListAPIView):
+class GeneralSearch(generics.ListAPIView):
     """docstring for Search"""
     model = models.Material
     serializer_class= serializers.MiniMaterialSerializer
@@ -236,7 +236,14 @@ class SearchMaterial(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         """docstring for list"""
         try:
-            self.object_list = SearchQuerySet().filter(content=kwargs['keyword'])
+            limit = request.GET.get('on', '')
+            allow_models = [models.Material, models.Author]
+            if limit.lower() == 'm':    # Material only
+                allow_models = [models.Material,]
+            elif limit.lower() == 'a':  # Author only
+                allow_models = [models.Author,]                                
+            self.object_list = SearchQuerySet().models(*allow_models)
+            self.object_list = self.object_list.filter(content=kwargs['keyword'])
         except:
             return Http404
 

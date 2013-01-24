@@ -17,6 +17,6 @@ urlpatterns = patterns('',
     url(r'^categories/(?P<pk>[0-9]+)/$', content_views.CategoryDetail.as_view(), name='category-detail'),
     url(r'^editors/$', content_views.EditorList.as_view(), name='editor-list'),
     url(r'^editors/(?P<pk>[0-9]+)/$', content_views.EditorDetail.as_view(), name='editor-detail'),
-    url(r'^search/(?P<keyword>.+)/$', content_views.SearchMaterial.as_view(), name='search-material'),
+    url(r'^search/(?P<keyword>.+)/$', content_views.GeneralSearch.as_view(), name='general-search'),
     )
 
