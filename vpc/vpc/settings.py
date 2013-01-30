@@ -121,17 +121,19 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+#    'grappelli',
     'django.contrib.admin',
     'django.contrib.admindocs',
     'rest_framework',
-    'grappelli',
+#    'djcelery',
+#    'kombu.transport.django',
     'south',
     'django_extensions',   
     'vpc_api',
     'haystack',
     'vpc_content',
     'vpc_storage',
-    'vpc_admin',
+    'vpc_admin',    
 )
 
 # A sample logging configuration. The only tangible logging
@@ -170,10 +172,6 @@ REST_FRAMEWORK = {
 
 INTERNAL_IPS = ('127.0.0.1',)
 
-DEBUG_TOOLBAR_CONFIG = {
-    'INTERCEPT_REDIRECTS': False,
-    }
-
 #HAYSTACK_CONNECTIONS = {
 #    'default': {
 #        'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
@@ -181,6 +179,17 @@ DEBUG_TOOLBAR_CONFIG = {
 #    }
 #}
 
+
+# INDEX & SEARCHING 
+
 HAYSTACK_SEARCH_ENGINE = 'whoosh'
 HAYSTACK_SITECONF = 'vpc.search_sites'
 HAYSTACK_WHOOSH_PATH = os.path.join(os.path.dirname(__file__), 'whoosh_index')
+
+# CELERY
+
+#BROKER_URL = 'django://'
+#CELERY_IMPORTS = ('vpc.tasks',)
+#
+#import djcelery
+#djcelery.setup_loader()
