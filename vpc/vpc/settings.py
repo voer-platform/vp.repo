@@ -61,14 +61,15 @@ MEDIA_URL = ''
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = ''
+STATIC_ROOT =''
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
-STATIC_URL = '/static/'
+STATIC_URL = '/s/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
+    os.path.join(os.path.dirname(__file__), '../static'),
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
@@ -109,6 +110,7 @@ ROOT_URLCONF = 'vpc.urls'
 WSGI_APPLICATION = 'vpc.wsgi.application'
 
 TEMPLATE_DIRS = (
+    os.path.join(os.path.dirname(__file__), '../vpc_admin/templates'),
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
@@ -121,12 +123,9 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-#    'grappelli',
     'django.contrib.admin',
     'django.contrib.admindocs',
     'rest_framework',
-#    'djcelery',
-#    'kombu.transport.django',
     'south',
     'django_extensions',   
     'vpc_api',
@@ -172,24 +171,8 @@ REST_FRAMEWORK = {
 
 INTERNAL_IPS = ('127.0.0.1',)
 
-#HAYSTACK_CONNECTIONS = {
-#    'default': {
-#        'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
-#        'PATH': os.path.join(os.path.dirname(__file__), 'whoosh_index'),
-#    }
-#}
-
-
 # INDEX & SEARCHING 
 
 HAYSTACK_SEARCH_ENGINE = 'whoosh'
 HAYSTACK_SITECONF = 'vpc.search_sites'
 HAYSTACK_WHOOSH_PATH = os.path.join(os.path.dirname(__file__), 'whoosh_index')
-
-# CELERY
-
-#BROKER_URL = 'django://'
-#CELERY_IMPORTS = ('vpc.tasks',)
-#
-#import djcelery
-#djcelery.setup_loader()
