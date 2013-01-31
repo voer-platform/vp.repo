@@ -171,6 +171,8 @@ REST_FRAMEWORK = {
 
 INTERNAL_IPS = ('127.0.0.1',)
 
+LOGIN_URL = '/dashboard/login'
+
 # INDEX & SEARCHING 
 
 HAYSTACK_SEARCH_ENGINE = 'whoosh'

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+    {% block content %}
+
+     <div class="row-fluid">
+        <div class="well span5 offset2" style="margin-bottom:0px;">
+            <form action="." method="post" class="form-horizontal">
+                {% csrf_token %}
+                <legend>VP Dashboard - Log In</legend>
+                {% if error %} <div class="alert"> {{ error }} </div> {% endif %}
+                <div class="control-group">
+                    <label class="control-label" for="inputUserID">User ID:</label>
+                    <div class="controls">
+                        <input name="inputUID" id="inputUID" type="text" length="20em">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="inputPassword">Password:</label>
+                    <div class="controls">
+                        <input name="inputPassword" id="inputPassword" type="password" length="20em">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <div class="controls">
+                        <button type="submit" class="btn">Sign In</button>
+                        &nbsp;<a href="#">Hmm, cannot log in?</a>
+                    </div>
+                </div>
+
+                </fieldset>
+            </form>
+        </div>
+     </div><!--/row-->
+
+    {% endblock %}

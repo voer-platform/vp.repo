@@ -10,10 +10,9 @@ urlpatterns = patterns('',
     #url(r'^users/(?P<pk>\d+)/$', UserDetail.as_view(), name='user-detail'),
     #url(r'^groups/$', GroupList.as_view(), name='group-list'),
     #url(r'^groups/(?P<pk>\d+)/$', GroupDetail.as_view(), name='group-detail'),
-    #url(r'^admin/', include(admin.site.urls)),
-    #url(r'^search/', include('haystack.urls')),
+    url(r'^admin/', include(admin.site.urls)),
     url(r'^dashboard/', include('vpc_admin.urls')),
-    url(r'^$', 'api_root'),
+    url(r'^$', 'vpc_api.views.api_root'),
 )
 
 # Format suffixes
