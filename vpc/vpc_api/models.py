@@ -1,10 +1,19 @@
 from django.db import models
 from datetime import datetime
+import hashlib
 
 
 class Meta:
     app_label = 'VPC API'
     verbose_name = 'VPC API'
+
+
+def generateClientKey(email):
+    """Generate secret key for API client based on email"""
+    now = str(datetime.now())
+    sha = hashlib.sha224(email + now)
+    sha = sha.hexdigest()[:24]
+    return sha
 
 
 # Create your models here.

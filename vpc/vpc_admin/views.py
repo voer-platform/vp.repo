@@ -1,7 +1,7 @@
 from django.views.generic.base import TemplateView
 from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, views as auth_views
 from django.utils.decorators import method_decorator
 from django.shortcuts import render_to_response, redirect, render
 from django.template import RequestContext
@@ -9,7 +9,7 @@ from django.http import HttpResponse
 from django import forms
 
 from forms import ClientRegForm
-from vpc_api.models import APIClient
+from vpc_api.models import APIClient, generateClientKey
 
 class DashboardView(TemplateView):
     
@@ -48,11 +48,15 @@ def loginView(request):
                               context_instance=RequestContext(request))
 
 def logoutDashboard(request):
-    """docstring for logoutDashboard"""
-    if not request.user.is_anonymous:
-       logout(request.user)
+    """Log out current admin from dashboard"""
+    if request.user.is_authenticated:
+        defaults = {
+            'current_app': '',
+            'extra_context': {},
+            'template_name': 'login.html',
+            }
+        return auth_views.logout(request, **defaults)
     return render_to_response("login.html",
-                              dictionary={'error':'Logging out successfully'},
                               context_instance=RequestContext(request))
 
 @csrf_protect
@@ -67,8 +71,44 @@ def clientRegView(request):
             client.client_id = form['client_id'].value()
             client.email = form['email'].value()
             client.organization = form['organization'].value()
+            client.secret_key = generateClientKey(client.email)
             client.save()
-            return redirect('/client')
+            return redirect('/dashboard/clients/')
     else:
         form = ClientRegForm()
     return render(request, 'client_reg.html', {'form':form})
+    
+
+@login_required
+def clientListView(request):
+    """docstring for clientListView"""
+    clients = APIClient.objects.all().order_by('name') 
+    return render(request, 'clients.html', {'clients': clients})
+
+
+def getNavigationBar(request):
+    """ """
+    BASE_URL = '/dashboard/'
+    dashboard_items = {
+        'Overview': BASE_URL,
+        'API SERVICE': {
+            'Client Management': BASE_URL + 'clients/',
+            'Statistics': BASE_URL + 'stats/',
+            },
+        'SYSTEM': {
+            'Processes': BASE_URL + 'processes/',
+            'Resource Usages': BASE_URL + '',
+            'Database': '',
+            },
+        'CONTENT MANAGEMENT': {
+            'Materials': '',
+            'Other Content': '',
+            'Statistics': '',
+            },
+        'VP COMPONENTS': {
+            'VP Web': '',
+            'VP Core': '',
+            'VP Transformer': '',
+            },
+        } 
+    return dashboard_items

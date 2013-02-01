@@ -1,0 +1,26 @@
+{% extends "base_home.html" %}
+
+    {% block home-content %}
+
+        <div>
+
+          <h3>API Clients</h3>
+
+          <table class="table table-striped table-bordered">
+            {% for client in clients %}
+            <tr>
+              <td>{{ client.name }}</td>
+              <td>{{ client.client_id }}</td>
+              <td>{{ client.email }}</td>
+              <td>{{ client.secret_key }}</td>
+            </tr> 
+            {% endfor %}
+          </table>
+        
+          <div>
+            <a href="/dashboard/clients/add/" class="btn btn-primary">New API Client</a>
+          </div>
+          
+        </div>
+
+   {% endblock %}
