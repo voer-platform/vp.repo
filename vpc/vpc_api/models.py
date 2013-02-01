@@ -14,6 +14,8 @@ class APIClient(models.Model):
     name = models.CharField(max_length=256)
     organization = models.BooleanField()
     secret_key = models.CharField(max_length=256)
+    email = models.CharField(max_length=128)
+    join_date = models.DateTimeField(default=datetime.now())
 
     class Meta:
         verbose_name = 'API Client'

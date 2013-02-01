@@ -3,13 +3,20 @@
     {% block home-content %}
 
         <div class="well">
+
+          <legend>Create API Client</legend>
         
-          <form action="." method="post">
+          <form action="." method="post" class="form-horizontal">
 
             {% csrf_token %}
 
             {{ form.as_p }}
 
+            <div class="control-group">
+                <button type="submit" class="btn">Add New Client</button>
+                <button type="submit" class="btn">Cancel</button>
+            </div>
+            
           </form>
 
         </div>

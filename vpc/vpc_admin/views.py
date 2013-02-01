@@ -9,6 +9,7 @@ from django.http import HttpResponse
 from django import forms
 
 from forms import ClientRegForm
+from vpc_api.models import APIClient
 
 class DashboardView(TemplateView):
     
@@ -54,12 +55,20 @@ def logoutDashboard(request):
                               dictionary={'error':'Logging out successfully'},
                               context_instance=RequestContext(request))
 
+@csrf_protect
+@login_required
 def clientRegView(request):
-    """ """
+    """ Dashboard view, for registering API Client """
     if request.method == 'POST':
         form = ClientRegForm(request.POST)
         if form.is_valid():
-            return HttpResponseRedirect('/dashboard')
+            client = APIClient()
+            client.name = form['name'].value()
+            client.client_id = form['client_id'].value()
+            client.email = form['email'].value()
+            client.organization = form['organization'].value()
+            client.save()
+            return redirect('/client')
     else:
         form = ClientRegForm()
     return render(request, 'client_reg.html', {'form':form})
