@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+    {% block content %}
+
+      <div class="row-fluid">
+        <div class="span2">
+          <div class="well sidebar-nav">
+            <ul class="nav nav-list">
+              <li class="active"><a href="#">Overview</a></li>
+              <li class="nav-header">API Service</li>
+              <li><a href="#">Client Management</a></li>
+              <li><a href="#">Statistical Info</a></li>
+              <li class="nav-header">System</li>
+              <li><a href="#">Processes</a></li>
+              <li><a href="#">Resource Usages</a></li>
+              <li><a href="#">Database</a></li>
+              <li class="nav-header">Content Management</li>
+              <li><a href="#">Materials</a></li>
+              <li><a href="#">Other Content</a></li>
+              <li><a href="#">Statistical Info</a></li>
+              <li class="nav-header">VOER Platform Components</li>
+              <li><a href="#">VP Core</a></li>
+              <li><a href="#">VP Web</a></li>
+              <li><a href="#">VP Transformer</a></li>
+            </ul>
+          </div><!--/.well -->
+        </div><!--/span-->
+        <div class="span8">
+            {% block home-content %} {% endblock %}           
+        </div><!--/span-->
+        <div class="span2">
+          <div class="well well-small">
+            Brief statistical information
+          </div>
+        </div>
+      </div><!--/row-->
+
+    {% endblock %}

@@ -3,11 +3,12 @@ from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.utils.decorators import method_decorator
-from django.shortcuts import render_to_response, redirect
+from django.shortcuts import render_to_response, redirect, render
 from django.template import RequestContext
 from django.http import HttpResponse
 from django import forms
 
+from forms import ClientRegForm
 
 class DashboardView(TemplateView):
     
@@ -28,7 +29,7 @@ def loginView(request):
     ERROR_LOGIN = 'Log in failed: %s'
     data = {}
 
-    if request.POST:
+    if request.method == 'POST':
         # validate the inputs
         uid = request.POST.get('inputUID', '')
         password = request.POST.get('inputPassword', '')
@@ -52,3 +53,13 @@ def logoutDashboard(request):
     return render_to_response("login.html",
                               dictionary={'error':'Logging out successfully'},
                               context_instance=RequestContext(request))
+
+def clientRegView(request):
+    """ """
+    if request.method == 'POST':
+        form = ClientRegForm(request.POST)
+        if form.is_valid():
+            return HttpResponseRedirect('/dashboard')
+    else:
+        form = ClientRegForm()
+    return render(request, 'client_reg.html', {'form':form})

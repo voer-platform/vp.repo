@@ -36,3 +36,18 @@ class APIToken(models.Model):
 
     def __unicode__(self):
         return "Token (%s): %s" % (self.client.client_id, self.token)
+
+
+class APIRecord(models.Model):
+    """ """
+    client_id = models.ForeignKey(APIClient)
+    result = models.IntegerField()
+    time = models.DateTimeField()
+    type = models.IntegerField()
+    request = models.CharField(max_length=256)
+
+    class Meta:
+        verbose_name = 'API Record'
+
+    def __unicode__(self):
+        return "API Record: %s" % (self.request)

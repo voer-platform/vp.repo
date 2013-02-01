@@ -34,36 +34,36 @@ def api_root(request, format=None):
     })
 
 
-class UserList(generics.ListCreateAPIView):
-    """
-    API endpoint that represents a list of users.
-    """
-    model = User
-    serializer_class = UserSerializer
-
-
-class UserDetail(generics.RetrieveUpdateDestroyAPIView):
-    """
-    API endpoint that represents a single user.
-    """
-    model = User
-    serializer_class = UserSerializer
-
-
-class GroupList(generics.ListCreateAPIView):
-    """
-    API endpoint that represents a list of groups.
-    """
-    model = Group
-    serializer_class = GroupSerializer
-
-
-class GroupDetail(generics.RetrieveUpdateDestroyAPIView):
-    """
-    API endpoint that represents a single group.
-    """
-    model = Group
-    serializer_class = GroupSerializer
+#class UserList(generics.ListCreateAPIView):
+#    """
+#    API endpoint that represents a list of users.
+#    """
+#    model = User
+#    serializer_class = UserSerializer
+#
+#
+#class UserDetail(generics.RetrieveUpdateDestroyAPIView):
+#    """
+#    API endpoint that represents a single user.
+#    """
+#    model = User
+#    serializer_class = UserSerializer
+#
+#
+#class GroupList(generics.ListCreateAPIView):
+#    """
+#    API endpoint that represents a list of groups.
+#    """
+#    model = Group
+#    serializer_class = GroupSerializer
+#
+#
+#class GroupDetail(generics.RetrieveUpdateDestroyAPIView):
+#    """
+#    API endpoint that represents a single group.
+#    """
+#    model = Group
+#    serializer_class = GroupSerializer
 
 
 @api_view(['GET'])

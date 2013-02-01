@@ -1,7 +1,6 @@
 from django.conf.urls import patterns, url, include
 from django.contrib import admin
 from rest_framework.urlpatterns import format_suffix_patterns
-from vpc_api.views import UserList, UserDetail, GroupList, GroupDetail
 
 admin.autodiscover()
 

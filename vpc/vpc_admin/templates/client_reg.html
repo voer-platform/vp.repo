@@ -1,0 +1,17 @@
+{% extends "base_home.html" %}
+
+    {% block home-content %}
+
+        <div class="well">
+        
+          <form action="." method="post">
+
+            {% csrf_token %}
+
+            {{ form.as_p }}
+
+          </form>
+
+        </div>
+
+   {% endblock %}
