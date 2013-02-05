@@ -1,0 +1,16 @@
+<div class="well sidebar-nav">
+    <ul class="nav nav-list">
+    
+    {{ request }}
+
+    {% for item, value in navItems %}
+      {% if value == '' %}
+        <li class="nav-header">{{ item }}</li>
+      {% else %}
+        <li><a href="{{ value }}">{{ item }}</a></li>
+      {% endif %}
+    {% endfor %}
+
+</div><!--/.well -->
+
+
