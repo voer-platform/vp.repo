@@ -9,7 +9,7 @@ from django.http import HttpResponse
 from django import forms
 
 from forms import ClientRegForm
-from vpc_api.models import APIClient, generateClientKey
+from vpr_api.models import APIClient, generateClientKey
 
 class DashboardView(TemplateView):
     

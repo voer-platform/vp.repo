@@ -4,8 +4,8 @@ import hashlib
 
 
 class Meta:
-    app_label = 'VPC API'
-    verbose_name = 'VPC API'
+    app_label = 'VPR API'
+    verbose_name = 'VPR API'
 
 
 def generateClientKey(email):

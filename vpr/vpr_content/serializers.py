@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from vpc_content import models
+from vpr_content import models
 
 
 class MaterialSerializer(serializers.ModelSerializer):

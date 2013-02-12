@@ -5,7 +5,7 @@ from django.db.models import DateTimeField
 from hashlib import md5
 from datetime import datetime
 
-from vpc_api.models import APIClient
+from vpr_api.models import APIClient
 from repository import MaterialBase
 
 

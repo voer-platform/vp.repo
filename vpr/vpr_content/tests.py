@@ -7,7 +7,7 @@ Replace this with more appropriate tests for your application.
 
 from django.test import TestCase
 
-from vpc_api.models import APIClient
+from vpr_api.models import APIClient
 from views import createAuthor, createEditor, createModule
 from models import Author, Metadata, Category
 

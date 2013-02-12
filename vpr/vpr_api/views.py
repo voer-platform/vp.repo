@@ -11,9 +11,9 @@ from datetime import datetime
 import md5 
 import re
 
-from vpc_api.serializers import UserSerializer, GroupSerializer
-from vpc_api.models import APIClient as Client
-from vpc_api.models import APIToken as Token
+from vpr_api.serializers import UserSerializer, GroupSerializer
+from vpr_api.models import APIClient as Client
+from vpr_api.models import APIToken as Token
 
 
 @api_view(['GET'])

@@ -1,7 +1,7 @@
 from django.conf.urls import patterns, url, include
 from django.contrib import admin
 
-from vpc_content import views as content_views
+from vpr_content import views as content_views
 import views
 
 urlpatterns = patterns('',

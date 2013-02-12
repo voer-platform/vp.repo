@@ -1,4 +1,4 @@
-# Django settings for vpc project.
+# Django settings for vpr project.
 
 import os
 
@@ -15,11 +15,11 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         #'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        #'NAME': 'vpc.sqlite3',                      # Or path to database file if using sqlite3.
+        #'NAME': 'vpr.sqlite3',                      # Or path to database file if using sqlite3.
         'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'vpc',                      # Or path to database file if using sqlite3.
-        'USER': 'vpc',                      # Not used with sqlite3.
-        'PASSWORD': 'vpc',                  # Not used with sqlite3.
+        'NAME': 'vpr',                      # Or path to database file if using sqlite3.
+        'USER': 'vpr',                      # Not used with sqlite3.
+        'PASSWORD': 'vpr',                  # Not used with sqlite3.
         'HOST': 'localhost',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '3306',                      # Set to empty string for default. Not used with sqlite3.
     }
@@ -104,13 +104,13 @@ MIDDLEWARE_CLASSES = (
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'vpc.urls'
+ROOT_URLCONF = 'vpr.urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
-WSGI_APPLICATION = 'vpc.wsgi.application'
+WSGI_APPLICATION = 'vpr.wsgi.application'
 
 TEMPLATE_DIRS = (
-    os.path.join(os.path.dirname(__file__), '../vpc_admin/templates'),
+    os.path.join(os.path.dirname(__file__), '../vpr_admin/templates'),
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
@@ -128,11 +128,11 @@ INSTALLED_APPS = (
     'rest_framework',
     'south',
     'django_extensions',   
-    'vpc_api',
     'haystack',
-    'vpc_content',
-    'vpc_storage',
-    'vpc_admin',    
+    'vpr_api',
+    'vpr_content',
+    'vpr_storage',
+    'vpr_admin',    
 )
 
 # A sample logging configuration. The only tangible logging
@@ -176,5 +176,5 @@ LOGIN_URL = '/dashboard/login'
 # INDEX & SEARCHING 
 
 HAYSTACK_SEARCH_ENGINE = 'whoosh'
-HAYSTACK_SITECONF = 'vpc.search_sites'
+HAYSTACK_SITECONF = 'vpr.search_sites'
 HAYSTACK_WHOOSH_PATH = os.path.join(os.path.dirname(__file__), 'whoosh_index')

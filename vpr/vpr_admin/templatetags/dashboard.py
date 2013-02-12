@@ -28,7 +28,7 @@ def getNavigationItems(request):
         ('Statistics', '-'),
         ('VP COMPONENTS', ''),
         ('VP Web', '-'),
-        ('VP Core', '-'),
+        ('VP Repository', '-'),
         ('VP Transformer', '-'),
         ) 
     return dashboard_items

@@ -14,7 +14,7 @@ from datetime import datetime
 from rest_framework import mixins
 from haystack.query import SearchQuerySet 
 
-from vpc_api.models import APIRecord
+from vpr_api.models import APIRecord
 import models
 import serializers
 
