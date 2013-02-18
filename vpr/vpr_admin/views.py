@@ -56,8 +56,7 @@ def logoutDashboard(request):
             'template_name': 'login.html',
             }
         return auth_views.logout(request, **defaults)
-    return render_to_response("login.html",
-                              context_instance=RequestContext(request))
+    return redirect('/dashboard/login/')
 
 @csrf_protect
 @login_required

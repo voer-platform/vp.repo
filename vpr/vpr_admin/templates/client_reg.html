@@ -2,19 +2,29 @@
 
     {% block home-content %}
 
-        <h3>Create API Client</h3>
+        <h3>New API Client</h3>
 
         <div class="well">
 
           <form action="." method="post" class="form-horizontal">
-
             {% csrf_token %}
+            {{ form.non_field_errors }}
 
-            {{ form.as_p }}
+
+            {% for field in form %}
+                <div class="control-group">
+                    <label class="control-label" for="client_id">{{ field.label }}:</label>
+                    <div class="controls">{{ field }}
+                        <label class="help-inline">{% firstof field.errors field.help_text%}</label>
+                    </div>
+                </div>
+            {% endfor %}
 
             <div class="control-group">
-                <button type="submit" class="btn btn-primary">Add New Client</button>
+              <div class="controls">
+                <button type="submit" class="btn btn-primary">Create Account</button>
                 <a href="/dashboard/clients/" class="btn">Cancel</a>
+              </div>
             </div>
             
           </form>
