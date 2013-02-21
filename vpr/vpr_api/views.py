@@ -22,10 +22,6 @@ def api_root(request, format=None):
     The entry endpoint of our API.
     """
     return Response({
-#        'users': reverse('user-list', request=request),
-#        'groups': reverse('group-list', request=request),
-#        'auth': reverse('authenticate'),
-#        'token': reverse('test-token', request=request),
         'authors': reverse('author-list', request=request),
         'editors': reverse('editor-list', request=request),
         'categories': reverse('category-list', request=request),
@@ -34,39 +30,8 @@ def api_root(request, format=None):
     })
 
 
-#class UserList(generics.ListCreateAPIView):
-#    """
-#    API endpoint that represents a list of users.
-#    """
-#    model = User
-#    serializer_class = UserSerializer
-#
-#
-#class UserDetail(generics.RetrieveUpdateDestroyAPIView):
-#    """
-#    API endpoint that represents a single user.
-#    """
-#    model = User
-#    serializer_class = UserSerializer
-#
-#
-#class GroupList(generics.ListCreateAPIView):
-#    """
-#    API endpoint that represents a list of groups.
-#    """
-#    model = Group
-#    serializer_class = GroupSerializer
-#
-#
-#class GroupDetail(generics.RetrieveUpdateDestroyAPIView):
-#    """
-#    API endpoint that represents a single group.
-#    """
-#    model = Group
-#    serializer_class = GroupSerializer
 
-
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 def authenticate(request, cid):
     """
     Authenticate a client and issue session token
@@ -106,6 +71,11 @@ def authenticate(request, cid):
     return Response(res)
 
 
+def createAuthCombination(secret, sugar):
+    """Returns the good combination from secret key and sugar"""
+    return md5.md5(secret + sugar).hexdigest()
+
+
 def verifyAuthComb(cid, comb, sugar):
     """ Verify sent info for authenticating
     """
@@ -113,7 +83,7 @@ def verifyAuthComb(cid, comb, sugar):
         if comb == '' or sugar == '':
             raise
         client = Client.objects.get(client_id=cid)
-        good_comb = md5.md5(client.secret_key + sugar).hexdigest()
+        good_comb = createAuthCombination(client.secret_key, sugar)
         print "GOOD COMB: " + good_comb
         if good_comb != comb:
             raise            
