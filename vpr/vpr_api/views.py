@@ -1,12 +1,13 @@
 # Create your views here.
 
 from django.contrib.auth.models import User, Group
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseNotAllowed
 from django.core import urlresolvers
 from rest_framework import generics
 from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
 from rest_framework.response import Response
+from rest_framework.exceptions import NotAcceptable
 from datetime import datetime
 import md5 
 import re
@@ -14,7 +15,6 @@ import re
 from vpr_api.serializers import UserSerializer, GroupSerializer
 from vpr_api.models import APIClient as Client
 from vpr_api.models import APIToken as Token
-
 
 @api_view(['GET'])
 def api_root(request, format=None):
@@ -83,6 +83,7 @@ def authenticate(request, cid):
         res = {'client_id': cid}
 
         client = verifyAuthComb(cid, comb, sugar)
+        print client
         if client:
             token = Token(client = client,
                           client_ip = '192.168.1.1',
@@ -93,6 +94,10 @@ def authenticate(request, cid):
             res['token'] = token.token
             res['expire'] = token.expire
             res['result'] = 'OK'
+        else:
+            raise NotAcceptable('Authentication failed (invalid combination)')
+            # or...
+            #return Response({'details':'Authentication ...'}, status=406)
     except:
         raise
         res['result'] = 'ERROR'
@@ -159,11 +164,10 @@ def getRequestVersion(request):
         pass
     return version
 
-
 def validateToken(client_id, post_token):
     """ Verify if the transfered token and client ID is matched and valid
     """
-    token = getActiveToken(request, client_id)
+    token = getActiveToken(client_id)
     return post_token == token
 
 

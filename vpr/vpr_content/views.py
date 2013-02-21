@@ -15,6 +15,8 @@ from rest_framework import mixins
 from haystack.query import SearchQuerySet 
 
 from vpr_api.models import APIRecord
+from vpr_api.decorators import api_token_required
+
 import models
 import serializers
 
@@ -112,6 +114,7 @@ class MaterialList(generics.ListCreateAPIView):
     br_fields = ('categories', 'authors', 'editor_id', 
                  'language', 'material_type')
 
+    @api_token_required
     def list(self, request, *args, **kwargs):
         """ Customized function for listing materials with same ID
         """
