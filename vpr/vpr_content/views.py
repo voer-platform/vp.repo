@@ -70,11 +70,37 @@ class CategoryList(generics.ListCreateAPIView):
     model = models.Category
     serializer_class = serializers.CategorySerializer
 
+    @api_token_required
+    def get(self, request, *args, **kwargs):
+        """Old post method with decorator"""
+        return self.list(request, *args, **kwargs)
+
+    @api_token_required
+    def post(self, request, *args, **kwargs):
+        """Old post method with decorator"""
+        return self.create(request, *args, **kwargs)
+
 
 class CategoryDetail(generics.RetrieveUpdateDestroyAPIView):
     """docstring for CategoryDetail"""
     model = models.Category
     serializer_class = serializers.CategorySerializer
+
+    @api_token_required
+    def get(self, request, *args, **kwargs):
+        """docstring for get"""
+        return self.retrieve(request, *args, **kwargs)
+
+    @api_token_required
+    def put(self, request, *args, **kwargs):
+        """docstring for get"""
+        return self.update(request, *args, **kwargs)
+
+    @api_token_required
+    def delete(self, request, *args, **kwargs):
+        """docstring for get"""
+        return self.destroy(request, *args, **kwargs)
+
 
 
 # EDITOR CALLS
@@ -84,11 +110,36 @@ class EditorList(generics.ListCreateAPIView):
     model = models.Editor
     serializer_class = serializers.EditorSerializer
 
+    @api_token_required
+    def get(self, request, *args, **kwargs):
+        """Old post method with decorator"""
+        return self.list(request, *args, **kwargs)
+
+    @api_token_required
+    def post(self, request, *args, **kwargs):
+        """Old post method with decorator"""
+        return self.create(request, *args, **kwargs)
+
 
 class EditorDetail(generics.RetrieveUpdateDestroyAPIView):
     """docstring for EditorDetail"""
     model = models.Editor
     serializer_class = serializers.EditorSerializer
+
+    @api_token_required
+    def get(self, request, *args, **kwargs):
+        """docstring for get"""
+        return self.retrieve(request, *args, **kwargs)
+
+    @api_token_required
+    def put(self, request, *args, **kwargs):
+        """docstring for get"""
+        return self.update(request, *args, **kwargs)
+
+    @api_token_required
+    def delete(self, request, *args, **kwargs):
+        """docstring for get"""
+        return self.destroy(request, *args, **kwargs)
 
 
 # AUTHOR CALLS
@@ -98,11 +149,37 @@ class AuthorList(generics.ListCreateAPIView):
     model = models.Author
     serializer_class = serializers.AuthorSerializer
 
+    @api_token_required
+    def get(self, request, *args, **kwargs):
+        """Old post method with decorator"""
+        return self.list(request, *args, **kwargs)
+
+    @api_token_required
+    def post(self, request, *args, **kwargs):
+        """Old post method with decorator"""
+        return self.create(request, *args, **kwargs)
+
 
 class AuthorDetail(generics.RetrieveUpdateDestroyAPIView):
     """docstring for AuthorDetail"""
     model = models.Author
     serializer_class = serializers.AuthorSerializer
+
+    @api_token_required
+    def get(self, request, *args, **kwargs):
+        """docstring for get"""
+        return self.retrieve(request, *args, **kwargs)
+
+    @api_token_required
+    def put(self, request, *args, **kwargs):
+        """docstring for get"""
+        return self.update(request, *args, **kwargs)
+
+    @api_token_required
+    def delete(self, request, *args, **kwargs):
+        """docstring for get"""
+        return self.destroy(request, *args, **kwargs)
+
 
 # MODULE
 
@@ -155,6 +232,12 @@ class MaterialList(generics.ListCreateAPIView):
 
         return Response(serializer.data)
 
+    @api_token_required
+    def post(self, request, *args, **kwargs):
+        """Old post method with decorator"""
+        return self.create(request, *args, **kwargs)
+
+
     #def get(self, request, *args, **kwargs):
     #    """docstring for get"""
     #    return Response({'a':'b'})
@@ -190,10 +273,12 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
         serializer = self.get_serializer(self.object)
         return Response(serializer.data)
 
+    @api_token_required
     def get(self, request, *args, **kwargs):
         """docstring for get"""
         return self.retrieve(request, *args, **kwargs)
 
+    @api_token_required
     def put(self, request, *args, **kwargs):
         """ Check in a material  """
         try: 
@@ -223,6 +308,7 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
         except: 
             return Http404
 
+    @api_token_required
     def destroy(self, request, *args, **kwargs):
         """ Delete the material """
         try:
@@ -233,11 +319,13 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
         except:
             return Http404
 
+
 class GeneralSearch(generics.ListAPIView):
     """docstring for Search"""
     model = models.Material
     serializer_class= serializers.MiniMaterialSerializer
 
+    @api_token_required
     def list(self, request, *args, **kwargs):
         """docstring for list"""
         try:
