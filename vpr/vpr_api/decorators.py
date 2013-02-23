@@ -22,7 +22,6 @@ def api_token_required(orig):
                 return Response({'details':'Permission denied due to invalid API token'},
                                 status=401);
         except:
-            raise
             return Response({'details':'API request processing failed due to unknown reason'},
                             status=404);
 

@@ -8,6 +8,7 @@ from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
 from rest_framework.response import Response
 from rest_framework.exceptions import NotAcceptable
+from rest_framework import status
 from datetime import datetime, timedelta
 import md5 
 import re
@@ -145,16 +146,12 @@ def validateToken(client_id, post_token):
         token = '#'
     return post_token == token
 
-
-# TESTING FUNCTIONS ======================================== 
-
-
-def testActiveToken(request, cid):
-    """ Just for testing 
-    """
-    msg = 'API version: ' + getRequestVersion(request) + '<br/>'
-    msg += str(getActiveToken(cid))
-    return HttpResponse(msg) 
-
+@api_view(['GET'])
+def testTokenView(request, token):
+    """Check if the given token and client_id are correct"""
+    client_id = request.GET.get('client_id', '')
+    if validateToken(client_id, token):
+        return Response({'details':'Valid token'}, status=status.HTTP_200_OK)
+    return Response({'details':'Invalid token'}, status=status.HTTP_401_UNAUTHORIZED)
 
 

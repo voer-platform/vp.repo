@@ -6,7 +6,7 @@ import views
 
 urlpatterns = patterns('',
     url(r'^auth/(?P<cid>\w+)/$', views.authenticate, name='authenticate'),
-    url(r'^token/(?P<cid>\w+)/$', views.testActiveToken, name='test-token'),
+    url(r'^token/(?P<token>\w+)/$', views.testTokenView, name='validate-token'),
     url(r'^materials/$', content_views.MaterialList.as_view(), name='material-list'),
     url(r'^materials/(?P<mid>[0-9a-z]+)/all/$', content_views.MaterialList.as_view(), name='material-version-list'),
     url(r'^materials/(?P<mid>[0-9a-z]+)/((?P<version>\d+)/)?$', content_views.MaterialDetail.as_view(), name='material-detail'), 
