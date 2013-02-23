@@ -10,7 +10,9 @@ def api_token_required(orig):
             print 'API token checking'
             request = args[1]._request
             token = request.COOKIES.get('vpr_token', '')
-            client_id = request.COOKIES.get('vpr_client_id', '')
+            client_id = request.COOKIES.get('vpr_client', '')
+            print token
+            print client_id
             if validateToken(client_id, token):
                 return orig(*args, **kwargs)
             else:

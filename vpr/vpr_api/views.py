@@ -48,7 +48,6 @@ def authenticate(request, cid):
         res = {'client_id': cid}
 
         client = verifyAuthComb(cid, comb, sugar)
-        print client
         if client:
             token = Token(client = client,
                           client_ip = '192.168.1.1',
@@ -87,7 +86,6 @@ def verifyAuthComb(cid, comb, sugar):
             raise
         client = Client.objects.get(client_id=cid)
         good_comb = createAuthCombination(client.secret_key, sugar)
-        print "GOOD COMB: " + good_comb
         if good_comb != comb:
             raise            
     except:
@@ -140,7 +138,11 @@ def getRequestVersion(request):
 def validateToken(client_id, post_token):
     """ Verify if the transfered token and client ID is matched and valid
     """
-    token = getActiveToken(client_id)
+    try:
+        token = getActiveToken(client_id)
+        token = token.token
+    except AttributeError: 
+        token = '#'
     return post_token == token
 
 
