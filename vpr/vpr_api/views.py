@@ -8,7 +8,7 @@ from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
 from rest_framework.response import Response
 from rest_framework.exceptions import NotAcceptable
-from datetime import datetime
+from datetime import datetime, timedelta
 import md5 
 import re
 
@@ -53,7 +53,10 @@ def authenticate(request, cid):
             token = Token(client = client,
                           client_ip = '192.168.1.1',
                           )
-            token.expire = datetime.now().isoformat()
+            
+            expire = datetime.now() + timedelta(minutes=30)
+            token.expire = expire.isoformat()
+
             token.token = md5.md5(cid + token.expire).hexdigest()
             token.save()
             res['token'] = token.token
