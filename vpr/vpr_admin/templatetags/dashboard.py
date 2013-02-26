@@ -17,6 +17,7 @@ def getNavigationItems(request):
         ('Overview', BASE_URL),
         ('API SERVICE', ''),
         ('Client Management', BASE_URL + 'clients/'),
+        ('Active Tokens', BASE_URL + 'tokens/'),
         ('Statistics', BASE_URL + 'stats/'),
         ('SYSTEM', ''), 
         ('Processes', BASE_URL + 'processes/'),

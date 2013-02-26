@@ -9,7 +9,7 @@ from django.http import HttpResponse
 from django import forms
 
 from forms import ClientRegForm
-from vpr_api.models import APIClient, generateClientKey
+from vpr_api.models import APIClient, generateClientKey, APIToken
 
 class DashboardView(TemplateView):
     
@@ -53,10 +53,10 @@ def logoutDashboard(request):
         defaults = {
             'current_app': '',
             'extra_context': {},
-            'template_name': 'login.html',
+            'next_page': '/dashboard/',
             }
         return auth_views.logout(request, **defaults)
-    return redirect('/dashboard/login/')
+    return redirect('/dashboard/')
 
 @csrf_protect
 @login_required
@@ -78,11 +78,50 @@ def clientRegView(request):
     return render(request, 'client_reg.html', {'form':form})
     
 
+@csrf_protect
+@login_required
+def clientEditView(request, client_id):
+    """ Dashboard view, for registering API Client """
+    if request.method == 'POST':
+        form = ClientRegForm(request.POST)
+        if form.is_valid():
+            cid = form['id'].value()
+            client = APIClient.objects.get(id=cid)
+            client.name = form['name'].value()
+            client.client_id = form['client_id'].value()
+            client.email = form['email'].value()
+            client.organization = form['organization'].value()
+            client.secret_key = form['secret_key'].value()
+            client.save()
+            return redirect('/dashboard/clients/')
+        else:
+            assert False
+
+    # Open existing client object 
+    client = APIClient.objects.get(id=client_id)
+    form = ClientRegForm()
+    form.fields['id'].initial = client.id
+    form.fields['name'].initial = client.name
+    form.fields['client_id'].initial = client.client_id 
+    form.fields['organization'].initial = client.organization
+    form.fields['email'].initial = client.email
+
+    return render(request, 'client_reg.html', {'form': form,
+                                               'client': client
+                                               })
+
 @login_required
 def clientListView(request):
     """docstring for clientListView"""
     clients = APIClient.objects.all().order_by('name') 
     return render(request, 'clients.html', {'clients': clients})
+
+
+@login_required
+def tokenListView(request):
+    """docstring for tokenListView"""
+    tokens = APIToken.objects.all().order_by('since') 
+    return render(request, 'tokens.html', {'tokens': tokens})
 
 
 def getNavigationBar(request):

@@ -9,8 +9,8 @@
           <table class="table table-striped table-bordered">
             {% for client in clients %}
             <tr>
-              <td>{{ client.name }}</td>
-              <td>{{ client.client_id }}</td>
+              <td><a href="/dashboard/clients/{{ client.id }}/">{{ client.name }}</a></td>
+              <td><a href="/dashboard/clients/{{ client.id }}/">{{ client.client_id }}</a></td>
               <td>{{ client.email }}</td>
               <td>{{ client.secret_key }}</td>
             </tr> 

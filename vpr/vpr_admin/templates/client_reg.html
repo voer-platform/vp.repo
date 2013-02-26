@@ -2,7 +2,15 @@
 
     {% block home-content %}
 
+        {% if client != None  %}
+        <h3>API Client: {{ client.name }}</h3>
+        {% else %}
         <h3>New API Client</h3>
+        {% endif %}
+
+        <div>
+            <span>Registered since: {{ client.join_date }}</span>
+        </div>
 
         <div class="well">
 
@@ -10,19 +18,33 @@
             {% csrf_token %}
             {{ form.non_field_errors }}
 
-
-            {% for field in form %}
+            {% for field in form.visible_fields %}
                 <div class="control-group">
-                    <label class="control-label" for="client_id">{{ field.label }}:</label>
+                    <label class="control-label" for="">{{ field.label }}:</label>
                     <div class="controls">{{ field }}
                         <label class="help-inline">{% firstof field.errors field.help_text%}</label>
                     </div>
                 </div>
             {% endfor %}
 
+            {% if client != None %}
+                <div class="control-group">
+                    <label class="control-label" for="{{ lid_secret_key }}">Secret Key:</label>
+                    <div class="controls">
+                        <input id="id_secret_key" type="text" name="secret_key" value="{{ client.secret_key }}" maxlength="32"/>
+                        <label class="help-inline">{% firstof field.errors field.help_text%}</label>
+                    </div>
+                </div>
+                <input type="hidden" name="id" value="{{ client.id }}">
+            {% endif %}
+
             <div class="control-group">
               <div class="controls">
+                {% if client != None %}
+                <button type="submit" class="btn btn-primary">Update Client</button>
+                {% else %}
                 <button type="submit" class="btn btn-primary">Create Account</button>
+                {% endif %}
                 <a href="/dashboard/clients/" class="btn">Cancel</a>
               </div>
             </div>

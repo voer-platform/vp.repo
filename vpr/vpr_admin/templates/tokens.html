@@ -1,0 +1,32 @@
+{% extends "base_home.html" %}
+
+    {% block home-content %}
+
+        <div>
+
+          <h3>API Tokens</h3>
+
+          <table class="table table-striped table-bordered">
+            <tr>
+              <th>Token</td>
+              <th>Client</td>
+              <th>Valid From</td>
+              <th>Valid To</td>
+            </tr> 
+            {% for token in tokens %}
+            <tr>
+              <td>{{ token.token }}</td>
+              <td><a href="/dashboard/clients/{{ token.client.id }}/">{{ token.client.client_id }}</a></td>
+              <td>{{ token.since }}</td>
+              <td>{{ token.expire }}</td>
+            </tr> 
+            {% endfor %}
+          </table>
+        
+          <div>
+            <a href="/dashboard/clients/add/" class="btn btn-primary">New API Client</a>
+          </div>
+          
+        </div>
+
+   {% endblock %}

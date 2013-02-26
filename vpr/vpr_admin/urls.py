@@ -9,4 +9,6 @@ urlpatterns = patterns('',
     url(r'^logout/$', views.logoutDashboard, name='dashboard-logout'),
     url(r'^clients/$', views.clientListView, name='client-list'),
     url(r'^clients/add/$', views.clientRegView, name='add-client'),
+    url(r'^clients/(?P<client_id>\d+)/$', views.clientEditView, name='view-client'),
+    url(r'^tokens/$', views.tokenListView, name='token-list'),
 )
