@@ -87,6 +87,7 @@ def verifyAuthComb(cid, comb, sugar):
             raise
         client = Client.objects.get(client_id=cid)
         good_comb = createAuthCombination(client.secret_key, sugar)
+        print 'GOOD COMB: ' + good_comb
         if good_comb != comb:
             raise            
     except:
@@ -149,7 +150,7 @@ def validateToken(client_id, post_token):
 @api_view(['GET'])
 def testTokenView(request, token):
     """Check if the given token and client_id are correct"""
-    client_id = request.GET.get('client_id', '')
+    client_id = request.GET.get('cid', '')
     if validateToken(client_id, token):
         return Response({'details':'Valid token'}, status=status.HTTP_200_OK)
     return Response({'details':'Invalid token'}, status=status.HTTP_401_UNAUTHORIZED)
