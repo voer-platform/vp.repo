@@ -114,7 +114,7 @@ class TokenTest(TestCase):
     def test_validate_token(self):
         """Test good token with listing materials
         """
-        res = self.client.get('/1/token/'+self.token + '/?client_id='+self.api_client.client_id)
+        res = self.client.get('/1/token/'+self.token + '/?cid='+self.api_client.client_id)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
     def test_validate_bad_token(self):
