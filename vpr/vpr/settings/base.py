@@ -2,28 +2,11 @@
 
 import os
 
-DEBUG = True
-DEVELOPMENT = True
-TEMPLATE_DEBUG = DEBUG
-
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
 )
 
 MANAGERS = ADMINS
-
-DATABASES = {
-    'default': {
-        #'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        #'NAME': 'vpr.sqlite3',                      # Or path to database file if using sqlite3.
-        'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'vpr',                      # Or path to database file if using sqlite3.
-        'USER': 'vpr',                      # Not used with sqlite3.
-        'PASSWORD': 'vpr',                  # Not used with sqlite3.
-        'HOST': 'localhost',                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '3306',                      # Set to empty string for default. Not used with sqlite3.
-    }
-}
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -104,7 +87,8 @@ MIDDLEWARE_CLASSES = (
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'vpr.urls'
+# overrided by dev and prod
+#ROOT_URLCONF = 'vpr.urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
 WSGI_APPLICATION = 'vpr.wsgi.application'
@@ -127,13 +111,12 @@ INSTALLED_APPS = (
     'django.contrib.admindocs',
     'rest_framework',
     'south',
-    'django_extensions',   
     'haystack',
     'vpr_api',
     'vpr_content',
     'vpr_storage',
     'vpr_admin',    
-)
+    )
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
