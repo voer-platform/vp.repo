@@ -1,6 +1,7 @@
 # Django settings for vpr project.
 
 from base import *
+from logger import *
 
 DEBUG = True
 DEVELOPMENT = True

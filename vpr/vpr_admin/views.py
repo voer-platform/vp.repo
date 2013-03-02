@@ -10,6 +10,9 @@ from django import forms
 
 from forms import ClientRegForm
 from vpr_api.models import APIClient, generateClientKey, APIToken
+from vpr_log import get_logger
+
+logger = get_logger('dashboard')
 
 class DashboardView(TemplateView):
     
@@ -121,6 +124,7 @@ def clientListView(request):
 def tokenListView(request):
     """docstring for tokenListView"""
     tokens = APIToken.objects.all().order_by('since') 
+    logger.error('What\'s going on here?')
     return render(request, 'tokens.html', {'tokens': tokens})
 
 

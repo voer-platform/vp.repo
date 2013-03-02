@@ -1,8 +1,16 @@
 from rest_framework.response import Response
+import logging
+
 from vpr_api.views import validateToken
+from vpr_log.logger import get_logger
+
+
+logger = get_logger('api')
 
 COOKIE_TOKEN = 'vpr_token'
 COOKIE_CLIENT = 'vpr_client'
+
+LOG_CHECK_TOKEN = 'Check API token (%s): %s'
 
 def api_token_required(orig):
     """Check if the token is valid or not, in order to process the request"""
@@ -17,11 +25,14 @@ def api_token_required(orig):
                 token = request.GET.get(COOKIE_TOKEN, None)
                 client_id = request.GET.get(COOKIE_CLIENT, None)
             if validateToken(client_id, token):
+                logger.info(LOG_CHECK_TOKEN % (client_id, 'OK'))
                 return orig(*args, **kwargs)
             else:
+                logger.info(LOG_CHECK_TOKEN % (client_id, 'KO'))
                 return Response({'details':'Permission denied due to invalid API token'},
                                 status=401);
         except:
+            logger.info(LOG_CHECK_TOKEN % (client_id, 'FAILED (unknown)'))
             return Response({'details':'API request processing failed due to unknown reason'},
                             status=404);
 

@@ -1,6 +1,7 @@
 # Django settings for vpr project.
-
 import os
+
+SETTING_DIR = os.path.dirname(__file__)
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -52,7 +53,7 @@ STATIC_URL = '/s/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
-    os.path.join(os.path.dirname(__file__), '../static'),
+    os.path.join(SETTING_DIR, '../../static'),
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
@@ -93,8 +94,9 @@ MIDDLEWARE_CLASSES = (
 # Python dotted path to the WSGI application used by Django's runserver.
 WSGI_APPLICATION = 'vpr.wsgi.application'
 
+
 TEMPLATE_DIRS = (
-    os.path.join(os.path.dirname(__file__), '../vpr_admin/templates'),
+    os.path.join(SETTING_DIR, '../../vpr_admin/templates'),
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
@@ -111,11 +113,13 @@ INSTALLED_APPS = (
     'django.contrib.admindocs',
     'rest_framework',
     'south',
+    'raven.contrib.django.raven_compat',
     'haystack',
     'vpr_api',
     'vpr_content',
     'vpr_storage',
     'vpr_admin',    
+    'vpr_log',
     )
 
 # A sample logging configuration. The only tangible logging
@@ -136,7 +140,15 @@ LOGGING = {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler'
-        }
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler'
+        },
+        'sentry': {
+            'level': 'INFO',
+            'class': 'raven.contrib.django.handlers.SentryHandler',
+        },
     },
     'loggers': {
         'django.request': {
@@ -144,7 +156,18 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': True,
         },
-    }
+        'vpr.api': {
+            'handlers': ['sentry', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'vpr.dashboard': {
+            'handlers': ['console', 'sentry'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+ 
+   }
 }
 
 REST_FRAMEWORK = {
@@ -161,3 +184,7 @@ LOGIN_URL = '/dashboard/login'
 HAYSTACK_SEARCH_ENGINE = 'whoosh'
 HAYSTACK_SITECONF = 'vpr.search_sites'
 HAYSTACK_WHOOSH_PATH = os.path.join(os.path.dirname(__file__), 'whoosh_index')
+
+RAVEN_CONFIG = {
+    'dsn': 'http://0c540c36128343fa9a723e46d9b755cd:7bf6f5f0b4914533b76dc2a89d816d70@localhost:9000/2',
+}

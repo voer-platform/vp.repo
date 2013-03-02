@@ -16,10 +16,13 @@ from haystack.query import SearchQuerySet
 
 from vpr_api.models import APIRecord
 from vpr_api.decorators import api_token_required
+from vpr_log.logger import get_logger
 
 import models
 import serializers
 
+
+logger = get_logger('api')
 
 def dispatchModuleCalls(request):
     """ Analyze the requests and call the appropriate function
