@@ -10,7 +10,7 @@ from django import forms
 
 from forms import ClientRegForm
 from vpr_api.models import APIClient, generateClientKey, APIToken
-from vpr_log import get_logger
+from vpr_log.logger import get_logger
 
 logger = get_logger('dashboard')
 
