@@ -33,7 +33,6 @@ class APIClient(models.Model):
         return "Client: %s (%s)" % (self.client_id, self.name)      
 
 
-# 
 class APIToken(models.Model):
     """ """
     client = models.ForeignKey(APIClient)
@@ -51,11 +50,12 @@ class APIToken(models.Model):
 
 class APIRecord(models.Model):
     """ """
-    client_id = models.ForeignKey(APIClient)
+    client_id = models.CharField(max_length=128)
     result = models.IntegerField()
     time = models.DateTimeField()
-    type = models.IntegerField()
-    request = models.CharField(max_length=256)
+    method = models.CharField(max_length=10)
+    path = models.CharField(max_length=256) 
+    ip = models.CharField(max_length=40) 
 
     class Meta:
         verbose_name = 'API Record'

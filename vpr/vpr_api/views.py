@@ -43,6 +43,7 @@ def authenticate(request, cid):
             inputs = request.POST
         elif request.method == 'GET':
             inputs = request.GET
+        ip = request.META.get('REMOTE_ADDR', '')
         comb = inputs['comb']
         sugar = inputs['sugar']
         cid = cid.strip().lower()
@@ -50,15 +51,7 @@ def authenticate(request, cid):
 
         client = verifyAuthComb(cid, comb, sugar)
         if client:
-            token = Token(client = client,
-                          client_ip = '192.168.1.1',
-                          )
-            
-            expire = datetime.now() + timedelta(minutes=30)
-            token.expire = expire.isoformat()
-
-            token.token = md5.md5(cid + token.expire).hexdigest()
-            token.save()
+            token = createToken(client, ip)
             res['token'] = token.token
             res['expire'] = token.expire
             res['result'] = 'OK'
@@ -73,6 +66,18 @@ def authenticate(request, cid):
 
     return Response(res)
 
+
+def createToken(client, ip='1.1.1.1'):
+    """Create the token and save into DB with given client object"""
+    token = Token(client=client,
+                  client_ip=ip,
+                  )
+    expire = datetime.now() + timedelta(minutes=30)
+    token.expire = expire.isoformat()
+    token.token = md5.md5(client.client_id + token.expire).hexdigest()
+    token.save()
+    return token
+ 
 
 def createAuthCombination(secret, sugar):
     """Returns the good combination from secret key and sugar"""
@@ -154,5 +159,11 @@ def testTokenView(request, token):
     if validateToken(client_id, token):
         return Response({'details':'Valid token'}, status=status.HTTP_200_OK)
     return Response({'details':'Invalid token'}, status=status.HTTP_401_UNAUTHORIZED)
+
+def getTokenView(request, cid):
+    """(dev) Returns the token of given client ID"""
+    client = Client.objects.get(client_id=cid)
+    token = createToken(client)
+    return HttpResponse(cid + '<br>' + token.token)
 
 

@@ -16,6 +16,7 @@ from haystack.query import SearchQuerySet
 
 from vpr_api.models import APIRecord
 from vpr_api.decorators import api_token_required
+from vpr_api.utils import APILogger
 from vpr_log.logger import get_logger
 
 import models
@@ -23,6 +24,8 @@ import serializers
 
 
 logger = get_logger('api')
+apilog = APILogger() 
+
 
 def dispatchModuleCalls(request):
     """ Analyze the requests and call the appropriate function
@@ -76,6 +79,8 @@ class CategoryList(generics.ListCreateAPIView):
     @api_token_required
     def get(self, request, *args, **kwargs):
         """Old post method with decorator"""
+        response = self.list(request, *args, **kwargs)
+        apilog.record(request)
         return self.list(request, *args, **kwargs)
 
     @api_token_required
@@ -103,7 +108,6 @@ class CategoryDetail(generics.RetrieveUpdateDestroyAPIView):
     def delete(self, request, *args, **kwargs):
         """docstring for get"""
         return self.destroy(request, *args, **kwargs)
-
 
 
 # EDITOR CALLS

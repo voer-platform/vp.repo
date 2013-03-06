@@ -2,13 +2,11 @@ from rest_framework.response import Response
 import logging
 
 from vpr_api.views import validateToken
+from vpr_api.utils import COOKIE_CLIENT, COOKIE_TOKEN
 from vpr_log.logger import get_logger
 
 
 logger = get_logger('api')
-
-COOKIE_TOKEN = 'vpr_token'
-COOKIE_CLIENT = 'vpr_client'
 
 LOG_CHECK_TOKEN = 'Check API token (%s): %s'
 
