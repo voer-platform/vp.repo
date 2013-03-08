@@ -27,6 +27,12 @@ logger = get_logger('api')
 apilog = APILogger() 
 
 
+def raise404(request, message=''):
+    """Record failed API call and raise 404 exception"""
+    apilog.record(request, 404)
+    raise Http404(message)
+
+
 def dispatchModuleCalls(request):
     """ Analyze the requests and call the appropriate function
     """
@@ -79,14 +85,16 @@ class CategoryList(generics.ListCreateAPIView):
     @api_token_required
     def get(self, request, *args, **kwargs):
         """Old post method with decorator"""
-        response = self.list(request, *args, **kwargs)
-        apilog.record(request)
-        return self.list(request, *args, **kwargs)
+        response = self.list(request, *args, **kwargs)        
+        apilog.record(request, response.status_code)
+        return response
 
     @api_token_required
     def post(self, request, *args, **kwargs):
         """Old post method with decorator"""
-        return self.create(request, *args, **kwargs)
+        response = self.create(request, *args, **kwargs)
+        apilog.record(request, response.status_code)
+        return response
 
 
 class CategoryDetail(generics.RetrieveUpdateDestroyAPIView):
@@ -97,17 +105,23 @@ class CategoryDetail(generics.RetrieveUpdateDestroyAPIView):
     @api_token_required
     def get(self, request, *args, **kwargs):
         """docstring for get"""
-        return self.retrieve(request, *args, **kwargs)
+        response = self.retrieve(request, *args, **kwargs)
+        apilog.record(request, response.status_code)
+        return response
 
     @api_token_required
     def put(self, request, *args, **kwargs):
         """docstring for get"""
-        return self.update(request, *args, **kwargs)
+        response = self.update(request, *args, **kwargs)
+        apilog.record(request, response.status_code)
+        return response
 
     @api_token_required
     def delete(self, request, *args, **kwargs):
         """docstring for get"""
-        return self.destroy(request, *args, **kwargs)
+        response = self.destroy(request, *args, **kwargs)
+        apilog.record(request, response.status_code)
+        return response
 
 
 # EDITOR CALLS
@@ -120,12 +134,16 @@ class EditorList(generics.ListCreateAPIView):
     @api_token_required
     def get(self, request, *args, **kwargs):
         """Old post method with decorator"""
-        return self.list(request, *args, **kwargs)
+        response = self.list(request, *args, **kwargs)
+        apilog.record(request, response.status_code)
+        return response
 
     @api_token_required
     def post(self, request, *args, **kwargs):
         """Old post method with decorator"""
-        return self.create(request, *args, **kwargs)
+        response = self.create(request, *args, **kwargs)
+        apilog.record(request, response.status_code)
+        return response
 
 
 class EditorDetail(generics.RetrieveUpdateDestroyAPIView):
@@ -136,7 +154,9 @@ class EditorDetail(generics.RetrieveUpdateDestroyAPIView):
     @api_token_required
     def get(self, request, *args, **kwargs):
         """docstring for get"""
-        return self.retrieve(request, *args, **kwargs)
+        response = self.retrieve(request, *args, **kwargs)
+        apilog.record(request, response.status_code)
+        return response
 
     @api_token_required
     def put(self, request, *args, **kwargs):
@@ -146,7 +166,9 @@ class EditorDetail(generics.RetrieveUpdateDestroyAPIView):
     @api_token_required
     def delete(self, request, *args, **kwargs):
         """docstring for get"""
-        return self.destroy(request, *args, **kwargs)
+        response = self.destroy(request, *args, **kwargs)
+        apilog.record(request, response.status_code)
+        return response
 
 
 # AUTHOR CALLS
@@ -159,12 +181,16 @@ class AuthorList(generics.ListCreateAPIView):
     @api_token_required
     def get(self, request, *args, **kwargs):
         """Old post method with decorator"""
-        return self.list(request, *args, **kwargs)
+        response = self.list(request, *args, **kwargs)
+        apilog.record(request, response.status_code)
+        return response
 
     @api_token_required
     def post(self, request, *args, **kwargs):
         """Old post method with decorator"""
-        return self.create(request, *args, **kwargs)
+        response = self.create(request, *args, **kwargs)
+        apilog.record(request, response.status_code)
+        return response
 
 
 class AuthorDetail(generics.RetrieveUpdateDestroyAPIView):
@@ -175,17 +201,23 @@ class AuthorDetail(generics.RetrieveUpdateDestroyAPIView):
     @api_token_required
     def get(self, request, *args, **kwargs):
         """docstring for get"""
-        return self.retrieve(request, *args, **kwargs)
+        response = self.retrieve(request, *args, **kwargs)
+        apilog.record(request, response.status_code)
+        return response
 
     @api_token_required
     def put(self, request, *args, **kwargs):
         """docstring for get"""
-        return self.update(request, *args, **kwargs)
+        response = self.update(request, *args, **kwargs)
+        apilog.record(request, response.status_code)
+        return response
 
     @api_token_required
     def delete(self, request, *args, **kwargs):
         """docstring for get"""
-        return self.destroy(request, *args, **kwargs)
+        response = self.destroy(request, *args, **kwargs)
+        apilog.record(request, response.status_code)
+        return response
 
 
 # MODULE
@@ -218,14 +250,14 @@ class MaterialList(generics.ListCreateAPIView):
             if sort_fields:
                 self.object_list = self.object_list.order_by(sort_fields)
         except:
-            raise Http404()
+            raise404(request) 
 
         # Default is to allow empty querysets.  This can be altered by setting
         # `.allow_empty = False`, to raise 404 errors on empty querysets.
         allow_empty = self.get_allow_empty()
         if not allow_empty and len(self.object_list) == 0:
             error_args = {'class_name': self.__class__.__name__}
-            raise Http404(self.empty_error % error_args)
+            raise404(request, self.empty_error % error_args)
 
         # Pagination size is set by the `.paginate_by` attribute,
         # which may be `None` to disable pagination.
@@ -237,12 +269,16 @@ class MaterialList(generics.ListCreateAPIView):
         else:
             serializer = self.get_serializer(self.object_list)
 
-        return Response(serializer.data)
+        response = Response(serializer.data)
+        apilog.record(request, response.status_code)
+        return response
 
     @api_token_required
     def post(self, request, *args, **kwargs):
         """Old post method with decorator"""
-        return self.create(request, *args, **kwargs)
+        response = self.create(request, *args, **kwargs)
+        apilog.record(request, response.status_code)
+        return response 
 
 
     #def get(self, request, *args, **kwargs):
@@ -256,7 +292,7 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
     model = models.Material
     serializer_class = serializers.MaterialSerializer
 
-    def get_object(self, material_id, version=''):
+    def get_object(self, material_id, version='', request=None):
         """ Customized get_object() function, used for Material objects
             which will be get by ID and version.
         """
@@ -271,25 +307,33 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
                 object = getLatestMaterial(material_id)
             return object 
         except:
-            raise Http404()
+            raise404(request, 404)
 
     def retrieve(self, request, *args, **kwargs):
         """ Customized to the Material objects """
         self.object = self.get_object(material_id=kwargs.get('mid', ''),
-                                      version=kwargs.get('version', ''))
+                                      version=kwargs.get('version', ''),
+                                      request=request)
+
         serializer = self.get_serializer(self.object)
-        return Response(serializer.data)
+
+        response = Response(serializer.data)
+        apilog.record(request, response.status_code)
+        return response
 
     @api_token_required
     def get(self, request, *args, **kwargs):
         """docstring for get"""
-        return self.retrieve(request, *args, **kwargs)
+        response = self.retrieve(request, *args, **kwargs)
+        apilog.record(request, response.status_code)
+        return response
 
     @api_token_required
     def put(self, request, *args, **kwargs):
         """ Check in a material  """
         try: 
             serializer = self.get_serializer(data=request.DATA)
+            response = None
             if serializer.is_valid():
                 # check if valid editor or new material will be created
                 sobj = serializer.object
@@ -310,10 +354,14 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
                         sobj.version = 1
                 self.pre_save(sobj)
                 self.object = serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)            
+                response = Response(serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                response =  Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)            
+
+            apilog.record(request, response.status_code)
+            return response
         except: 
-            return Http404
+            raise404(request)
 
     @api_token_required
     def destroy(self, request, *args, **kwargs):
@@ -322,9 +370,11 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
             self.object = self.get_object(material_id=kwargs.get('mid', ''),
                                           version=kwargs.get('version', ''))
             self.object.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            response = Response(status=status.HTTP_204_NO_CONTENT)
+            apilog.record(request, response.status_code)
+            return response
         except:
-            return Http404
+            raise404(request)
 
 
 class GeneralSearch(generics.ListAPIView):
@@ -345,14 +395,15 @@ class GeneralSearch(generics.ListAPIView):
             self.object_list = SearchQuerySet().models(*allow_models)
             self.object_list = self.object_list.filter(content=kwargs['keyword'])
         except:
-            return Http404
+            raise404(request)
 
         # Default is to allow empty querysets.  This can be altered by setting
         # `.allow_empty = False`, to raise 404 errors on empty querysets.
         allow_empty = self.get_allow_empty()
         if not allow_empty and len(self.object_list) == 0:
             error_args = {'class_name': self.__class__.__name__}
-            raise Http404(self.empty_error % error_args)
+            raise404(self.empty_error % error_args)
+
 
         # Pagination size is set by the `.paginate_by` attribute,
         # which may be `None` to disable pagination.
@@ -364,15 +415,15 @@ class GeneralSearch(generics.ListAPIView):
         else:
             serializer = self.get_serializer(self.object_list)
 
-        return Response(serializer.data) 
+        response = Response(serializer.data) 
+        apilog.record(request, response.status_code)
+        return response
+
 
 def getLatestMaterial(mid):
     """ Returns the latest version of the material with given ID """
     material = None
-    try:
-        material = models.Material.objects.filter(material_id=mid)\
-                                          .order_by('version') \
-                                          .reverse()[0]
-    except:
-        pass
+    material = models.Material.objects.filter(material_id=mid)\
+                                        .order_by('version') \
+                                        .reverse()[0]
     return material 
