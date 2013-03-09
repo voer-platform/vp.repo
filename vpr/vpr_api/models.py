@@ -1,6 +1,7 @@
 from django.db import models
 from datetime import datetime
 import hashlib
+import random
 
 
 class Meta:
@@ -14,6 +15,16 @@ def generateClientKey(email):
     sha = hashlib.sha224(email + now)
     sha = sha.hexdigest()[:24]
     return sha
+    
+
+def generateClientID(ip=''):
+    """Generate a random, unique client ID, and ensure that it's not existing 
+       in the system
+    """
+    new_id = ''
+    while not new_id or APIClient.objects.filter(client_id=new_id):
+        new_id = str(random.randint(10000000, 99999999))
+    return new_id
 
 
 # Create your models here.

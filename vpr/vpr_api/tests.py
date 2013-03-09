@@ -124,3 +124,36 @@ class TokenTest(TestCase):
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
+class RegisterTest(TestCase):
+    """Test the auto client registration request from Drupal"""
+
+    def setUp(self):
+        pass
+
+    def test_register_ok(self):
+        """Normal client register, everything is normal and correct"""
+        res = self.client.post('/setup/register/',
+                               {'name': 'New One', 'email':'new@one.com'},
+                               )
+        client_id = eval(res.content).get('client_id', '')
+        secret = eval(res.content).get('secret', '')
+        self.assertEqual(res.status_code, 201)
+        self.assertNotEqual(client_id, '')
+        self.assertNotEqual(secret, '')
+
+    def test_register_duplication(self):
+        """Normal client register, but failed due to duplicated e-mail"""
+        res = self.client.post('/setup/register/',
+                               {'name': 'New One', 'email':'new@one.com'},
+                               )
+        res = self.client.post('/setup/register/',
+                               {'name': 'New Two', 'email':'new@one.com'},
+                               )
+        self.assertEqual(res.status_code, 400)
+        
+    def test_register_failed(self):
+        """Invalid registration"""
+        res = self.client.post('/setup/register/',
+                               {'name': 'New One', 'email':''},
+                               )
+        self.assertEqual(res.status_code, 400)

@@ -2,6 +2,8 @@ from django.conf.urls import patterns, url, include
 from django.contrib import admin
 from rest_framework.urlpatterns import format_suffix_patterns
 
+from vpr_api.views import registerClient
+
 admin.autodiscover()
 
 urlpatterns = patterns('',
@@ -12,6 +14,7 @@ urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
     url(r'^dashboard/', include('vpr_admin.urls')),
     url(r'^$', 'vpr_api.views.api_root'),
+    url(r'^setup/register/$', registerClient, name='register-client'),
 )
 
 # Format suffixes

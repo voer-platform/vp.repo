@@ -12,10 +12,13 @@ from rest_framework import status
 from datetime import datetime, timedelta
 import md5 
 import re
+import time
 
 from vpr_api.serializers import UserSerializer, GroupSerializer
 from vpr_api.models import APIClient as Client
 from vpr_api.models import APIToken as Token
+from vpr_api.models import generateClientKey, generateClientID
+
 
 @api_view(['GET'])
 def api_root(request, format=None):
@@ -142,6 +145,7 @@ def getRequestVersion(request):
         pass
     return version
 
+
 def validateToken(client_id, post_token):
     """ Verify if the transfered token and client ID is matched and valid
     """
@@ -152,13 +156,16 @@ def validateToken(client_id, post_token):
         token = '#'
     return post_token == token
 
+
 @api_view(['GET'])
 def testTokenView(request, token):
     """Check if the given token and client_id are correct"""
     client_id = request.GET.get('cid', '')
     if validateToken(client_id, token):
         return Response({'details':'Valid token'}, status=status.HTTP_200_OK)
-    return Response({'details':'Invalid token'}, status=status.HTTP_401_UNAUTHORIZED)
+    return Response({'details':'Invalid token'}, 
+                    status=status.HTTP_401_UNAUTHORIZED)
+
 
 def getTokenView(request, cid):
     """(dev) Returns the token of given client ID"""
@@ -167,3 +174,35 @@ def getTokenView(request, cid):
     return HttpResponse(cid + '<br>' + token.token)
 
 
+REGISTER_DELAY = 0
+
+@api_view(['GET', 'POST'])
+def registerClient(request):
+    """This is for the installation process of VPW. Email is mandatory and used
+       to check the unique of the remote system. Both email and name could be 
+       sent through POST or GET.
+            email    email of the client (required and unique)
+            name     name of the client (required).
+    """
+    try:
+        time.sleep(REGISTER_DELAY)   # dirty way to reduce multiple request
+        email = request.GET.get('email', '') or request.POST.get('email', '')  
+        name = request.GET.get('name', '') or request.POST.get('name', '')  
+        # not allow same client ID or reusing
+        if not email or not name or Client.objects.filter(email=email):
+            response = Response({}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            client_id = generateClientID(request.META.get('REMOTE_ADDR', ''))
+            client = Client(client_id = client_id,
+                            name = name,
+                            email = email,
+                            secret_key = generateClientKey(email or 'empty')
+                            )
+            client.save()
+            response = Response({'client_id': client_id,
+                                'secret': client.secret_key
+                                },
+                                status=status.HTTP_201_CREATED)
+        return response
+    except:
+        raise
