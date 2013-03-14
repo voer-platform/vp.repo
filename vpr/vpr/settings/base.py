@@ -113,7 +113,7 @@ INSTALLED_APPS = (
     'django.contrib.admindocs',
     'rest_framework',
     'south',
-    'raven.contrib.django.raven_compat',
+#    'raven.contrib.django.raven_compat',
     'haystack',
     'vpr_api',
     'vpr_content',
@@ -145,10 +145,10 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler'
         },
-        'sentry': {
-            'level': 'INFO',
-            'class': 'raven.contrib.django.handlers.SentryHandler',
-        },
+#        'sentry': {
+#            'level': 'INFO',
+#            'class': 'raven.contrib.django.handlers.SentryHandler',
+#        },
     },
     'loggers': {
         'django.request': {
@@ -157,12 +157,12 @@ LOGGING = {
             'propagate': True,
         },
         'vpr.api': {
-            'handlers': ['sentry', 'console'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': True,
         },
         'vpr.dashboard': {
-            'handlers': ['console', 'sentry'],
+            'handlers': ['console'],            
             'level': 'ERROR',
             'propagate': True,
         },
