@@ -1,3 +1,42 @@
-VOER Platform - Core Component
+VOER Platform - Repository Component
 =======
-This project is based on Django, and uses some applications like django-restframework, haystack,...
+This is the repository component of the VOER Platform, which provides services for storing/getting/searching materials.
+
+Installation
+------------
+
+* Pre-requisites
+
+    ```
+    Python 2.5 to 2.7
+    ```
+
+* Clone the VPR repository from GitHub, using `git`
+
+    ```
+    git clone git://github.com/voer-platform/vp.repo.git
+    ```
+    
+* Go to the `vp.repo/` directory, and run the script `install.sh`
+    
+    ```
+    cd vp.repo/
+    bash ./install.sh
+    ```
+    
+* Configure the database running with component, inside:
+    
+    ```
+    vp.repo/vpr/vpr/settings/dev.py    # Development instance
+    vp.repo/vpr/vpr/settings/prod.py   # Production instance
+    ```
+
+Running Component
+-----------------
+
+* Go to the 'vp.repo/vpr/' directory, and run the Python script:
+    
+    ```
+    python ./manage.py
+    ```
+    
