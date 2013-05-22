@@ -246,6 +246,8 @@ class MaterialList(generics.ListCreateAPIView):
                 mfile.material_id = self.object.material_id
                 mfile.version = self.object.version
                 mfile.mfile = request.FILES.get(key, None)
+                mfile.name = request.DATA.get(key+'_name', '')
+                mfile.description = request.DATA.get(key+'_description', '')
                 mfile.mime_type = ''
                 mfile.save()
             
@@ -343,7 +345,7 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
         apilog.record(request, response.status_code)
         return response
 
-    @api_token_required
+    #@api_token_required
     def get(self, request, *args, **kwargs):
         """docstring for get"""
         response = self.retrieve(request, *args, **kwargs)
@@ -450,7 +452,7 @@ def getLatestMaterial(mid):
     return material 
 
 
-class MaterialFileList(generics.ListCreateAPIView):
+class MaterialFiles(generics.ListCreateAPIView):
     """View for listing and creating MaterialFile"""
     model = models.MaterialFile
     serializer_class = serializers.MaterialFileSerializer
@@ -483,3 +485,17 @@ class MaterialFileList(generics.ListCreateAPIView):
         apilog.record(request, response.status_code)
         return response
 
+
+@api_view(['GET'])
+def listMaterialFiles(request, *args, **kwargs):
+    """Lists all files attached to the specific material, except the material image
+    """
+    material_id = kwargs.get('mid', None)
+    version = kwargs.get('version', None)
+    file_ids = []
+    if material_id and version:
+        mfiles = models.MaterialFile.objects.filter(material_id=material_id, 
+                                                   version=version)
+        file_ids = [mf.id for mf in mfiles]
+
+    return Response(file_ids)   

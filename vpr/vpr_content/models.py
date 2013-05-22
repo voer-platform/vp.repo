@@ -64,5 +64,7 @@ class Material(models.Model, MaterialBase):
 class MaterialFile(models.Model):
     material_id = CharField(max_length=64)
     version = IntegerField(default=1)
+    name = CharField(max_length=255, blank=True, null=True)
+    description = TextField(blank=True, null=True)
     mfile = FileField(upload_to="./mfiles")
     mime_type = CharField(max_length=100)

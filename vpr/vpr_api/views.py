@@ -30,9 +30,11 @@ def api_root(request, format=None):
         'editors': reverse('editor-list', request=request),
         'categories': reverse('category-list', request=request),
         'materials': reverse('material-list', request=request),
-#        'search': reverse('general-search', request=request),
+        'mfiles': reverse('material-files', request=request),
     })
 
+#        'mfiles': reverse('material-files', request=request),
+#        'search': reverse('general-search', request=request),
 
 
 @api_view(['GET', 'POST'])

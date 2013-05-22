@@ -40,7 +40,9 @@ class MaterialFileSerializer(serializers.ModelSerializer):
     """ File attached to material """
     class Meta:
         model = models.MaterialFile
-        fields = ('id', 'material_id', 'version', 'mfile', 'mime_type')
+        fields = ('id', 'material_id', 'version', 
+                  'name', 'description', 
+                  'mfile', 'mime_type')
 
 # SERIALIZERS FOR SEARCHING
 
