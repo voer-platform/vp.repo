@@ -230,7 +230,19 @@ class MaterialList(generics.ListCreateAPIView):
     br_fields = ('categories', 'authors', 'editor_id', 
                  'language', 'material_type')
 
-    @api_token_required
+    #@api_token_required
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.DATA)
+        if serializer.is_valid():
+            self.pre_save(serializer.object)
+            self.object = serializer.save()
+            # add the attached image manually
+            self.object.image = request.FILES.get('image', None)
+            self.object.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    #@api_token_required
     def list(self, request, *args, **kwargs):
         """ Customized function for listing materials with same ID
         """
@@ -273,7 +285,7 @@ class MaterialList(generics.ListCreateAPIView):
         apilog.record(request, response.status_code)
         return response
 
-    @api_token_required
+    #@api_token_required
     def post(self, request, *args, **kwargs):
         """Old post method with decorator"""
         response = self.create(request, *args, **kwargs)
@@ -422,8 +434,42 @@ class GeneralSearch(generics.ListAPIView):
 
 def getLatestMaterial(mid):
     """ Returns the latest version of the material with given ID """
-    material = None
     material = models.Material.objects.filter(material_id=mid)\
-                                        .order_by('version') \
-                                        .reverse()[0]
+                                      .order_by('version') \
+                                      .reverse()[0]
     return material 
+
+
+class MaterialFileList(generics.ListCreateAPIView):
+    """View for listing and creating MaterialFile"""
+    model = models.MaterialFile
+    serializer_class = serializers.MaterialFileSerializer
+    
+    def get_object(self, mfid, version='', request=None):
+        """ Customized get_object() function, used for Material objects
+            which will be get by ID and version.
+        """
+        try:
+            object = self.model.objects.get(id=mfid)
+            return object 
+        except:
+            raise404(request, 404)
+
+    def retrieve(self, request, *args, **kwargs):
+        """ Customized to the Material objects """
+        self.object = self.get_object(mfid=kwargs.get('mfid', ''),
+                                      request=request)
+
+        serializer = self.get_serializer(self.object)
+
+        response = Response(serializer.data)
+        apilog.record(request, response.status_code)
+        return response
+
+    #@api_token_required
+    def get(self, request, *args, **kwargs):
+        """docstring for get"""
+        response = self.retrieve(request, *args, **kwargs)
+        apilog.record(request, response.status_code)
+        return response
+

@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models import CharField, TextField, FileField
 from django.db.models import IntegerField, CommaSeparatedIntegerField
-from django.db.models import DateTimeField
+from django.db.models import DateTimeField, ImageField
 from hashlib import md5
 from datetime import datetime
 
@@ -26,7 +26,7 @@ class Editor(models.Model):
     user_id = CharField(max_length=64, blank=True)
     client_id = IntegerField(default=0)
 
-# (HP) I don't think we will use this anymore.
+# (z) I don't think we will use this anymore.
 # Using normal pk field would be good enough.
 def generateMaterialId():
     """ Ensure generating of unique material ID
@@ -51,12 +51,18 @@ class Material(models.Model, MaterialBase):
     categories = CommaSeparatedIntegerField(max_length=8)
     authors = CommaSeparatedIntegerField(max_length=8)
     editor_id = IntegerField()
-    keywords = TextField()
-    file = FileField(upload_to=".", null=True)
-    file_type = CharField(max_length=64, blank=True)
+    keywords = TextField(blank=True, null=True)
+    #file = FileField(upload_to=".", null=True)
+    #file_type = CharField(max_length=64, blank=True)
     language = CharField(max_length=2, blank=True)
     license_id = IntegerField(null=True)
     modified = DateTimeField(default=datetime.now)
-    derived_from = CharField(max_length=64, blank=True)
+    derived_from = CharField(max_length=64, blank=True, null=True)
+    image = ImageField(upload_to="./mimgs", blank=True, null=True) 
 
 
+class MaterialFile(models.Model):
+    material_id = CharField(max_length=64)
+    version = IntegerField(default=1)
+    mfile = FileField(upload_to="./mfiles")
+    mime_type = CharField(max_length=100)

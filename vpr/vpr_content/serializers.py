@@ -11,8 +11,8 @@ class MaterialSerializer(serializers.ModelSerializer):
         model = models.Material
         fields = ('material_id', 'material_type', 'title', 'text', 
                   'version', 'description', 'categories', 'authors',
-                  'editor_id', 'keywords', 'file', 'file_type',
-                  'language', 'license_id', 'modified', 'derived_from',)
+                  'editor_id', 'keywords', 'image', 'language', 
+                  'license_id', 'modified', 'derived_from',)
 
 
 class AuthorSerializer(serializers.ModelSerializer):
@@ -35,6 +35,12 @@ class EditorSerializer(serializers.ModelSerializer):
         model = models.Editor
         fields = ('id', 'fullname', 'user_id', 'client_id')
 
+
+class MaterialFileSerializer(serializers.ModelSerializer):
+    """ File attached to material """
+    class Meta:
+        model = models.MaterialFile
+        fields = ('id', 'material_id', 'version', 'mfile', 'mime_type')
 
 # SERIALIZERS FOR SEARCHING
 
