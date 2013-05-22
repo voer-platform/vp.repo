@@ -14,7 +14,9 @@ mdata['authors'] = 1
 mdata['editor_id'] = 1
 mdata['license_id'] = 1
 mdata['language'] = 1
-#mdata['image'] = image
+mdata['image'] = image
+mdata['mf01'] = image
+mdata['mf02'] = image
 res = client.post('/1/materials/', mdata)
 res.status_code
 

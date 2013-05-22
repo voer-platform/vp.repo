@@ -239,6 +239,16 @@ class MaterialList(generics.ListCreateAPIView):
             # add the attached image manually
             self.object.image = request.FILES.get('image', None)
             self.object.save()
+            # next, add all other files submitted
+            for key in request.FILES.keys():
+                if key == 'image': continue
+                mfile = models.MaterialFile()
+                mfile.material_id = self.object.material_id
+                mfile.version = self.object.version
+                mfile.mfile = request.FILES.get(key, None)
+                mfile.mime_type = ''
+                mfile.save()
+            
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
