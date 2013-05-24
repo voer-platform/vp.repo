@@ -230,7 +230,7 @@ class MaterialList(generics.ListCreateAPIView):
     br_fields = ('categories', 'authors', 'editor_id', 
                  'language', 'material_type')
 
-    #@api_token_required
+    @api_token_required
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.DATA)
         if serializer.is_valid():
@@ -254,7 +254,7 @@ class MaterialList(generics.ListCreateAPIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    #@api_token_required
+    @api_token_required
     def list(self, request, *args, **kwargs):
         """ Customized function for listing materials with same ID
         """
@@ -297,7 +297,7 @@ class MaterialList(generics.ListCreateAPIView):
         apilog.record(request, response.status_code)
         return response
 
-    #@api_token_required
+    @api_token_required
     def post(self, request, *args, **kwargs):
         """Old post method with decorator"""
         response = self.create(request, *args, **kwargs)
@@ -345,7 +345,7 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
         apilog.record(request, response.status_code)
         return response
 
-    #@api_token_required
+    @api_token_required
     def get(self, request, *args, **kwargs):
         """docstring for get"""
         response = self.retrieve(request, *args, **kwargs)
@@ -478,7 +478,7 @@ class MaterialFiles(generics.ListCreateAPIView):
         apilog.record(request, response.status_code)
         return response
 
-    #@api_token_required
+    @api_token_required
     def get(self, request, *args, **kwargs):
         """docstring for get"""
         response = self.retrieve(request, *args, **kwargs)
