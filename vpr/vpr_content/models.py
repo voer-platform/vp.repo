@@ -68,3 +68,15 @@ class MaterialFile(models.Model):
     description = TextField(blank=True, null=True)
     mfile = FileField(upload_to="./mfiles")
     mime_type = CharField(max_length=100)
+
+
+def listMaterialFiles(material_id, version):
+    """Returns all IDs of files attached to specific material, except the material image
+    """
+    file_ids = []
+    if material_id and version:
+        mfiles = MaterialFile.objects.filter(material_id=material_id, 
+                                             version=version)
+        file_ids = [mf.id for mf in mfiles]
+
+    return file_ids   
