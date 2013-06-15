@@ -1,9 +1,10 @@
 from django.test.client import Client
 client = Client()
 
-image = open('test-image.png', 'r')
-f01 = open('test-image.png', 'r')
-f02 = open('test-image.png', 'r')
+i0 = 'tests/test.png'
+image = open(i0, 'r')
+f01 = open(i0, 'r')
+f02 = open(i0, 'r')
 
 mdata = {}
 mdata['material_type'] = 1

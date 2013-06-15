@@ -80,3 +80,13 @@ def listMaterialFiles(material_id, version):
         file_ids = [mf.id for mf in mfiles]
 
     return file_ids   
+
+class MaterialExport(models.Model):
+    """ Model for storing export product of the Material
+    """
+    material_id = CharField(max_length=64)
+    version = IntegerField(default=1)
+    name = CharField(max_length=255, blank=True, null=True)
+    path = CharField(max_length=255)
+    file_type = CharField(max_length=32, blank=True, null=True)
+

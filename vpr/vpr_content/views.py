@@ -18,7 +18,7 @@ from vpr_api.models import APIRecord
 from vpr_api.decorators import api_token_required
 from vpr_api.utils import APILogger
 from vpr_log.logger import get_logger
-from vpr_storage.views import zipMaterial
+from vpr_storage.views import zipMaterial, requestMaterialPDF
 
 import models
 import serializers
@@ -254,7 +254,7 @@ class MaterialList(generics.ListCreateAPIView):
                 mfile.save()
 
             # create the zip package and post to vpt
-            zipMaterial(self.object)
+            requestMaterialPDF(self.object)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

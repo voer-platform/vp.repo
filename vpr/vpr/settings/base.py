@@ -191,5 +191,9 @@ RAVEN_CONFIG = {
 
 # VOER PLATFORM 
 
-VPT_URL = 'localhost'
+EXPORT_DIR = 'mexports'
+IMAGES_DIR = 'mimgs'
+MATERIAL_FILE_DIR = 'mfiles'
+
+VPT_URL = 'http://dev.voer.edu.vn:6543/'
 
