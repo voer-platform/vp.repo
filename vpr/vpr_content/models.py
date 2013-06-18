@@ -61,6 +61,21 @@ class Material(models.Model, MaterialBase):
     image = ImageField(upload_to="./mimgs", blank=True, null=True) 
 
 
+def getLatestMaterial(material_id):
+    """ Returns the latest version of the material with given ID """
+    material = Material.objects.filter(material_id=material_id)\
+                                      .order_by('version') \
+                                      .reverse()[0]
+    return material 
+
+
+def getMaterialLatestVersion(material_id):
+    """ Returns the value of newest material version
+    """
+    material = getLatestMaterial(material_id)
+    return material.version
+
+
 class MaterialFile(models.Model):
     material_id = CharField(max_length=64)
     version = IntegerField(default=1)

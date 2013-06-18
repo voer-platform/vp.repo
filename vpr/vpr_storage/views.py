@@ -4,10 +4,11 @@ import requests
 import os
 
 from zipfile import ZipFile, ZIP_DEFLATED
-from django.http import Http404 
+from django.http import Http404, HttpResponse
 
-from vpr_content.models import Material, MaterialFile
+from vpr_content.models import Material, MaterialFile, MaterialExport
 from vpr_content.models import listMaterialFiles, MaterialExport
+from vpr_content.models import getLatestMaterial, getMaterialLatestVersion
 
 from django.conf import settings
 
@@ -40,7 +41,7 @@ def requestMaterialPDF(material):
         export_path = os.path.join(settings.EXPORT_DIR, export_path)
         with open(export_path, 'wb') as ofile:
             ofile.write(res.content)
-            export_path= os.path.dirname(ofile.name)
+            export_path= os.path.realpath(ofile.name)
 
         # create material export record
         try:
@@ -80,3 +81,22 @@ def zipMaterial(material):
     zf.writestr(ZIP_HTML_FILE, material.text)
     zf.close()
     return realpath(zf.filename)
+
+
+def getMaterialPDF(request, *args, **kwargs):
+    """ Check and return the PDF file of given material if exist
+    """
+    mid = kwargs.get('mid', None)
+    version = kwargs.get('version', None)
+   
+    if not version:
+        version = getMaterialLatestVersion(mid)
+    try:
+        export_obj = MaterialExport.objects.get(material_id=mid,
+                                                version=version)
+        with open(export_obj.path, 'rb') as pdf:
+            data = pdf.read()
+        return HttpResponse(data, mimetype='application/pdf')
+    except:
+        raise Http404
+    

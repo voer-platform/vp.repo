@@ -302,7 +302,7 @@ class MaterialList(generics.ListCreateAPIView):
         apilog.record(request, response.status_code)
         return response
 
-    #@api_token_required
+    @api_token_required
     def post(self, request, *args, **kwargs):
         """Old post method with decorator"""
         response = self.create(request, *args, **kwargs)
@@ -333,7 +333,7 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
                 args['version'] = version
                 object = object.get(**args)
             else:
-                object = getLatestMaterial(material_id)
+                object = models.getLatestMaterial(material_id)
             return object 
         except:
             raise404(request, 404)
@@ -366,7 +366,7 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
             if serializer.is_valid():
                 # check if valid editor or new material will be created
                 sobj = serializer.object
-                last_material = getLatestMaterial(sobj.material_id)
+                last_material = models.getLatestMaterial(sobj.material_id)
                 last_editor = ""
                 try:    
                     last_editor = last_material.editor_id
@@ -447,14 +447,6 @@ class GeneralSearch(generics.ListAPIView):
         response = Response(serializer.data) 
         apilog.record(request, response.status_code)
         return response
-
-
-def getLatestMaterial(mid):
-    """ Returns the latest version of the material with given ID """
-    material = models.Material.objects.filter(material_id=mid)\
-                                      .order_by('version') \
-                                      .reverse()[0]
-    return material 
 
 
 class MaterialFiles(generics.ListCreateAPIView):
