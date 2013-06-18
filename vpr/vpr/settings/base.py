@@ -197,3 +197,4 @@ MATERIAL_FILE_DIR = 'mfiles'
 
 VPT_URL = 'http://dev.voer.edu.vn:6543/'
 
+TOKEN_REQUIRED = True
