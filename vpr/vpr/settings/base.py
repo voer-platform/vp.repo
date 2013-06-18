@@ -188,3 +188,12 @@ HAYSTACK_WHOOSH_PATH = os.path.join(os.path.dirname(__file__), 'whoosh_index')
 RAVEN_CONFIG = {
     'dsn': 'http://0c540c36128343fa9a723e46d9b755cd:7bf6f5f0b4914533b76dc2a89d816d70@localhost:9000/2',
 }
+
+# VOER PLATFORM 
+
+EXPORT_DIR = 'mexports'
+IMAGES_DIR = 'mimgs'
+MATERIAL_FILE_DIR = 'mfiles'
+
+VPT_URL = 'http://dev.voer.edu.vn:6543/'
+

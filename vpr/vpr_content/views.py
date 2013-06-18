@@ -18,6 +18,7 @@ from vpr_api.models import APIRecord
 from vpr_api.decorators import api_token_required
 from vpr_api.utils import APILogger
 from vpr_log.logger import get_logger
+from vpr_storage.views import zipMaterial, requestMaterialPDF
 
 import models
 import serializers
@@ -230,7 +231,6 @@ class MaterialList(generics.ListCreateAPIView):
     br_fields = ('categories', 'authors', 'editor_id', 
                  'language', 'material_type')
 
-    @api_token_required
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.DATA)
         if serializer.is_valid():
@@ -245,12 +245,17 @@ class MaterialList(generics.ListCreateAPIView):
                 mfile = models.MaterialFile()
                 mfile.material_id = self.object.material_id
                 mfile.version = self.object.version
-                mfile.mfile = request.FILES.get(key, None)
+                file_content = request.FILES.get(key, None)
+                mfile.mfile = file_content 
+                mfile.mfile.close()
                 mfile.name = request.DATA.get(key+'_name', '')
                 mfile.description = request.DATA.get(key+'_description', '')
                 mfile.mime_type = ''
                 mfile.save()
-            
+
+            # create the zip package and post to vpt
+            requestMaterialPDF(self.object)
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -328,7 +333,7 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
                 args['version'] = version
                 object = object.get(**args)
             else:
-                object = getLatestMaterial(material_id)
+                object = models.getLatestMaterial(material_id)
             return object 
         except:
             raise404(request, 404)
@@ -361,7 +366,7 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
             if serializer.is_valid():
                 # check if valid editor or new material will be created
                 sobj = serializer.object
-                last_material = getLatestMaterial(sobj.material_id)
+                last_material = models.getLatestMaterial(sobj.material_id)
                 last_editor = ""
                 try:    
                     last_editor = last_material.editor_id
@@ -444,14 +449,6 @@ class GeneralSearch(generics.ListAPIView):
         return response
 
 
-def getLatestMaterial(mid):
-    """ Returns the latest version of the material with given ID """
-    material = models.Material.objects.filter(material_id=mid)\
-                                      .order_by('version') \
-                                      .reverse()[0]
-    return material 
-
-
 class MaterialFiles(generics.ListCreateAPIView):
     """View for listing and creating MaterialFile"""
     model = models.MaterialFile
@@ -492,10 +489,6 @@ def listMaterialFiles(request, *args, **kwargs):
     """
     material_id = kwargs.get('mid', None)
     version = kwargs.get('version', None)
-    file_ids = []
-    if material_id and version:
-        mfiles = models.MaterialFile.objects.filter(material_id=material_id, 
-                                                   version=version)
-        file_ids = [mf.id for mf in mfiles]
+    file_ids = models.listMaterialFiles(material_id, version)
 
     return Response(file_ids)   

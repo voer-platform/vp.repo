@@ -2,6 +2,8 @@ from django.conf.urls import patterns, url, include
 from django.contrib import admin
 
 from vpr_content import views as content_views
+from vpr_storage import views as storage_views
+
 import views
 
 urlpatterns = patterns('',
@@ -10,6 +12,7 @@ urlpatterns = patterns('',
     url(r'^materials/$', content_views.MaterialList.as_view(), name='material-list'),
     url(r'^materials/(?P<mid>[0-9a-z]+)/all/$', content_views.MaterialList.as_view(), name='material-version-list'),
     url(r'^materials/(?P<mid>[0-9a-z]+)/((?P<version>\d+)/)?$', content_views.MaterialDetail.as_view(), name='material-detail'), 
+    url(r'^materials/(?P<mid>[0-9a-z]+)/((?P<version>\d+)/)?pdf/$', storage_views.getMaterialPDF, name='material-pdf'), 
     url(r'^materials/(?P<mid>[0-9a-z]+)/((?P<version>\d+)/)?mfiles/$', content_views.listMaterialFiles, name='material-file-list'), 
     url(r'^mfiles/(?P<mfid>\d+)?/$', content_views.MaterialFiles.as_view(), name='material-files'), 
     url(r'^authors/$', content_views.AuthorList.as_view(), name='author-list'),

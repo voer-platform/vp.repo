@@ -61,6 +61,21 @@ class Material(models.Model, MaterialBase):
     image = ImageField(upload_to="./mimgs", blank=True, null=True) 
 
 
+def getLatestMaterial(material_id):
+    """ Returns the latest version of the material with given ID """
+    material = Material.objects.filter(material_id=material_id)\
+                                      .order_by('version') \
+                                      .reverse()[0]
+    return material 
+
+
+def getMaterialLatestVersion(material_id):
+    """ Returns the value of newest material version
+    """
+    material = getLatestMaterial(material_id)
+    return material.version
+
+
 class MaterialFile(models.Model):
     material_id = CharField(max_length=64)
     version = IntegerField(default=1)
@@ -68,3 +83,25 @@ class MaterialFile(models.Model):
     description = TextField(blank=True, null=True)
     mfile = FileField(upload_to="./mfiles")
     mime_type = CharField(max_length=100)
+
+
+def listMaterialFiles(material_id, version):
+    """Returns all IDs of files attached to specific material, except the material image
+    """
+    file_ids = []
+    if material_id and version:
+        mfiles = MaterialFile.objects.filter(material_id=material_id, 
+                                             version=version)
+        file_ids = [mf.id for mf in mfiles]
+
+    return file_ids   
+
+class MaterialExport(models.Model):
+    """ Model for storing export product of the Material
+    """
+    material_id = CharField(max_length=64)
+    version = IntegerField(default=1)
+    name = CharField(max_length=255, blank=True, null=True)
+    path = CharField(max_length=255)
+    file_type = CharField(max_length=32, blank=True, null=True)
+
