@@ -36,6 +36,13 @@ class EditorSerializer(serializers.ModelSerializer):
         fields = ('id', 'fullname', 'user_id', 'client_id')
 
 
+class PersonSerializer(serializers.ModelSerializer):
+    """docstring for PersonSerializer"""
+    class Meta:
+        model = models.Person
+        fields = ('id', 'fullname', 'user_id', 'email', 'bio')
+
+
 class MaterialFileSerializer(serializers.ModelSerializer):
     """ File attached to material """
     class Meta:

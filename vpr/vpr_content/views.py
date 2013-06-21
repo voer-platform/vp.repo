@@ -221,6 +221,55 @@ class AuthorDetail(generics.RetrieveUpdateDestroyAPIView):
         return response
 
 
+# PERSON
+
+class PersonList(generics.ListCreateAPIView):
+    """docstring for PersonList"""
+    model = models.Person
+    serializer_class = serializers.PersonSerializer
+
+    @api_token_required
+    def get(self, request, *args, **kwargs):
+        """Old post method with decorator"""
+        response = self.list(request, *args, **kwargs)
+        apilog.record(request, response.status_code)
+        return response
+
+    @api_token_required
+    def post(self, request, *args, **kwargs):
+        """Old post method with decorator"""
+        response = self.create(request, *args, **kwargs)
+        apilog.record(request, response.status_code)
+        return response
+
+
+class PersonDetail(generics.RetrieveUpdateDestroyAPIView):
+    """docstring for PersonDetail"""
+    model = models.Person
+    serializer_class = serializers.PersonSerializer
+
+    @api_token_required
+    def get(self, request, *args, **kwargs):
+        """docstring for get"""
+        response = self.retrieve(request, *args, **kwargs)
+        apilog.record(request, response.status_code)
+        return response
+
+    @api_token_required
+    def put(self, request, *args, **kwargs):
+        """docstring for get"""
+        response = self.update(request, *args, **kwargs)
+        apilog.record(request, response.status_code)
+        return response
+
+    @api_token_required
+    def delete(self, request, *args, **kwargs):
+        """docstring for get"""
+        response = self.destroy(request, *args, **kwargs)
+        apilog.record(request, response.status_code)
+        return response
+
+
 # MODULE
 
 class MaterialList(generics.ListCreateAPIView):

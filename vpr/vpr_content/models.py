@@ -16,6 +16,13 @@ class Category(models.Model):
     description = TextField(blank=True)
 
 
+class Person(models.Model):
+    user_id = CharField(max_length=64)
+    fullname = CharField(max_length=256)
+    email = CharField(max_length=64)
+    bio = TextField(blank=True)
+
+
 class Author(models.Model):
     fullname = CharField(max_length=255)
     text = TextField(blank=True)
