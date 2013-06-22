@@ -18,9 +18,9 @@ class Category(models.Model):
 
 class Person(models.Model):
     user_id = CharField(max_length=64)
-    fullname = CharField(max_length=256)
-    email = CharField(max_length=64)
-    bio = TextField(blank=True)
+    fullname = CharField(max_length=256, blank=True, null=True)
+    email = CharField(max_length=64, blank=True, null=True)
+    bio = TextField(blank=True, null=True)
 
 
 class Author(models.Model):

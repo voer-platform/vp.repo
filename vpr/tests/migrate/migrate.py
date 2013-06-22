@@ -1,12 +1,9 @@
 from os import path, listdir
 from subprocess import call
-
 import libxml2
 import libxslt
 import re
-import request
-
-#from vpr_content import models
+import requests
 
 def convert2HTML(module_path):
     """Converts the module from CNXML to HTML5, using path to the 
@@ -85,17 +82,19 @@ def getMetadata(cnxml):
     info_needed = ('title', 'version', 'created', 'keyword', 
                    'subject', 'abstract', 'language', 
                    'repository')
-    for info in info_need:
-        metadata[info] = getTagContent('md:'+info)
+    for info in info_needed:
+        metadata[info] = getTagContent('md:'+info, cnxml)
+
+    return metadata
 
 
-VPR_URL = 'http://dev.voer.edu.vn/1/'
+VPR_URL = 'http://localhost:8000/1'
 
 def migrateModule(module_path):
     """Convert current module at given path into material inside VPR"""
 
-    cnxml_path = os.path.join(module_path, 'index.cnxml')
-    if os.path.exists(cnxml_path):
+    cnxml_path = path.join(module_path, 'index.cnxml')
+    if path.exists(cnxml_path):
         # extract the module information
         with open(cnxml_path, 'r') as f0:
             cnxml = f0.read()
@@ -104,16 +103,29 @@ def migrateModule(module_path):
 
         # convert module into html and load the content
         convert2HTML(module_path)
-        with open(os.path.join(module_path, 'index.html')) as f1:
+        with open(path.join(module_path, 'index.html')) as f1:
             html = f1.read()
 
         # load all the files
-        module_files = os.listdir(module_path)
+        module_files = listdir(module_path)
         module_files.remove('index.html')
         module_files.remove('index.cnxml')
 
         # add persons into VPR
-        roles['author']
+        author_uids = []
+        authors = roles.get('author', ['unknown'])
+        for author_uid in authors:
+            p_info = {}
+            p_info['user_id'] = author_uid
+            p_info['fullname'] = persons[author_uid]['fullname']
+            p_info['email'] = persons[author_uid]['email']
+            res = requests.post(VPR_URL + '/person', p_info)
+            if res.status_code == 200:
+                per_dict = eval(res.content.replace('null', 'None'))
+                author_id = per_dict['id']
+            else:
+                author_id = 999999
+            author_uids.append(author_id)
 
         # add material into VPR
         m_info = {
@@ -121,11 +133,21 @@ def migrateModule(module_path):
             'title': metadata['title'],
             'text': html,
             'version': 1, 
-            'description': metadata['abstract'],
+            'description': metadata['abstract'] or '-',
             'language': metadata['language'],
+            'authors': author_uid,
+            'editor_id': author_id,
+            'categories': [1],
             }
-        
+        mfiles = {}
+        for mfid in module_files:
+            mf = open(path.join(module_path, mfid), 'r')
+            mfiles['f'+str(len(mfiles))] = (mfid, mf.read())
+            mf.close()
 
+        # post to the site
+        res = requests.post(VPR_URL+'/materials/', files=mfiles, data=m_info)
+        print res.status_code
 
 
 """

@@ -538,6 +538,9 @@ def listMaterialFiles(request, *args, **kwargs):
     """
     material_id = kwargs.get('mid', None)
     version = kwargs.get('version', None)
+    # why possibly version gets nothing as value?
+    if not version:
+        version = models.getMaterialLatestVersion(material_id)
     file_ids = models.listMaterialFiles(material_id, version)
 
     return Response(file_ids)   
