@@ -112,20 +112,20 @@ def migrateModule(module_path):
         module_files.remove('index.cnxml')
 
         # add persons into VPR
-        author_uids = []
+        author_ids = []
         authors = roles.get('author', ['unknown'])
         for author_uid in authors:
             p_info = {}
             p_info['user_id'] = author_uid
-            p_info['fullname'] = persons[author_uid]['fullname']
-            p_info['email'] = persons[author_uid]['email']
-            res = requests.post(VPR_URL + '/person', p_info)
-            if res.status_code == 200:
+            p_info['fullname'] = persons[author_uid]['fullname'][0] or ''
+            p_info['email'] = persons[author_uid]['email'][0] or ''
+            res = requests.post(VPR_URL + '/persons/', data=p_info)
+            if res.status_code == 201:
                 per_dict = eval(res.content.replace('null', 'None'))
                 author_id = per_dict['id']
             else:
                 author_id = 999999
-            author_uids.append(author_id)
+            author_ids.append(author_id)
 
         # add material into VPR
         m_info = {
@@ -135,7 +135,7 @@ def migrateModule(module_path):
             'version': 1, 
             'description': metadata['abstract'] or '-',
             'language': metadata['language'],
-            'authors': author_uid,
+            'authors': author_ids,
             'editor_id': author_id,
             'categories': [1],
             }
