@@ -85,6 +85,14 @@ def getMetadata(cnxml):
     for info in info_needed:
         metadata[info] = getTagContent('md:'+info, cnxml)
 
+    # ensure no having empty fields
+    if not metadata['abstract'] or metadata['abstract'][0] == '':
+        metadata['abstract'] = '-'
+    if not metadata['title']:
+        metadata['title'] = getTagContent('title', cnxml)
+    if not metadata['language']:
+        metadata['language'] = ['-']
+
     return metadata
 
 
@@ -117,8 +125,12 @@ def migrateModule(module_path):
         for author_uid in authors:
             p_info = {}
             p_info['user_id'] = author_uid
-            p_info['fullname'] = persons[author_uid]['fullname'][0] or ''
-            p_info['email'] = persons[author_uid]['email'][0] or ''
+            try:
+                p_info['fullname'] = persons[author_uid]['fullname'][0] or ''
+                p_info['email'] = persons[author_uid]['email'][0] or ''
+            except:
+                p_info['fullname'] = 'unknown'
+                p_info['email'] = ''
             res = requests.post(VPR_URL + '/persons/', data=p_info)
             if res.status_code == 201:
                 per_dict = eval(res.content.replace('null', 'None'))
@@ -134,7 +146,7 @@ def migrateModule(module_path):
             'text': html,
             'version': 1, 
             'description': metadata['abstract'] or '-',
-            'language': metadata['language'],
+            'language': metadata.get('language', 'na'),
             'authors': author_ids,
             'editor_id': author_id,
             'categories': [1],
@@ -147,7 +159,19 @@ def migrateModule(module_path):
 
         # post to the site
         res = requests.post(VPR_URL+'/materials/', files=mfiles, data=m_info)
+
         print res.status_code
+
+
+def migrateAllModules(root_path):
+    """Do the migrate to all modules found inside path"""
+    module_list = listdir(root_path)
+    for module in module_list:
+        if path.isdir(path.join(root_path,module)):
+            print "\nMIGRATING " + module
+            migrateModule(path.join(root_path,module))
+            print "\nMIGRATING " + module + "... DONE"
+
 
 
 """
