@@ -7,22 +7,14 @@ from vpr_api.views import registerClient
 admin.autodiscover()
 
 urlpatterns = patterns('',
-    #url(r'^users/$', UserList.as_view(), name='user-list'),
-    #url(r'^users/(?P<pk>\d+)/$', UserDetail.as_view(), name='user-detail'),
-    #url(r'^groups/$', GroupList.as_view(), name='group-list'),
-    #url(r'^groups/(?P<pk>\d+)/$', GroupDetail.as_view(), name='group-detail'),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^dashboard/', include('vpr_admin.urls')),
     url(r'^$', 'vpr_api.views.api_root'),
     url(r'^setup/register/$', registerClient, name='register-client'),
 )
 
-# Format suffixes
-#urlpatterns = format_suffix_patterns(urlpatterns, allowed=['json', 'api'])
-
 urlpatterns += patterns('',
     url(r'^[0-9]+\.?[0-9]*/', include('vpr_api.urls'),)
-    #url(r'^token/(?P<cid>\w+)/$', api_views.getActiveToken, name='get-token'),
     )
 
 # Default login/logout views

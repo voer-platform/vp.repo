@@ -34,6 +34,10 @@ def requestMaterialPDF(material):
     files = {'file': (mzip.name.split('/')[-1], mzip.read())}
     res = requests.post(export_url, files=files, data={})
 
+    # delete the temp ZIP
+    mzip.close()
+    os.remove(mzip.name) 
+
     # receive and save to file (PDF)
     if res.status_code == 200:
         export_path = material.material_id + '-' + str(material.version)
@@ -56,7 +60,8 @@ def requestMaterialPDF(material):
         me_obj.file_type = EXPORT_TYPE
         me_obj.save()
     else:
-        pass
+        print '[ERR] Exporting to PDF failed. Error occurs when calling the VPT export'
+        print '\t' + res.content.replace('\n', '\n\t') + '\n'
 
 
 def zipMaterial(material):
@@ -68,7 +73,11 @@ def zipMaterial(material):
     version = material.version
     
     # init the zip package
-    zf = ZipFile('m-'+str(mid)+'-'+str(version)+'.zip', 'w', ZIP_DEFLATED) 
+    zip_path = os.path.join(
+        settings.TEMP_DIR,
+        'm-'+str(mid)+'-'+str(version)+'.zip'
+        )
+    zf = ZipFile(zip_path, 'w', ZIP_DEFLATED) 
 
     # read all material files, and put into the zip package
     mfids = listMaterialFiles(mid, version)

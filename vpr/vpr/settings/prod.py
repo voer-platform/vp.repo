@@ -2,9 +2,9 @@
 
 from base import *
 
-DEBUG = False
-DEVELOPMENT = False 
-PRODUCTION = True
+DEBUG = TEMPLATE_DEBUG = False 
+#DEVELOPMENT = False 
+#PRODUCTION = True
 
 DATABASES = {
     'default': {
