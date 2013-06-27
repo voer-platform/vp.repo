@@ -199,4 +199,4 @@ TEMP_DIR = 'tmp'
 
 VPT_URL = 'http://dev.voer.edu.vn:6543/'
 
-TOKEN_REQUIRED = False 
+TOKEN_REQUIRED = True 
