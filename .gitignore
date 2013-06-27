@@ -3,7 +3,3 @@
 *.pyc
 local_settings.py
 sample/
-mfiles/
-mexports/
-mimgs/
-tmp/
