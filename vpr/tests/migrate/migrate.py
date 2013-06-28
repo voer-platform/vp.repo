@@ -40,10 +40,13 @@ def buildRegex(tag, template=''):
     return rg
 
 
-def getTagContent(tag, content):
+def getTagContent(tag, content, default=''):
     """Returns data between given tag inside content text"""
     rtag = buildRegex(tag)
-    return rtag.findall(content)
+    res = rtag.findall(content)
+    if not res:
+        res = default
+    return res
 
 
 def getAuthorInfo(cnxml):
@@ -85,18 +88,22 @@ def getMetadata(cnxml):
     for info in info_needed:
         metadata[info] = getTagContent('md:'+info, cnxml)
 
-    # ensure no having empty fields
+    # ensure having no empty fields
+
     if not metadata['abstract'] or metadata['abstract'][0] == '':
         metadata['abstract'] = '-'
+    
     if not metadata['title']:
-        metadata['title'] = getTagContent('title', cnxml)
+        metadata['title'] = getTagContent('title', cnxml, ['Untitled'])
+    metadata['title'] = metadata['title'][0]
+
     if not metadata['language']:
         metadata['language'] = ['-']
 
     return metadata
 
 
-VPR_URL = 'http://localhost:8000/1'
+VPR_URL = 'http://vpr.net/1'
 
 def migrateModule(module_path):
     """Convert current module at given path into material inside VPR"""
@@ -173,6 +180,11 @@ def migrateAllModules(root_path):
             print "\nMIGRATING " + module + "... DONE"
 
 
+
+def out2File(file_name, content):
+    f0 = open(file_name, 'w')
+    f0.write(content)
+    f0.close()
 
 """
 doc0 = libxml2.parseFile('cnxml-to-html5.xsl')
