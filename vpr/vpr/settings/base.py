@@ -2,6 +2,7 @@
 import os
 
 SETTING_DIR = os.path.dirname(__file__)
+PROJECT_DIR = os.path.join(SETTING_DIR, '../..')
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -192,11 +193,11 @@ RAVEN_CONFIG = {
 
 # VOER PLATFORM 
 
-EXPORT_DIR = 'mexports'
-IMAGES_DIR = 'mimgs'
-MATERIAL_FILE_DIR = 'mfiles'
-TEMP_DIR = 'tmp'
+EXPORT_DIR = os.path.join(PROJECT_DIR, 'mexports')
+IMAGES_DIR = os.path.join(PROJECT_DIR, 'mimgs')
+MATERIAL_FILE_DIR = os.path.join(PROJECT_DIR, 'mfiles')
+TEMP_DIR = os.path.join(PROJECT_DIR, 'tmp')
 
 VPT_URL = 'http://dev.voer.edu.vn:6543/'
 
-TOKEN_REQUIRED = True 
+TOKEN_REQUIRED = False 
