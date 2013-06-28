@@ -115,6 +115,7 @@ INSTALLED_APPS = (
     'django.contrib.admindocs',
     'rest_framework',
     'south',
+    'gunicorn',
 #    'raven.contrib.django.raven_compat',
     'haystack',
     'vpr_api',
