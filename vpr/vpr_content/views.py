@@ -302,7 +302,7 @@ class MaterialList(generics.ListCreateAPIView):
                 mfile.mime_type = ''
                 mfile.save()
 
-            # create the zip package and post to vpt
+            # (module/collection) create the zip package and post to vpt
             requestMaterialPDF(self.object)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)

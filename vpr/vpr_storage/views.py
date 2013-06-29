@@ -13,7 +13,8 @@ from vpr_content.models import getLatestMaterial, getMaterialLatestVersion
 from django.conf import settings
 
 ZIP_HTML_FILE = 'index.html'
-
+MTYPE_MODULE = 1
+MTYPE_COLLECTION = 2
 
 def requestMaterialPDF(material):
     """ Create the zip package and post it to vpt in order to 
@@ -32,45 +33,51 @@ def requestMaterialPDF(material):
 
     export_url = settings.VPT_URL + 'export'
     files = {'file': (mzip.name.split('/')[-1], mzip.read())}
-    res = requests.post(export_url, files=files, data={})
 
-    # delete the temp ZIP
-    mzip.close()
-    os.remove(mzip.name) 
+    try:
+        res = None
+        res = requests.post(export_url, files=files, data={})
 
-    # receive and save to file (PDF)
-    if res.status_code == 200:
-        export_path = material.material_id + '-' + str(material.version)
-        export_path += '.pdf'
-        export_path = os.path.join(settings.EXPORT_DIR, export_path)
-        with open(export_path, 'wb') as ofile:
-            ofile.write(res.content)
-            export_path= os.path.realpath(ofile.name)
+        # receive and save to file (PDF)
+        if res.status_code == 200:
+            export_path = material.material_id + '-' + str(material.version)
+            export_path += '.pdf'
+            export_path = os.path.join(settings.EXPORT_DIR, export_path)
+            with open(export_path, 'wb') as ofile:
+                ofile.write(res.content)
+                export_path= os.path.realpath(ofile.name)
 
-        # create material export record
-        try:
-            me_obj = MaterialExport.objects.get(
-                material_id = material.material_id,
-                version     = material.version)
-        except:
-            me_obj = MaterialExport()
-            me_obj.material_id = material.material_id
-            me_obj.version = material.version
-        me_obj.path = export_path
-        me_obj.file_type = EXPORT_TYPE
-        me_obj.save()
-    else:
+            # create material export record
+            try:
+                me_obj = MaterialExport.objects.get(
+                    material_id = material.material_id,
+                    version     = material.version)
+            except:
+                me_obj = MaterialExport()
+                me_obj.material_id = material.material_id
+                me_obj.version = material.version
+            me_obj.path = export_path
+            me_obj.file_type = EXPORT_TYPE
+            me_obj.save()
+        else:
+            raise
+    except:
         print '[ERR] Exporting to PDF failed. Error occurs when calling the VPT export'
-        print '\t' + res.content.replace('\n', '\n\t') + '\n'
+        if res: 
+            print '\t' + res.content.replace('\n', '\n\t') + '\n'
+    finally:
+        # delete the temp ZIP
+        mzip.close()
+        os.remove(mzip.name) 
 
 
 def zipMaterial(material):
     """ Collects all material info and put it into a ZIP file.
         Full path of the zip file will be returned to the caller.
     """
-
     mid = material.material_id
     version = material.version
+    mtype = material.material_type
     
     # init the zip package
     zip_path = os.path.join(
@@ -79,18 +86,72 @@ def zipMaterial(material):
         )
     zf = ZipFile(zip_path, 'w', ZIP_DEFLATED) 
 
-    # read all material files, and put into the zip package
-    mfids = listMaterialFiles(mid, version)
-    for mfid in mfids:
-        mf = MaterialFile.objects.get(id=mfid)
-        zf.writestr(mf.name, mf.mfile.read())
-        mf.mfile.close()
+    # check if module or collection
+    if mtype == MTYPE_MODULE:
+        # read all material files, and put into the zip package
+        mfids = listMaterialFiles(mid, version)
+        for mfid in mfids:
+            mf = MaterialFile.objects.get(id=mfid)
+            zf.writestr(mf.name, mf.mfile.read())
+            mf.mfile.close()
+        # add material text content
+        zf.writestr(ZIP_HTML_FILE, material.text)
+    elif mtype == MTYPE_COLLECTION:
+        # get list of all contained materials    
+        all_materials = getNestedMaterials(material)
+        # load materials into ZIP
+        index_content = ''
+        for cid in range(len(all_materials)):
+            m_id = all_materials[cid][0]
+            m_version = all_materials[cid][1]
+            m_title = all_materials[cid][2]
+            mfids = listMaterialFiles(m_id, m_version)
+            m_object = Material.objects.get(material_id=m_id)
+            chapter_dir = 'm%d' % (cid+1)
+            for mfid in mfids:
+                mf = MaterialFile.objects.get(id=mfid)
+                zf.writestr(chapter_dir+'/'+mf.name, mf.mfile.read())
+                mf.mfile.close()
+            zf.writestr(chapter_dir+'/'+ZIP_HTML_FILE, m_object.text)
+            index_content += chapter_dir + ', "'+m_title+'"\n' 
+        # generate chapters.txt
+        zf.writestr('chapters.txt', index_content)
 
-    # add material text content
-    zf.writestr(ZIP_HTML_FILE, material.text)
     zf.close()
     return realpath(zf.filename)
 
+
+def getNestedMaterials(material):
+    """Returns list of material IDs of children inside collection material"""
+    materials = []
+    try:
+        # get all material IDs and versions
+        nodes = eval(material.text)
+        for node in nodes:
+            materials.extend(extractMaterialInfo(node))
+    except:
+        pass
+    return materials
+    
+
+def extractMaterialInfo(node):
+    """(recursively) Returns material IDs and version found"""
+    found = []
+    try:
+        # extract current node
+        mid = node['attr']['id']
+        mver = node['attr']['version']
+        mtitle = node['data']
+        found.append((mid, mver, mtitle))
+
+        # extract child nodes
+        if node.get('children', []):
+            for child_node in node['children']:
+                found.extend(extractMaterialInfo(child_node))
+    except:
+        pass
+    return found
+        
 
 def getMaterialPDF(request, *args, **kwargs):
     """ Check and return the PDF file of given material if exist
