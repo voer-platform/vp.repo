@@ -170,3 +170,16 @@ def getMaterialPDF(request, *args, **kwargs):
     except:
         raise Http404
     
+
+def getMaterialFile(request, *args, **kwargs):
+    """Return request for downloading material file"""
+    mfid = kwargs.get('mfid', None)
+
+    try:
+        mfile = MaterialFile.objects.get(id=mfid)  
+        data = mfile.mfile.read()
+        mime_type = mfile.mime_type
+        mfile.mfile.close()
+        return HttpResponse(data, mimetype=mime_type)
+    except:
+        raise Http404
