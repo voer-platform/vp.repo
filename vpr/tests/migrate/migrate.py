@@ -1,9 +1,15 @@
 from os import path, listdir
 from subprocess import call
+
 import libxml2
 import libxslt
 import re
 import requests
+
+
+#VPR_URL = 'http://vpr.net/1'
+VPR_URL = 'http://localhost:8000/1'
+
 
 def convert2HTML(module_path):
     """Converts the module from CNXML to HTML5, using path to the 
@@ -16,7 +22,7 @@ def convert2HTML(module_path):
             code = call('xsltproc cnxml2html.xsl '+index_path+' > '+target_path, shell=True, stdout=None)
             if code != 0: 
                 raise
-            print '>> ' + target_path
+            print '>> Converted CNXML to ' + target_path
         except:
             print "Error: Something wrong with module: " + module_path
 
@@ -103,7 +109,30 @@ def getMetadata(cnxml):
     return metadata
 
 
-VPR_URL = 'http://vpr.net/1'
+def prepareCategory(categories):
+    """Return the category ID of every category in list. Creating new in
+    case of not existed"""
+    # get list of category first
+    res = requests.get(VPR_URL+'/categories/')
+    res = eval(res.content.replace('null', 'None'))
+    cat_names = [cat['name'].lower().strip() for cat in res]
+
+    cat_ids = []
+    for cat in categories:
+        norm_cat = cat.lower().strip()
+        if norm_cat in cat_names:
+            cat_id = res[cat_names.index(norm_cat)]['id']
+        else:
+            # create new category
+            data = {'name': cat.strip(),
+                    'description':''}
+            res = requests.post(VPR_URL+'/categories/', data=data)
+            res = eval(res.replace('null', 'None'))
+            cat_id = res['id']
+        cat_ids.append(cat_id)
+
+    return cat_ids
+
 
 def migrateModule(module_path):
     """Convert current module at given path into material inside VPR"""
@@ -146,6 +175,9 @@ def migrateModule(module_path):
                 author_id = 999999
             author_ids.append(author_id)
 
+        # getting categories
+        cat_ids = prepareCategory(metadata['subject'])
+
         # add material into VPR
         m_info = {
             'material_type': 1,
@@ -156,7 +188,8 @@ def migrateModule(module_path):
             'language': metadata.get('language', 'na'),
             'authors': author_ids,
             'editor_id': author_id,
-            'categories': [1],
+            'categories': cat_ids,
+            'keywords': '\n'.join(metadata['keyword']),
             }
         mfiles = {}
         for mfid in module_files:
