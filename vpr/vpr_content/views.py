@@ -82,6 +82,7 @@ class CategoryList(generics.ListCreateAPIView):
     """docstring for AuthorList"""
     model = models.Category
     serializer_class = serializers.CategorySerializer
+    paginate_by = None
 
     @api_token_required
     def get(self, request, *args, **kwargs):
@@ -297,7 +298,8 @@ class MaterialList(generics.ListCreateAPIView):
                 file_content = request.FILES.get(key, None)
                 mfile.mfile = file_content 
                 mfile.mfile.close()
-                mfile.name = request.DATA.get(key+'_name', '')
+                #mfile.name = request.DATA.get(key+'_name', '')
+                mfile.name = request.FILES[key].name
                 mfile.description = request.DATA.get(key+'_description', '')
                 mfile.mime_type = ''
                 mfile.save()
