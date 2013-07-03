@@ -138,6 +138,8 @@ def prepareCategory(categories):
 def migrateModule(module_path):
     """Convert current module at given path into material inside VPR"""
     
+    global vpr_persons
+
     cnxml_path = path.join(module_path, 'index.cnxml')
     if path.exists(cnxml_path):
         # extract the module information
@@ -160,20 +162,25 @@ def migrateModule(module_path):
         author_ids = []
         authors = roles.get('author', ['unknown'])
         for author_uid in authors:
-            p_info = {}
-            p_info['user_id'] = author_uid
-            try:
-                p_info['fullname'] = persons[author_uid]['fullname'][0] or ''
-                p_info['email'] = persons[author_uid]['email'][0] or ''
-            except:
-                p_info['fullname'] = 'unknown'
-                p_info['email'] = ''
-            res = requests.post(VPR_URL + '/persons/', data=p_info)
-            if res.status_code == 201:
-                per_dict = eval(res.content.replace('null', 'None'))
-                author_id = per_dict['id']
+            # check for existence first
+            if vpr_persons.has_key(author_uid):
+                author_id = vpr_persons[author_uid]['id']
             else:
-                author_id = 999999
+                # post the new person into VPR
+                p_info = {}
+                p_info['user_id'] = author_uid
+                try:
+                    p_info['fullname'] = persons[author_uid]['fullname'][0] or ''
+                    p_info['email'] = persons[author_uid]['email'][0] or ''
+                except:
+                    p_info['fullname'] = 'unknown'
+                    p_info['email'] = ''
+                res = requests.post(VPR_URL + '/persons/', data=p_info)
+                if res.status_code == 201:
+                    per_dict = eval(res.content.replace('null', 'None'))
+                    author_id = per_dict['id']
+                else:
+                    author_id = 999999
             author_ids.append(author_id)
 
         # getting categories
@@ -212,7 +219,6 @@ def migrateAllModules(root_path):
             print "\nMIGRATING " + module
             migrateModule(path.join(root_path,module))
             print "\nMIGRATING " + module + "... DONE"
-
 
 
 def out2File(file_name, content):
