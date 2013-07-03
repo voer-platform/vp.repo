@@ -2,19 +2,7 @@ import datetime
 from haystack.indexes import SearchIndex, RealTimeSearchIndex
 from haystack.indexes import CharField, DateTimeField
 from haystack import site
-from models import Author, Material
-
-
-class AuthorIndex(RealTimeSearchIndex):
-    # the used template contains fullname and author bio
-    # Zniper thinks this line below also is OK:
-    # text = CharField(document=True, model_attr='text')
-    fullname = CharField(model_attr='fullname')
-    text = CharField(document=True, use_template=True)
-
-    def index_queryset(self):
-        """Used when entire index for model is updated"""
-        return Author.objects.all()
+from models import Material
 
 
 class MaterialIndex(RealTimeSearchIndex):
@@ -31,5 +19,4 @@ class MaterialIndex(RealTimeSearchIndex):
         return Material.objects.all()
 
 
-site.register(Author, AuthorIndex)
 site.register(Material, MaterialIndex)
