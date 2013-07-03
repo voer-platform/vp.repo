@@ -14,6 +14,9 @@ from datetime import datetime
 from rest_framework import mixins
 from haystack.query import SearchQuerySet 
 
+import os
+import mimetypes
+
 from vpr_api.models import APIRecord
 from vpr_api.decorators import api_token_required
 from vpr_api.utils import APILogger
@@ -26,6 +29,8 @@ import serializers
 
 logger = get_logger('api')
 apilog = APILogger() 
+
+mimetypes.init()
 
 
 def raise404(request, message=''):
@@ -249,10 +254,10 @@ class MaterialList(generics.ListCreateAPIView):
                 file_content = request.FILES.get(key, None)
                 mfile.mfile = file_content 
                 mfile.mfile.close()
-                #mfile.name = request.DATA.get(key+'_name', '')
                 mfile.name = request.FILES[key].name
                 mfile.description = request.DATA.get(key+'_description', '')
-                mfile.mime_type = ''
+                mfile.mime_type = mimetypes.guess_type(
+                    os.path.realpath(mfile.mfile.name))[0] or ''
                 mfile.save()
 
             # (module/collection) create the zip package and post to vpt
