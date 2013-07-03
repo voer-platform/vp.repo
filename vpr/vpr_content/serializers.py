@@ -15,13 +15,6 @@ class MaterialSerializer(serializers.ModelSerializer):
                   'license_id', 'modified', 'derived_from',)
 
 
-class AuthorSerializer(serializers.ModelSerializer):
-    """docstring for AuthorSerializer"""
-    class Meta:
-        model = models.Author
-        fields = ('id', 'fullname', 'text')
-
-
 class CategorySerializer(serializers.ModelSerializer):
     """docstring for CategorySerializer"""
     class Meta:
@@ -40,7 +33,7 @@ class PersonSerializer(serializers.ModelSerializer):
     """docstring for PersonSerializer"""
     class Meta:
         model = models.Person
-        fields = ('id', 'fullname', 'user_id', 'email', 'bio')
+        fields = ('id', 'fullname', 'user_id', 'email', 'client_id')
 
 
 class MaterialFileSerializer(serializers.ModelSerializer):

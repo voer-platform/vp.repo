@@ -8,10 +8,10 @@ Replace this with more appropriate tests for your application.
 from django.test import TestCase
 
 from vpr_api.models import APIClient
-from views import createAuthor, createEditor, createModule
-from models import Author, Metadata, Category
+from views import createEditor, createModule
+from models import Metadata, Category
 
-
+"""
 class AuthorTestCase(TestCase):
 
     fn = 'Barrack Obama',
@@ -32,7 +32,7 @@ class AuthorTestCase(TestCase):
         self.assertEqual(self.author.fullname, self.fn)
         self.assertEqual(self.author.author_id, self.aid)
         self.assertEqual(self.author.bio, self.bio)
-
+"""
 
 def createAPIClient(name, cid, org='Sample Org', secret='secret'):
     return APIClient.objects.create(client_id=cid, name=name, organization=org, secret_key=secret)

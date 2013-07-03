@@ -173,55 +173,6 @@ class EditorDetail(generics.RetrieveUpdateDestroyAPIView):
         return response
 
 
-# AUTHOR CALLS
-
-class AuthorList(generics.ListCreateAPIView):
-    """docstring for AuthorList"""
-    model = models.Author
-    serializer_class = serializers.AuthorSerializer
-
-    @api_token_required
-    def get(self, request, *args, **kwargs):
-        """Old post method with decorator"""
-        response = self.list(request, *args, **kwargs)
-        apilog.record(request, response.status_code)
-        return response
-
-    @api_token_required
-    def post(self, request, *args, **kwargs):
-        """Old post method with decorator"""
-        response = self.create(request, *args, **kwargs)
-        apilog.record(request, response.status_code)
-        return response
-
-
-class AuthorDetail(generics.RetrieveUpdateDestroyAPIView):
-    """docstring for AuthorDetail"""
-    model = models.Author
-    serializer_class = serializers.AuthorSerializer
-
-    @api_token_required
-    def get(self, request, *args, **kwargs):
-        """docstring for get"""
-        response = self.retrieve(request, *args, **kwargs)
-        apilog.record(request, response.status_code)
-        return response
-
-    @api_token_required
-    def put(self, request, *args, **kwargs):
-        """docstring for get"""
-        response = self.update(request, *args, **kwargs)
-        apilog.record(request, response.status_code)
-        return response
-
-    @api_token_required
-    def delete(self, request, *args, **kwargs):
-        """docstring for get"""
-        response = self.destroy(request, *args, **kwargs)
-        apilog.record(request, response.status_code)
-        return response
-
-
 # PERSON
 
 class PersonList(generics.ListCreateAPIView):
@@ -467,11 +418,13 @@ class GeneralSearch(generics.ListAPIView):
         """docstring for list"""
         try:
             limit = request.GET.get('on', '')
-            allow_models = [models.Material, models.Author]
+            #allow_models = [models.Material, models.Author]
+            allow_models = [models.Material]
+            
             if limit.lower() == 'm':    # Material only
                 allow_models = [models.Material,]
-            elif limit.lower() == 'a':  # Author only
-                allow_models = [models.Author,]                                
+            #elif limit.lower() == 'a':  # Author only
+            #    allow_models = [models.Author,]                                
             self.object_list = SearchQuerySet().models(*allow_models)
             self.object_list = self.object_list.filter(content=kwargs['keyword'])
         except:

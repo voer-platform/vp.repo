@@ -20,12 +20,7 @@ class Person(models.Model):
     user_id = CharField(max_length=64)
     fullname = CharField(max_length=256, blank=True, null=True)
     email = CharField(max_length=64, blank=True, null=True)
-    bio = TextField(blank=True, null=True)
-
-
-class Author(models.Model):
-    fullname = CharField(max_length=255)
-    text = TextField(blank=True)
+    client_id = IntegerField(default=0)
 
 
 class Editor(models.Model):
