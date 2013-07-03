@@ -4,7 +4,7 @@ from subprocess import call
 import libxml2
 import libxslt
 import re
-import requests
+import requests as rq
 
 
 #VPR_URL = 'http://vpr.net/1'
@@ -109,6 +109,7 @@ def getMetadata(cnxml):
     return metadata
 
 
+
 def prepareCategory(categories):
     """Return the category ID of every category in list. Creating new in
     case of not existed"""
@@ -136,7 +137,7 @@ def prepareCategory(categories):
 
 def migrateModule(module_path):
     """Convert current module at given path into material inside VPR"""
-
+    
     cnxml_path = path.join(module_path, 'index.cnxml')
     if path.exists(cnxml_path):
         # extract the module information
@@ -215,9 +216,53 @@ def migrateAllModules(root_path):
 
 
 def out2File(file_name, content):
+    """Export the content into file"""
     f0 = open(file_name, 'w')
     f0.write(content)
     f0.close()
+
+
+def normalizeResponse(response):
+    """Correct the text reponse and convert it to appropriate type"""
+    response = response.content.replace('null', 'None')
+    return eval(response)
+
+
+def out(text):
+    """Just print to screen"""
+    print '\n>> %s\n' % text
+
+
+def getAllPersons():
+    """Browse every page of the ../persons/ and extract all person info"""
+
+    out('Start downloading all person data')
+    persons = {}
+    res = rq.get(VPR_URL + '/persons/')    
+    res = normalizeResponse(res)
+
+    # add the first page into list
+    for item in res['results']:
+        if not persons.has_key(item['user_id']):
+            persons[item['user_id']] = item
+
+    while res['next'] != None:
+        out('Downloading next person page...')
+        res = rq.get(res['next'])    
+        res = normalizeResponse(res)
+        # add the current page into list
+        for item in res['results']:
+            if not persons.has_key(item['user_id']):
+                persons[item['user_id']] = item
+    
+    out('DONE: Download person data')
+    return persons
+
+
+
+# MUST RUN FIRST
+vpr_persons = getAllPersons()
+
 
 """
 doc0 = libxml2.parseFile('cnxml-to-html5.xsl')
