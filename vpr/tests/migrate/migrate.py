@@ -9,7 +9,10 @@ import requests as rq
 
 #VPR_URL = 'http://vpr.net/1'
 VPR_URL = 'http://localhost:8000/1'
+LOG_FILE = 'migrate.log'
 
+vpr_categories = {}
+vpr_persons = {}
 
 def convert2HTML(module_path):
     """Converts the module from CNXML to HTML5, using path to the 
@@ -109,27 +112,29 @@ def getMetadata(cnxml):
     return metadata
 
 
-
 def prepareCategory(categories):
     """Return the category ID of every category in list. Creating new in
     case of not existed"""
-    # get list of category first
-    res = requests.get(VPR_URL+'/categories/')
-    res = eval(res.content.replace('null', 'None'))
-    cat_names = [cat['name'].lower().strip() for cat in res]
+
+    global vpr_categories
 
     cat_ids = []
     for cat in categories:
         norm_cat = cat.lower().strip()
-        if norm_cat in cat_names:
-            cat_id = res[cat_names.index(norm_cat)]['id']
+        if vpr_categories.has_key(norm_cat):
+            cat_id = vpr_categories[norm_cat]['id']
         else:
             # create new category
+            out('Create new category: ' + cat.strip())
             data = {'name': cat.strip(),
                     'description':''}
-            res = requests.post(VPR_URL+'/categories/', data=data)
-            res = eval(res.replace('null', 'None'))
+            res = rq.post(VPR_URL+'/categories/', data=data)
+            res = eval(res.content.replace('null', 'None'))
             cat_id = res['id']
+
+            # add back to the global list
+            vpr_categories[norm_cat] = res
+
         cat_ids.append(cat_id)
 
     return cat_ids
@@ -139,6 +144,7 @@ def migrateModule(module_path):
     """Convert current module at given path into material inside VPR"""
     
     global vpr_persons
+    out("--------------\nMigrating: " + module_path)
 
     cnxml_path = path.join(module_path, 'index.cnxml')
     if path.exists(cnxml_path):
@@ -149,6 +155,7 @@ def migrateModule(module_path):
             metadata = getMetadata(cnxml)
 
         # convert module into html and load the content
+        out('Converting CNXML > HTML')
         convert2HTML(module_path)
         with open(path.join(module_path, 'index.html')) as f1:
             html = f1.read()
@@ -159,6 +166,7 @@ def migrateModule(module_path):
         module_files.remove('index.cnxml')
 
         # add persons into VPR
+        out('+ author information')
         author_ids = []
         authors = roles.get('author', ['unknown'])
         for author_uid in authors:
@@ -175,18 +183,22 @@ def migrateModule(module_path):
                 except:
                     p_info['fullname'] = 'unknown'
                     p_info['email'] = ''
-                res = requests.post(VPR_URL + '/persons/', data=p_info)
+                res = rq.post(VPR_URL + '/persons/', data=p_info)
                 if res.status_code == 201:
                     per_dict = eval(res.content.replace('null', 'None'))
                     author_id = per_dict['id']
+                    # add back to the global list
+                    vpr_persons[author_uid] = per_dict
                 else:
                     author_id = 999999
             author_ids.append(author_id)
 
         # getting categories
+        out('+ material categories')
         cat_ids = prepareCategory(metadata['subject'])
 
         # add material into VPR
+        out('+ material metadata')
         m_info = {
             'material_type': 1,
             'title': metadata['title'],
@@ -206,9 +218,9 @@ def migrateModule(module_path):
             mf.close()
 
         # post to the site
-        res = requests.post(VPR_URL+'/materials/', files=mfiles, data=m_info)
-
-        print res.status_code
+        out('Posting material...')
+        res = rq.post(VPR_URL+'/materials/', files=mfiles, data=m_info)
+        out('POST code: ' + str(res.status_code))
 
 
 def migrateAllModules(root_path):
@@ -216,9 +228,7 @@ def migrateAllModules(root_path):
     module_list = listdir(root_path)
     for module in module_list:
         if path.isdir(path.join(root_path,module)):
-            print "\nMIGRATING " + module
             migrateModule(path.join(root_path,module))
-            print "\nMIGRATING " + module + "... DONE"
 
 
 def out2File(file_name, content):
@@ -236,13 +246,16 @@ def normalizeResponse(response):
 
 def out(text):
     """Just print to screen"""
-    print '\n>> %s\n' % text
+    msg = '\n>> %s' % text
+    print msg
+    with open(LOG_FILE, 'a') as of:
+        of.write(msg)
 
 
 def getAllPersons():
     """Browse every page of the ../persons/ and extract all person info"""
 
-    out('Start downloading all person data')
+    out('Downloading all person data...')
     persons = {}
     res = rq.get(VPR_URL + '/persons/')    
     res = normalizeResponse(res)
@@ -261,13 +274,32 @@ def getAllPersons():
             if not persons.has_key(item['user_id']):
                 persons[item['user_id']] = item
     
-    out('DONE: Download person data')
+    out('Person data downloaded')
     return persons
 
 
+def getAllCategories():
+    """Download all categories and store inside global list"""
+    out('Downloading categories...')
+    res = rq.get(VPR_URL+'/categories/')
+    res = eval(res.content.replace('null', 'None'))
+    categories = {}
+    for item in res:
+        cid = item['name'].lower().strip()
+        categories[cid] = item 
+    out('Categories downloaded')
+    return categories
+
 
 # MUST RUN FIRST
+
+try:
+    os.remove(LOG_FILE)
+except:
+    pass
 vpr_persons = getAllPersons()
+vpr_categories = getAllCategories()
+
 
 
 """
