@@ -92,10 +92,17 @@ def zipMaterial(material):
         mfids = listMaterialFiles(mid, version)
         for mfid in mfids:
             mf = MaterialFile.objects.get(id=mfid)
-            zf.writestr(mf.name, mf.mfile.read())
+            zf.writestr(mf.name, mf.mfile.read()) 
             mf.mfile.close()
+
         # add material text content
-        zf.writestr(ZIP_HTML_FILE, material.text)
+        raw_content = material.text
+        try:
+            raw_content = raw_content.encode('utf-8')
+        except:
+            raw_content = raw_content.decode('utf-8').encode('utf-8')
+        zf.writestr(ZIP_HTML_FILE, raw_content)
+
     elif mtype == MTYPE_COLLECTION:
         # get list of all contained materials    
         all_materials = getNestedMaterials(material)
