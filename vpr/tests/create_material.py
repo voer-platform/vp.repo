@@ -23,6 +23,7 @@ def ct1(title='Sample Module Title'):
     mdata['mf02'] = f02
     mdata['mf01_name'] = 'Hello this is the first file'
     mdata['mf02_name'] = 'And this is the second file'
+    mdata['export-now'] = 1 
     res = client.post('/1/materials/', mdata)
     res.status_code
     image.close()

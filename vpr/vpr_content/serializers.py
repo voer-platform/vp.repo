@@ -53,3 +53,4 @@ class MiniMaterialSerializer(serializers.ModelSerializer):
         fields = ('material_id', 'material_type', 'title',
                   'description', 'version', 'authors', 'editor_id',
                   'modified')
+

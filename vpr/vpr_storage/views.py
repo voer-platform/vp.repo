@@ -174,6 +174,19 @@ def getMaterialPDF(request, *args, **kwargs):
         with open(export_obj.path, 'rb') as pdf:
             data = pdf.read()
         return HttpResponse(data, mimetype='application/pdf')
+    except MaterialExport.DoesNotExist:
+        material = Material.objects.get(material_id=mid,
+                                        version=version)
+        requestMaterialPDF(material)
+        return HttpResponse('Material PDF is being generated...',
+                            status=102)
+    except IOError:
+        export_obj.delete()
+        material = Material.objects.get(material_id=mid,
+                                        version=version)
+        requestMaterialPDF(material)
+        return HttpResponse('Material PDF is being generated...',
+                            status=102)
     except:
         raise Http404
     
