@@ -261,8 +261,7 @@ class MaterialList(generics.ListCreateAPIView):
                 mfile.save()
 
             # (module/collection) create the zip package and post to vpt
-            if request.DATA.get('export-now', 0):
-                requestMaterialPDF(self.object)
+            requestMaterialPDF(self.object)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
