@@ -4,12 +4,14 @@ from subprocess import call
 import libxml2
 import libxslt
 import re
+import os
 import requests as rq
 
 
 #VPR_URL = 'http://vpr.net/1'
 VPR_URL = 'http://localhost:8000/1'
 LOG_FILE = 'migrate.log'
+RESUME_FILE = 'migrate.rs'
 
 vpr_categories = {}
 vpr_persons = {}
@@ -148,6 +150,8 @@ def migrateModule(module_path):
 
     cnxml_path = path.join(module_path, 'index.cnxml')
     if path.exists(cnxml_path):
+        toResume(module_path.split('/')[-1])
+
         # extract the module information
         with open(cnxml_path, 'r') as f0:
             cnxml = f0.read()
@@ -223,12 +227,29 @@ def migrateModule(module_path):
         out('POST code: ' + str(res.status_code))
 
 
-def migrateAllModules(root_path):
+def migrateAllModules(root_path, resume=False):
     """Do the migrate to all modules found inside path"""
     module_list = listdir(root_path)
+     
+    # prepare the resume list
+    done_list = []
+    try:
+        rf = open(RESUME_FILE, 'r')
+        if resume:
+            done_list = rf.read()
+            done_list = done_list.split('\n')
+            rf.close()
+        else:
+            os.remove(os.path.realpath(rf.filename))    
+    except:
+        pass
+
     for module in module_list:
-        if path.isdir(path.join(root_path,module)):
-            migrateModule(path.join(root_path,module))
+        if module not in done_list:
+            if path.isdir(path.join(root_path,module)):
+                migrateModule(path.join(root_path,module))
+        else:
+            out('Bypassing module: ' + module)
 
 
 def out2File(file_name, content):
@@ -250,6 +271,11 @@ def out(text):
     print msg
     with open(LOG_FILE, 'a') as of:
         of.write(msg)
+
+def toResume(module_id):
+    """Just print to screen"""
+    with open(RESUME_FILE, 'a') as of:
+        of.write(module_id + '\n')
 
 
 def getAllPersons():
