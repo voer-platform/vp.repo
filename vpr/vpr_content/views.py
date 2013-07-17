@@ -240,17 +240,23 @@ class MaterialList(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.DATA)
         if serializer.is_valid():
-            self.pre_save(serializer.object)
+
+            # this call consumes a lot of queries and time
+            #self.pre_save(serializer.object)
+
             self.object = serializer.save()
             # add the attached image manually
             self.object.image = request.FILES.get('image', None)
             self.object.save()
+
             # next, add all other files submitted
+            material_id = self.object.material_id
+            material_version = self.object.version 
             for key in request.FILES.keys():
                 if key == 'image': continue
                 mfile = models.MaterialFile()
-                mfile.material_id = self.object.material_id
-                mfile.version = self.object.version
+                mfile.material_id = material_id 
+                mfile.version = material_version
                 file_content = request.FILES.get(key, None)
                 mfile.mfile = file_content 
                 mfile.mfile.close()
@@ -259,6 +265,13 @@ class MaterialList(generics.ListCreateAPIView):
                 mfile.mime_type = mimetypes.guess_type(
                     os.path.realpath(mfile.mfile.name))[0] or ''
                 mfile.save()
+            
+            # add original record if having
+            if request.DATA.get('original_id', ''):
+                orgid = models.OriginalID()
+                orgid.material_id = material_id
+                orgid.original_id = request.DATA.get('original_id')
+                orgid.save()
 
             # (module/collection) create the zip package and post to vpt
             if request.DATA.get('export-now', 0):

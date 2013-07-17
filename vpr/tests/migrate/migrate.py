@@ -150,7 +150,12 @@ def migrateModule(module_path):
 
     cnxml_path = path.join(module_path, 'index.cnxml')
     if path.exists(cnxml_path):
-        toResume(module_path.split('/')[-1])
+
+        # extract the correct module id
+        module_id = module_path.split('/')[-1]
+        if module_id.strip() == '':
+            module_id = module_path.split('/')[-2]
+        toResume(module_id)
 
         # extract the module information
         with open(cnxml_path, 'r') as f0:
@@ -214,6 +219,7 @@ def migrateModule(module_path):
             'editor_id': author_id,
             'categories': cat_ids,
             'keywords': '\n'.join(metadata['keyword']),
+            'original_id': module_id,
             }
         mfiles = {}
         for mfid in module_files:
@@ -225,7 +231,8 @@ def migrateModule(module_path):
         out('Posting material...')
         res = rq.post(VPR_URL+'/materials/', files=mfiles, data=m_info)
         out('POST code: ' + str(res.status_code))
-
+    
+        return res
 
 def migrateAllModules(root_path, resume=False):
     """Do the migrate to all modules found inside path"""

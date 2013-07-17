@@ -63,6 +63,11 @@ class Material(models.Model, MaterialBase):
     image = ImageField(upload_to="./mimgs", blank=True, null=True) 
 
 
+class OriginalID(models.Model):
+    material_id = CharField(max_length=64, primary_key=True)
+    original_id = CharField(max_length=32)
+
+
 def getLatestMaterial(material_id):
     """ Returns the latest version of the material with given ID """
     material = Material.objects.filter(material_id=material_id)\

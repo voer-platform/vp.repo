@@ -26,15 +26,11 @@ def api_root(request, format=None):
     The entry endpoint of our API.
     """
     return Response({
-        'authors': reverse('author-list', request=request),
         'editors': reverse('editor-list', request=request),
         'categories': reverse('category-list', request=request),
         'materials': reverse('material-list', request=request),
-        'mfiles': reverse('material-files', request=request),
+        'mfiles': reverse('material-file', request=request),
     })
-
-#        'mfiles': reverse('material-files', request=request),
-#        'search': reverse('general-search', request=request),
 
 
 @api_view(['GET', 'POST'])
