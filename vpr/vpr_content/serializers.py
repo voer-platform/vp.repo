@@ -46,7 +46,7 @@ class MaterialFileSerializer(serializers.ModelSerializer):
 
 # SERIALIZERS FOR SEARCHING
 
-class MiniMaterialSerializer(serializers.ModelSerializer):
+class IndexMaterialSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = models.Material

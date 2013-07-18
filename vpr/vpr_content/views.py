@@ -242,7 +242,7 @@ class MaterialList(generics.ListCreateAPIView):
         if serializer.is_valid():
 
             # this call consumes a lot of queries and time
-            #self.pre_save(serializer.object)
+            self.pre_save(serializer.object)
 
             self.object = serializer.save()
             # add the attached image manually
@@ -430,22 +430,24 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
 class GeneralSearch(generics.ListAPIView):
     """docstring for Search"""
     model = models.Material
-    serializer_class= serializers.MiniMaterialSerializer
 
     @api_token_required
     def list(self, request, *args, **kwargs):
         """docstring for list"""
         try:
             limit = request.GET.get('on', '')
-            #allow_models = [models.Material, models.Author]
-            allow_models = [models.Material]
-            
-            if limit.lower() == 'm':    # Material only
-                allow_models = [models.Material,]
-            #elif limit.lower() == 'a':  # Author only
-            #    allow_models = [models.Author,]                                
-            self.object_list = SearchQuerySet().models(*allow_models)
-            self.object_list = self.object_list.filter(content=kwargs['keyword'])
+
+            # branching for the person case
+            if limit.lower() == 'p':  
+                self.serializer_class = serializers.PersonSerializer
+                allow_models = [models.Person,]                                
+            else: 
+                self.serializer_class = serializers.IndexMaterialSerializer
+                allow_models = [models.Material]
+
+            results = SearchQuerySet().models(*allow_models)
+            results = results.filter(content=kwargs['keyword'])
+            self.object_list = [obj.object for obj in results] 
         except:
             raise404(request)
 
@@ -455,7 +457,6 @@ class GeneralSearch(generics.ListAPIView):
         if not allow_empty and len(self.object_list) == 0:
             error_args = {'class_name': self.__class__.__name__}
             raise404(self.empty_error % error_args)
-
 
         # Pagination size is set by the `.paginate_by` attribute,
         # which may be `None` to disable pagination.

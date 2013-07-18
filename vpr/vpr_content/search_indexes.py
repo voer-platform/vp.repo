@@ -2,7 +2,7 @@ import datetime
 from haystack.indexes import SearchIndex, RealTimeSearchIndex
 from haystack.indexes import CharField, DateTimeField
 from haystack import site
-from models import Material
+from models import Material, Person 
 
 
 class MaterialIndex(RealTimeSearchIndex):
@@ -19,4 +19,16 @@ class MaterialIndex(RealTimeSearchIndex):
         return Material.objects.all()
 
 
+class PersonIndex(RealTimeSearchIndex):
+    # "text" combines normal body, title, description and keywords
+    text = CharField(document=True, use_template=True, model_attr='fullname')
+    user_id = CharField(model_attr='user_id')
+    email = CharField(model_attr='email')
+
+    def index_queryset(self):
+        """When entired index for model is updated"""
+        return Person.objects.all()
+
+
 site.register(Material, MaterialIndex)
+site.register(Person, PersonIndex)
