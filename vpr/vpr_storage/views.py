@@ -107,7 +107,7 @@ def zipMaterial(material):
         # get list of all contained materials    
         all_materials = getNestedMaterials(material)
         # load materials into ZIP
-        index_content = ''
+        index_content = '"' + material.title + '"\n'
         for cid in range(len(all_materials)):
             m_id = all_materials[cid][0]
             m_version = all_materials[cid][1]

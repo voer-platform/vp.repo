@@ -3,9 +3,9 @@ from vpr_content import models
 
 
 class MaterialSerializer(serializers.ModelSerializer):
-    #material_id = serializers.Field()
     #version = serializers.Field()
     modified = serializers.Field()
+    material_id = serializers.Field()
 
     class Meta:
         model = models.Material
@@ -51,6 +51,6 @@ class IndexMaterialSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Material
         fields = ('material_id', 'material_type', 'title',
-                  'description', 'version', 'authors', 'editor_id',
+                  'categories', 'version', 'authors', 'editor_id',
                   'modified')
 

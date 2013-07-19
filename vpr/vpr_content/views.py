@@ -290,11 +290,13 @@ class MaterialList(generics.ListCreateAPIView):
                 self.object_list = m_objects.filter(material_id=kwargs['mid'])
             else:
                 self.object_list = m_objects.all()
+
             # do the filtering
             browse_on = {}
             fields = [item for item in request.GET if item in self.br_fields]
             [browse_on.update({item:request.GET[item]}) for item in fields]
             self.object_list = self.object_list.filter(**browse_on)
+
             # continue with sorting
             sort_fields = request.GET.get('sort_on', '')
             if sort_fields:
@@ -318,6 +320,14 @@ class MaterialList(generics.ListCreateAPIView):
             serializer = self.get_pagination_serializer(page)
         else:
             serializer = self.get_serializer(self.object_list)
+
+        # silly steps: remove heavy data from response
+        try:
+            for res in range(len(serializer.data['results'])):
+                serializer.data['results'][res]['text'] = ''
+        except:
+            # should we shout anything?
+            pass
 
         response = Response(serializer.data)
         apilog.record(request, response.status_code)
