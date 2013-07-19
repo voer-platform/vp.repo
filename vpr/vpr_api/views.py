@@ -22,14 +22,14 @@ from vpr_api.models import generateClientKey, generateClientID
 
 @api_view(['GET'])
 def api_root(request, format=None):
-    """
-    The entry endpoint of our API.
+    """The entry endpoint of our API.
     """
     return Response({
-        'editors': reverse('editor-list', request=request),
+        'persons': reverse('person-list', request=request),
         'categories': reverse('category-list', request=request),
         'materials': reverse('material-list', request=request),
         'mfiles': reverse('material-file', request=request),
+#        'search': reverse('general-search', request=request),
     })
 
 

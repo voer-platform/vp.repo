@@ -27,3 +27,4 @@ INSTALLED_APPS += (
     'django_extensions',   
     )
 
+TOKEN_REQUIRED = False 

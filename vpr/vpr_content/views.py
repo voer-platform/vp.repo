@@ -434,6 +434,7 @@ class GeneralSearch(generics.ListAPIView):
     @api_token_required
     def list(self, request, *args, **kwargs):
         """docstring for list"""
+        keywords = request.GET.get('kw', '')
         try:
             limit = request.GET.get('on', '')
 
@@ -446,7 +447,7 @@ class GeneralSearch(generics.ListAPIView):
                 allow_models = [models.Material]
 
             results = SearchQuerySet().models(*allow_models)
-            results = results.filter(content=kwargs['keyword'])
+            results = results.filter(content=keywords)
             self.object_list = [obj.object for obj in results] 
         except:
             raise404(request)

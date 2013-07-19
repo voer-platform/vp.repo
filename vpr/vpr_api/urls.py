@@ -18,10 +18,8 @@ urlpatterns = patterns('',
     url(r'^mfiles/(?P<mfid>\d+)?/get/?$', storage_views.getMaterialFile, name='get-material-file'), 
     url(r'^categories/$', content_views.CategoryList.as_view(), name='category-list'),
     url(r'^categories/(?P<pk>[0-9]+)/$', content_views.CategoryDetail.as_view(), name='category-detail'),
-    url(r'^editors/$', content_views.EditorList.as_view(), name='editor-list'),
-    url(r'^editors/(?P<pk>[0-9]+)/$', content_views.EditorDetail.as_view(), name='editor-detail'),
     url(r'^persons/$', content_views.PersonList.as_view(), name='person-list'),
     url(r'^persons/(?P<pk>[0-9]+)/$', content_views.PersonDetail.as_view(), name='person-detail'),
-    url(r'^search/(?P<keyword>.+)/$', content_views.GeneralSearch.as_view(), name='general-search'),
+    url(r'^(search|s)/$', content_views.GeneralSearch.as_view(), name='general-search'),
     )
 
