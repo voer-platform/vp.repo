@@ -1,13 +1,14 @@
 from django.db import models
 from django.db.models import CharField, TextField, FileField
 from django.db.models import IntegerField, CommaSeparatedIntegerField
-from django.db.models import DateTimeField, ImageField
+from django.db.models import DateTimeField, ImageField 
 from hashlib import md5
 from datetime import datetime
 
 from vpr_api.models import APIClient
 from repository import MaterialBase
 
+MATERIAL_ID_SIZE = 8
 
 # Create your models here.
 class Category(models.Model):
@@ -36,11 +37,20 @@ def generateMaterialId():
     sugar = ''
     while True:
         temp_id = md5(str(datetime.now) + sugar).hexdigest()
+        temp_id = temp_id[:MATERIAL_ID_SIZE]
         if len(Material.objects.filter(material_id=temp_id)) > 0:
             sugar += '1'
         else:
             break
     return temp_id
+
+
+def assignSingleCat(material_rid, cat_id):
+    mcat = MaterialCategory()
+    mcat.material_rid = material_rid 
+    mcat.category_id = cat_id
+    mcat.save()
+    return mcat
 
 
 class Material(models.Model, MaterialBase):
@@ -68,6 +78,25 @@ class OriginalID(models.Model):
     original_id = CharField(max_length=32)
 
 
+class MaterialFile(models.Model):
+    material_id = CharField(max_length=64)
+    version = IntegerField(default=1)
+    name = CharField(max_length=255, blank=True, null=True)
+    description = TextField(blank=True, null=True)
+    mfile = FileField(upload_to="./mfiles")
+    mime_type = CharField(max_length=100)
+
+
+class MaterialExport(models.Model):
+    """ Model for storing export product of the Material
+    """
+    material_id = CharField(max_length=64)
+    version = IntegerField(default=1)
+    name = CharField(max_length=255, blank=True, null=True)
+    path = CharField(max_length=255)
+    file_type = CharField(max_length=32, blank=True, null=True)
+
+
 def getLatestMaterial(material_id):
     """ Returns the latest version of the material with given ID """
     material = Material.objects.filter(material_id=material_id)\
@@ -83,15 +112,6 @@ def getMaterialLatestVersion(material_id):
     return material.version
 
 
-class MaterialFile(models.Model):
-    material_id = CharField(max_length=64)
-    version = IntegerField(default=1)
-    name = CharField(max_length=255, blank=True, null=True)
-    description = TextField(blank=True, null=True)
-    mfile = FileField(upload_to="./mfiles")
-    mime_type = CharField(max_length=100)
-
-
 def listMaterialFiles(material_id, version):
     """Returns all IDs of files attached to specific material, except the material image
     """
@@ -103,12 +123,7 @@ def listMaterialFiles(material_id, version):
 
     return file_ids   
 
-class MaterialExport(models.Model):
-    """ Model for storing export product of the Material
-    """
-    material_id = CharField(max_length=64)
-    version = IntegerField(default=1)
-    name = CharField(max_length=255, blank=True, null=True)
-    path = CharField(max_length=255)
-    file_type = CharField(max_length=32, blank=True, null=True)
+
+
+# MIGRATION
 
