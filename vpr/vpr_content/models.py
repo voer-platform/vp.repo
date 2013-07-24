@@ -213,6 +213,7 @@ def changeMaterialCatValues():
             material.save()
         except:
             pass
+        m_count += 1
 
 
 if __name__ == '__main__':
