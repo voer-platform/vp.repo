@@ -206,11 +206,13 @@ def changeMaterialCatValues():
     all_materials = Material.objects.all()  # OMG
     m_count = 1
     m_total = len(all_materials)
+    w0 = SINGLE_ASSIGNED_CATEGORY[0]
     for material in all_materials:
         print '[%d/%d]' % (m_count, m_total)
-        try:        
-            material.categories = refineAssignedCategory(material.categories) 
-            material.save()
+        try:       
+            if material.categories[0] != w0:
+                material.categories = refineAssignedCategory(material.categories) 
+                material.save()
         except:
             pass
         m_count += 1
