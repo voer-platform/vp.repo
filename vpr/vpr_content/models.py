@@ -60,7 +60,7 @@ class Material(models.Model, MaterialBase):
     version = IntegerField(default=1)
     title = CharField(max_length=255)
     description = TextField(blank=True, null=True)
-    categories = CommaSeparatedIntegerField(max_length=8, blank=True, null=True)
+    categories = CharField(max_length=256, blank=True, null=True)
     authors = CommaSeparatedIntegerField(max_length=8)
     editor_id = IntegerField()
     keywords = TextField(blank=True, null=True)
@@ -124,6 +124,97 @@ def listMaterialFiles(material_id, version):
     return file_ids   
 
 
+from django.db import connection
+
+SINGLE_ASSIGNED_CATEGORY = '(%s)'
+
+def countAssignedMaterial(category_id):
+    """Counts and returns the number of material assigned to specific 
+    category"""
+    res = None
+    try:
+        category_id = SINGLE_ASSIGNED_CATEGORY % str(category_id)
+        cmd = "SELECT COUNT(id) FROM vpr_content_material WHERE categories LIKE '%s';" % category_id
+        cur = connection.cursor()
+        cur.execute(cmd)
+        res = cur.fetchone()[0]
+    except:
+        pass
+        # fires some log here
+    return res
+
+def refineAssignedCategory(category_id):
+    """Returns the standardized value of categories, which will be saved
+    into DB"""
+    cat_list = category_id.split(',')
+    new_value = ''
+    for cat_id in cat_list:
+        if cat_id.strip():
+            new_value += SINGLE_ASSIGNED_CATEGORY % cat_id.strip()
+    return new_value
+
+
+def restoreAssignedCategory(value):
+    """Converts the formatted values of categoriy IDs into normal numbers.
+    Example:
+    >>> restoreAssignedCategory('(123)')
+    [123]
+    >>> restoreAssignedCategory(' (123) ')
+    [123]
+    >>> restoreAssignedCategory('(123)')
+    [123]
+    >>> restoreAssignedCategory('(1)(321)')
+    [1, 321]
+    >>> restoreAssignedCategory('()')
+    []
+    >>> restoreAssignedCategory('(321)(wrong)')
+    [321]
+    >>> restoreAssignedCategory('123)')
+    []
+    >>> restoreAssignedCategory('(123')
+    []
+    """
+    try:
+        value = value.strip()
+    except:
+        value = ''
+    cat_list = []
+    w0 = SINGLE_ASSIGNED_CATEGORY[0]
+    w1 = SINGLE_ASSIGNED_CATEGORY[-1]
+    temp = ''
+    for ch in value:
+        if ch == w0: 
+            temp = '+'
+            continue
+        elif ch == w1:
+            try:
+                cat_list.append(int(temp))
+                temp = ''
+            except ValueError:
+                temp = ''
+        elif temp: 
+            temp += ch
+
+    return cat_list
+
 
 # MIGRATION
 
+def changeMaterialCatValues():
+    """Changes all assigned categories from format:
+    '1, 2' to '(1)(2)'"""
+    all_materials = Material.objects.all()  # OMG
+    m_count = 1
+    m_total = len(all_materials)
+    for material in all_materials:
+        print '[%d/%d]' % (m_count, m_total)
+        try:        
+            material.categories = refineAssignedCategory(material.categories) 
+            material.save()
+        except:
+            pass
+
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()

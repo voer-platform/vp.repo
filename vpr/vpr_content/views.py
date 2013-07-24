@@ -109,6 +109,17 @@ class CategoryDetail(generics.RetrieveUpdateDestroyAPIView):
     model = models.Category
     serializer_class = serializers.CategorySerializer
 
+    def retrieve(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        serializer = self.get_serializer(self.object)
+
+        # check if request for counting
+        if request.GET.get('count', None) == '1':
+            cid = kwargs.get('pk', None)
+            serializer.data['material'] = models.countAssignedMaterial(cid)
+
+        return Response(serializer.data)
+
     @api_token_required
     def get(self, request, *args, **kwargs):
         """docstring for get"""
@@ -238,13 +249,14 @@ class MaterialList(generics.ListCreateAPIView):
                  'language', 'material_type')
 
     def create(self, request, *args, **kwargs):
+        
         serializer = self.get_serializer(data=request.DATA)
         if serializer.is_valid():
 
             # this call consumes a lot of queries and time
             self.pre_save(serializer.object)
-
             self.object = serializer.save()
+
             # add the attached image manually
             self.object.image = request.FILES.get('image', None)
             self.object.save()
@@ -416,7 +428,7 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
                 self.object = serializer.save()
                 response = Response(serializer.data, status=status.HTTP_201_CREATED)
             else:
-                response =  Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)            
+                response = Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)            
 
             apilog.record(request, response.status_code)
             return response
