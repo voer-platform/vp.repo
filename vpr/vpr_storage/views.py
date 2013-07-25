@@ -9,6 +9,7 @@ from django.http import Http404, HttpResponse
 from vpr_content.models import Material, MaterialFile, MaterialExport
 from vpr_content.models import listMaterialFiles, MaterialExport
 from vpr_content.models import getLatestMaterial, getMaterialLatestVersion
+from vpr_content import models
 
 from django.conf import settings
 
@@ -202,5 +203,22 @@ def getMaterialFile(request, *args, **kwargs):
         mime_type = mfile.mime_type
         mfile.mfile.close()
         return HttpResponse(data, mimetype=mime_type)
+    except:
+        raise Http404
+
+
+def handlePersonAvatar(request, *args, **kwargs):
+    """Returns the avatar image of specific person"""
+    pid = kwargs.get('pk', None)
+    delete = request.GET.get('delete', None) 
+    try:
+        person = models.Person.objects.get(id=pid)  
+        if not delete: 
+            data = person.avatar.read()
+            person.avatar.close()
+            return HttpResponse(data, mimetype='image/jpeg')    # oh dear
+        elif delete == '1':
+            person.avatar.delete() 
+            return HttpResponse('Person avatar deleted', status=200)
     except:
         raise Http404

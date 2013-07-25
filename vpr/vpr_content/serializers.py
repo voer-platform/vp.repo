@@ -84,7 +84,17 @@ class PersonSerializer(serializers.ModelSerializer):
     """docstring for PersonSerializer"""
     class Meta:
         model = models.Person
-        fields = ('id', 'fullname', 'user_id', 'email', 'client_id')
+        fields = ('id', 'fullname', 'first_name', 'last_name', 'title',
+                  'user_id', 'email', 'client_id', 'homepage', 'affiliation',
+                  'affiliation_url', 'national', 'biography', 'avatar')
+
+
+class MiniPersonSerializer(serializers.ModelSerializer):
+    """docstring for PersonSerializer"""
+    class Meta:
+        model = models.Person
+        fields = ('id', 'fullname', 'first_name', 'last_name', 'title',
+                  'user_id', 'email', 'client_id')
 
 
 class MaterialFileSerializer(serializers.ModelSerializer):

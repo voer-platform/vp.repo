@@ -20,8 +20,17 @@ class Category(models.Model):
 class Person(models.Model):
     user_id = CharField(max_length=64)
     fullname = CharField(max_length=256, blank=True, null=True)
+    first_name = CharField(max_length=64, blank=True, null=True)
+    last_name = CharField(max_length=64, blank=True, null=True)
     email = CharField(max_length=64, blank=True, null=True)
+    title = CharField(max_length=32, blank=True, null=True)
+    homepage = CharField(max_length=255, blank=True, null=True)
+    affiliation = CharField(max_length=255, blank=True, null=True)
+    affiliation_url = CharField(max_length=255, blank=True, null=True)
+    national = CharField(max_length=255, blank=True, null=True)
+    biography = TextField(blank=True, null=True)
     client_id = IntegerField(default=0)
+    avatar = ImageField(upload_to="./mimgs/persons", blank=True, null=True) 
 
 
 class Editor(models.Model):

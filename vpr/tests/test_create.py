@@ -2,7 +2,7 @@ from django.test.client import Client
 
 client = Client()
 
-def ct1(title='Sample Module Title'):
+def createMaterial(title='Sample Module Title'):
     i0 = 'tests/test.png'
     image = open(i0, 'r')
     f01 = open(i0, 'r')
@@ -38,7 +38,7 @@ COLLECTION_ITEM = """{"attr":{"id":"%s","version": %d,"rel" : "default"},
                       "state" : ""
                       }"""
 
-def ct2(title='Sample Collection Title'):
+def createCollection(title='Sample Collection Title'):
     collection_text = '[' 
     # create sample modules first
     for i in range(2):
@@ -70,3 +70,25 @@ def ct2(title='Sample Collection Title'):
 
     return res
 
+def createPerson(fullname='Person Name'):
+    i0 = 'tests/test.png'
+    image = open(i0, 'r')
+    mdata = {}
+    mdata['fullname'] = fullname
+    mdata['first_name'] = 'First name'
+    mdata['last_name'] = 'Last name'
+    mdata['email'] = 'e@mail.com'
+    mdata['title'] = 'Mr'
+    mdata['homepage'] = 'google.com'
+    mdata['affiliation'] = 'none'
+    mdata['affiliation_url'] = 'none_url'
+    mdata['national'] = 'vietnam' 
+    mdata['avatar'] = image 
+    mdata['biography'] = 'Hello this is the bio'
+    mdata['client_id'] = 1 
+    mdata['user_id'] = 'jamesbond' 
+    res = client.post('/1/persons/', mdata)
+    res.status_code
+    image.close()
+
+    return res

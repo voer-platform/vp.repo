@@ -194,7 +194,7 @@ class EditorDetail(generics.RetrieveUpdateDestroyAPIView):
 class PersonList(generics.ListCreateAPIView):
     """docstring for PersonList"""
     model = models.Person
-    serializer_class = serializers.PersonSerializer
+    serializer_class = serializers.MiniPersonSerializer
 
     @api_token_required
     def get(self, request, *args, **kwargs):
@@ -206,10 +206,26 @@ class PersonList(generics.ListCreateAPIView):
     @api_token_required
     def post(self, request, *args, **kwargs):
         """Old post method with decorator"""
+        self.serializer_class = serializers.PersonSerializer
         response = self.create(request, *args, **kwargs)
+        self.serializer_class = serializers.MiniPersonSerializer
         apilog.record(request, response.status_code)
         return response
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.DATA)
+        if serializer.is_valid():
+            self.pre_save(serializer.object)
+            self.object = serializer.save()
+            
+            # add the avatar if uploaded
+            avatar = request.FILES.get('avatar', None)
+            if avatar is not None:
+                self.object.avatar = avatar 
+                self.object.save()
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class PersonDetail(generics.RetrieveUpdateDestroyAPIView):
     """docstring for PersonDetail"""
@@ -227,6 +243,13 @@ class PersonDetail(generics.RetrieveUpdateDestroyAPIView):
     def put(self, request, *args, **kwargs):
         """docstring for get"""
         response = self.update(request, *args, **kwargs)
+
+        # update the avatar if needed
+        avatar = request.FILES.get('avatar', None)
+        if avatar is not None:
+            self.object.avatar = avatar 
+            self.object.save()
+
         apilog.record(request, response.status_code)
         return response
 

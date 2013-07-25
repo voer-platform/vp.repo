@@ -20,6 +20,7 @@ urlpatterns = patterns('',
     url(r'^categories/(?P<pk>[0-9]+)/$', content_views.CategoryDetail.as_view(), name='category-detail'),
     url(r'^persons/$', content_views.PersonList.as_view(), name='person-list'),
     url(r'^persons/(?P<pk>[0-9]+)/$', content_views.PersonDetail.as_view(), name='person-detail'),
+    url(r'^persons/(?P<pk>[0-9]+)/avatar/$', storage_views.handlePersonAvatar, name='person-avatar'),
     url(r'^(search|s)/$', content_views.GeneralSearch.as_view(), name='general-search'),
     )
 
