@@ -21,7 +21,7 @@ class MaterialIndex(RealTimeSearchIndex):
 
 class PersonIndex(RealTimeSearchIndex):
     # "text" combines normal body, title, description and keywords
-    text = CharField(document=True, use_template=True, model_attr='fullname')
+    text = CharField(document=True, use_template=True)
     user_id = CharField(model_attr='user_id')
     email = CharField(model_attr='email')
 
