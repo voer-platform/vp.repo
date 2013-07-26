@@ -10,9 +10,9 @@ class MaterialSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Material
         fields = ('material_id', 'material_type', 'title', 'text', 
-                  'version', 'description', 'categories', 'authors',
-                  'editor_id', 'keywords', 'image', 'language', 
-                  'license_id', 'modified', 'derived_from',)
+                  'version', 'description', 'categories', 'keywords', 
+                  'image', 'language', 'license_id', 'modified', 
+                  'derived_from',)
 
     def convert_object(self, obj):
         """
@@ -34,7 +34,13 @@ class MaterialSerializer(serializers.ModelSerializer):
         cids = [str(cid) for cid in cids]
         ret['categories'] = ','.join(cids)
 
+        # vpr: custom process for material author, editor
+        material_roles = models.getMaterialPersons(obj.id)
+        for person_role in material_roles:
+            ret[person_role] = material_roles[person_role] 
+
         return ret
+
 
     def restore_object(self, attrs, instance=None):
         """
@@ -63,7 +69,6 @@ class MaterialSerializer(serializers.ModelSerializer):
                 self.m2m_data[field.name] = attrs.pop(field.name)
 
         return self.opts.model(**attrs)
-
 
 
 class CategorySerializer(serializers.ModelSerializer):

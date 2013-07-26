@@ -280,6 +280,9 @@ class MaterialList(generics.ListCreateAPIView):
             self.pre_save(serializer.object)
             self.object = serializer.save()
 
+            # update the person and roles
+            models.setMaterialPersons(self.object.id, request.DATA)
+
             # add the attached image manually
             self.object.image = request.FILES.get('image', None)
             self.object.save()
@@ -430,6 +433,7 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
             serializer = self.get_serializer(data=request.DATA)
             response = None
             if serializer.is_valid():
+
                 # check if valid editor or new material will be created
                 sobj = serializer.object
                 last_material = models.getLatestMaterial(sobj.material_id)
@@ -438,9 +442,12 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
                     last_editor = last_material.editor_id
                 except AttributeError:
                     pass 
+
                 # new material will have new ID
                 if sobj.editor_id != last_editor:
-                    sobj.material_id = models.generateMaterialId()
+                    # why new ID, stupid??
+                    # sobj.material_id = models.generateMaterialId()
+                    sobj.material_id = last_material.material_id
                     sobj.version = 1
                 else:
                     try:

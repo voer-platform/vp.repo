@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models import CharField, TextField, FileField
 from django.db.models import IntegerField, CommaSeparatedIntegerField
 from django.db.models import DateTimeField, ImageField 
+from django.conf import settings
 from hashlib import md5
 from datetime import datetime
 
@@ -70,11 +71,7 @@ class Material(models.Model, MaterialBase):
     title = CharField(max_length=255)
     description = TextField(blank=True, null=True)
     categories = CharField(max_length=256, blank=True, null=True)
-    authors = CommaSeparatedIntegerField(max_length=8)
-    editor_id = IntegerField()
     keywords = TextField(blank=True, null=True)
-    #file = FileField(upload_to=".", null=True)
-    #file_type = CharField(max_length=64, blank=True)
     language = CharField(max_length=2, blank=True)
     license_id = IntegerField(null=True)
     modified = DateTimeField(default=datetime.now)
@@ -106,6 +103,16 @@ class MaterialExport(models.Model):
     file_type = CharField(max_length=32, blank=True, null=True)
 
 
+class MaterialPerson(models.Model):
+    """Assign role to each person inside material"""
+    material_rid = IntegerField()
+    person_id = IntegerField()
+    role = IntegerField()   # see the settings.VPR_MATERIAL_ROLES
+
+
+# ----------------
+
+
 def getLatestMaterial(material_id):
     """ Returns the latest version of the material with given ID """
     material = Material.objects.filter(material_id=material_id)\
@@ -132,6 +139,44 @@ def listMaterialFiles(material_id, version):
 
     return file_ids   
 
+
+def getMaterialPersons(material_rid):
+    """
+    """
+    roles = settings.VPR_MATERIAL_ROLES
+    mapped_roles = MaterialPerson.objects.filter(material_rid=material_rid)
+    material_roles = {}
+    for mrole in mapped_roles:
+        try:
+            material_roles[roles[mrole.role]].append(str(mrole.person_id))
+        except KeyError:
+            material_roles[roles[mrole.role]] = [str(mrole.person_id)]
+    
+    for role in material_roles:
+        material_roles[role] = ','.join(material_roles[role])
+
+    return material_roles
+            
+
+def setMaterialPersons(material_rid, request):
+    """ """
+    # remove all existing record of the material
+    material_rid = int(material_rid)
+    MaterialPerson.objects.filter(material_rid=material_rid).delete()
+    for role in settings.VPR_MATERIAL_ROLES:
+        try:
+            values = request.get(role, '').split(',')
+            for pid in values:
+                mp = MaterialPerson(
+                    material_rid = material_rid,
+                    person_id = int(pid),
+                    role = settings.VPR_MATERIAL_ROLES.index(role)
+                    )
+                mp.save()
+        except:
+            pass
+
+    
 
 from django.db import connection
 
@@ -207,7 +252,8 @@ def restoreAssignedCategory(value):
     return cat_list
 
 
-# MIGRATION
+# MIGRATING FUNCTIONS
+
 
 def changeMaterialCatValues():
     """Changes all assigned categories from format:
@@ -226,6 +272,45 @@ def changeMaterialCatValues():
             pass
         m_count += 1
 
+
+def resetPersonRoles():
+    """Refresh values of person roles to original set"""
+
+    roles = ('author', 'editor', 'licensor', 'maintainer', 'translator')
+    MaterialRole.objects.all().delete()
+    rmap = {}
+    for rname in roles:
+        role = MaterialRole(name=rname)
+        role.save()
+        rmap[rname] = role.id
+
+    return rmap
+
+    
+def migratePersonRoles():
+    """ """
+    roles = settings.VPR_MATERIAL_ROLES
+    
+    cursor = connection.cursor()
+    cursor.execute('SELECT id, authors, editor_id FROM vpr_content_material')
+    old_values = cursor.fetchall()
+
+    role_author = roles.index('author')
+    role_editor = roles.index('editor')
+    
+    for val in old_values:
+        assign_person = MaterialPerson(
+            material_rid = val[0], 
+            person_id = int(val[1]), 
+            role = role_author)
+        assign_person.save()
+
+        assign_person = MaterialPerson(
+            material_rid = val[0], 
+            person_id = int(val[1]), 
+            role = role_editor)
+        assign_person.save()
+    
 
 if __name__ == '__main__':
     import doctest

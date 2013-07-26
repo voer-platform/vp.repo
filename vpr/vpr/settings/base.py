@@ -202,3 +202,5 @@ TEMP_DIR = os.path.join(PROJECT_DIR, 'tmp')
 VPT_URL = 'http://dev.voer.edu.vn:6543/'
 
 TOKEN_REQUIRED = True 
+
+VPR_MATERIAL_ROLES = ('author', 'editor', 'licensor', 'maintainer', 'translator', 'contributor')
