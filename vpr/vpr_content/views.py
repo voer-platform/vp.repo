@@ -13,6 +13,7 @@ from hashlib import md5
 from datetime import datetime
 from rest_framework import mixins
 from haystack.query import SearchQuerySet 
+from django.conf import settings
 
 import os
 import mimetypes
@@ -142,53 +143,6 @@ class CategoryDetail(generics.RetrieveUpdateDestroyAPIView):
         return response
 
 
-# EDITOR CALLS
-
-class EditorList(generics.ListCreateAPIView):
-    """docstring for EditorList"""
-    model = models.Editor
-    serializer_class = serializers.EditorSerializer
-
-    @api_token_required
-    def get(self, request, *args, **kwargs):
-        """Old post method with decorator"""
-        response = self.list(request, *args, **kwargs)
-        apilog.record(request, response.status_code)
-        return response
-
-    @api_token_required
-    def post(self, request, *args, **kwargs):
-        """Old post method with decorator"""
-        response = self.create(request, *args, **kwargs)
-        apilog.record(request, response.status_code)
-        return response
-
-
-class EditorDetail(generics.RetrieveUpdateDestroyAPIView):
-    """docstring for EditorDetail"""
-    model = models.Editor
-    serializer_class = serializers.EditorSerializer
-
-    @api_token_required
-    def get(self, request, *args, **kwargs):
-        """docstring for get"""
-        response = self.retrieve(request, *args, **kwargs)
-        apilog.record(request, response.status_code)
-        return response
-
-    @api_token_required
-    def put(self, request, *args, **kwargs):
-        """docstring for get"""
-        return self.update(request, *args, **kwargs)
-
-    @api_token_required
-    def delete(self, request, *args, **kwargs):
-        """docstring for get"""
-        response = self.destroy(request, *args, **kwargs)
-        apilog.record(request, response.status_code)
-        return response
-
-
 # PERSON
 
 class PersonList(generics.ListCreateAPIView):
@@ -231,6 +185,21 @@ class PersonDetail(generics.RetrieveUpdateDestroyAPIView):
     """docstring for PersonDetail"""
     model = models.Person
     serializer_class = serializers.PersonSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        serializer = self.get_serializer(self.object)
+
+        # check if request for counting
+        if request.GET.get('count', None) == '1':
+            pid = kwargs.get('pk', None)
+            person_stats = models.countPersonMaterial(
+                person_id = pid,
+                roles = range(len(settings.VPR_MATERIAL_ROLES)))
+            for role in person_stats:
+                serializer.data[role] = person_stats[role]
+
+        return Response(serializer.data)
 
     @api_token_required
     def get(self, request, *args, **kwargs):

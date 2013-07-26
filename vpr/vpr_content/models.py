@@ -252,6 +252,26 @@ def restoreAssignedCategory(value):
     return cat_list
 
 
+def countPersonMaterial(person_id, roles=()):
+    """Counts number of material where person participates into"""
+    result = {}
+    query = "SELECT COUNT(id) FROM vpr_content_materialperson"
+    query += " WHERE role=%d AND person_id=%d;"
+
+    person_id = int(person_id)
+    if type(roles) not in (tuple, list):
+        roles = (int(roles),)
+
+    for role_id in roles:
+        try:
+            cur = connection.cursor()
+            cur.execute(query % (role_id, person_id))
+            result[settings.VPR_MATERIAL_ROLES[role_id]] = int(cur.fetchone()[0])
+        except:
+            pass
+    return result
+
+
 # MIGRATING FUNCTIONS
 
 
