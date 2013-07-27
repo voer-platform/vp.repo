@@ -117,6 +117,31 @@ class IndexMaterialSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Material
         fields = ('material_id', 'material_type', 'title',
-                  'categories', 'version', 'authors', 'editor_id',
-                  'modified')
+                  'categories', 'version', 'modified')
 
+    def convert_object(self, obj):
+        """
+        Core of serialization.
+        Convert an object into a dictionary of serialized field values.
+        """
+        ret = self._dict_class()
+        ret.fields = {}
+
+        fields = self.get_fields(nested=bool(self.opts.depth))
+        for field_name, field in fields.items():
+            key = self.get_field_key(field_name)
+            value = field.field_to_native(obj, field_name)
+            ret[key] = value
+            ret.fields[key] = field
+
+        # vpr: custom settings for categories field
+        cids = models.restoreAssignedCategory(ret.get('categories', ''))
+        cids = [str(cid) for cid in cids]
+        ret['categories'] = ','.join(cids)
+
+        # vpr: custom process for material author, editor
+        material_roles = models.getMaterialPersons(obj.id)
+        for person_role in material_roles:
+            ret[person_role] = material_roles[person_role] 
+
+        return ret
