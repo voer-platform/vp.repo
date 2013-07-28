@@ -1,8 +1,6 @@
 from os import path, listdir
 from subprocess import call
 
-import libxml2
-import libxslt
 import re
 import os
 import requests as rq
@@ -333,17 +331,3 @@ vpr_persons = getAllPersons()
 vpr_categories = getAllCategories()
 
 
-
-"""
-doc0 = libxml2.parseFile('cnxml-to-html5.xsl')
-style = libxslt.parseStylesheetDoc(doc0)
-
-doc1 = libxml2.parseFile('index.cnxml')
-result = style.applyStylesheet(doc1, None)
-
-style.saveResultToFilename('test-result', result, 0)
-style.freeStylesheet()
-
-doc1.freeDoc()
-result.freeDoc()
-"""
