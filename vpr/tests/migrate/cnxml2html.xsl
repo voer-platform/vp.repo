@@ -29,7 +29,7 @@
 
 <xsl:template match="c:document">
   <body>
-    <xsl:apply-templates select="c:title"/>
+    <!--xsl:apply-templates select="c:title"/-->
     <xsl:apply-templates select="c:content"/>
   </body>
 </xsl:template>
@@ -42,7 +42,7 @@
 
 <xsl:template match="@*" priority="-1000">
   <xsl:if test="namespace-uri(..) = 'http://cnx.rice.edu/cnxml' and ancestor::c:content">
-    <xsl:message>TODO: <xsl:value-of select="local-name(..)"/>/@<xsl:value-of select="local-name()"/></xsl:message>
+    <!--xsl:message>TODO: <xsl:value-of select="local-name(..)"/>/@<xsl:value-of select="local-name()"/></xsl:message-->
   </xsl:if>
   <xsl:copy>
     <xsl:apply-templates select="@*|node()"/>
@@ -51,14 +51,14 @@
 
 <!-- Only consider c:titles in c:content (ignore c:document/c:title) -->
 <xsl:template match="c:title[ancestor::c:content]|c:label" priority="0">
-  <xsl:message>TODO: <xsl:value-of select="local-name(..)"/>/<xsl:value-of select="local-name(.)"/></xsl:message>
+  <!--xsl:message>TODO: <xsl:value-of select="local-name(..)"/>/<xsl:value-of select="local-name(.)"/></xsl:message-->
   <xsl:copy>
     <xsl:apply-templates mode="class" select="."/><xsl:apply-templates select="@*|node()"/>
   </xsl:copy>
 </xsl:template>
 
 <xsl:template match="c:*" priority="-1">
-  <xsl:message>TODO: <xsl:value-of select="local-name(.)"/></xsl:message>
+  <!--xsl:message>TODO: <xsl:value-of select="local-name(.)"/></xsl:message-->
   <xsl:copy>
     <xsl:apply-templates select="@*|node()"/>
   </xsl:copy>

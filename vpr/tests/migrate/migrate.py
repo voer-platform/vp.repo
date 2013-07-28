@@ -27,7 +27,6 @@ def convert2HTML(module_path):
             code = call('xsltproc cnxml2html.xsl '+index_path+' > '+target_path, shell=True, stdout=None)
             if code != 0: 
                 raise
-            print '>> Converted CNXML to ' + target_path
         except:
             print "Error: Something wrong with module: " + module_path
 
