@@ -426,27 +426,16 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
             serializer = self.get_serializer(data=request.DATA)
             response = None
             if serializer.is_valid():
-
                 # check if valid editor or new material will be created
                 sobj = serializer.object
-                last_material = models.getLatestMaterial(sobj.material_id)
-                last_editor = ""
-                try:    
-                    last_editor = last_material.editor_id
-                except AttributeError:
-                    pass 
+                sobj.material_id = kwargs.get('mid')
 
-                # new material will have new ID
-                if sobj.editor_id != last_editor:
-                    # why new ID, stupid??
-                    # sobj.material_id = models.generateMaterialId()
-                    sobj.material_id = last_material.material_id
+                last_material = models.getLatestMaterial(sobj.material_id)
+                try:
+                    sobj.version = last_material.version + 1
+                except AttributeError:
                     sobj.version = 1
-                else:
-                    try:
-                        sobj.version = last_material.version + 1
-                    except AttributeError:
-                        sobj.version = 1
+
                 self.pre_save(sobj)
                 self.object = serializer.save()
                 response = Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -456,6 +445,7 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
             apilog.record(request, response.status_code)
             return response
         except: 
+            raise 
             raise404(request)
 
     @api_token_required
