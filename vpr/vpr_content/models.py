@@ -39,16 +39,15 @@ class Editor(models.Model):
     user_id = CharField(max_length=64, blank=True)
     client_id = IntegerField(default=0)
 
-# (z) I don't think we will use this anymore.
-# Using normal pk field would be good enough.
+
 def generateMaterialId():
     """ Ensure generating of unique material ID
     """
     sugar = ''
     while True:
-        temp_id = md5(str(datetime.now) + sugar).hexdigest()
+        temp_id = md5(str(datetime.now()) + sugar).hexdigest()
         temp_id = temp_id[:MATERIAL_ID_SIZE]
-        if len(Material.objects.filter(material_id=temp_id)) > 0:
+        if Material.objects.filter(material_id=temp_id).count() > 0:
             sugar += '1'
         else:
             break
