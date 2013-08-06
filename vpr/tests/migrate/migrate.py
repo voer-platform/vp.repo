@@ -212,8 +212,8 @@ def migrateModule(module_path):
             'version': 1, 
             'description': metadata['abstract'] or '-',
             'language': metadata.get('language', 'na'),
-            'authors': author_ids,
-            'editor_id': author_id,
+            'author': author_ids,
+            'editor': author_id,
             'categories': cat_ids,
             'keywords': '\n'.join(metadata['keyword']),
             'original_id': module_id,
@@ -248,13 +248,16 @@ def migrateAllModules(root_path, resume=False):
     except:
         pass
 
+    m_count = 1
+    m_total = len(module_list)
     for module in module_list:
         if module not in done_list:
             if path.isdir(path.join(root_path,module)):
                 migrateModule(path.join(root_path,module))
+                print '\n[%d/%d] OK\n' % (m_count, m_total) 
         else:
             out('Bypassing module: ' + module)
-
+        m_count += 1
 
 def out2File(file_name, content):
     """Export the content into file"""
@@ -271,10 +274,10 @@ def normalizeResponse(response):
 
 def out(text):
     """Just print to screen"""
-    msg = '\n>> %s' % text
+    msg = '>> %s' % text
     print msg
     with open(LOG_FILE, 'a') as of:
-        of.write(msg)
+        of.write('\n' + msg)
 
 def toResume(module_id):
     """Just print to screen"""
