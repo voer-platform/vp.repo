@@ -333,6 +333,31 @@ def getAllCategories():
 
 
 # manage.py shell
+def isMissing(module_path):
+    """Convert current module at given path into material inside VPR"""
+    
+    cnxml_path = path.join(module_path, 'index.cnxml')
+    if path.exists(cnxml_path):
+
+        from vpr_content.models import Material
+
+        # extract the correct module id
+        module_id = module_path.split('/')[-1]
+        if module_id.strip() == '':
+            module_id = module_path.split('/')[-2]
+        toResume(module_id)
+
+        # extract the module information
+        with open(cnxml_path, 'r') as f0:
+            cnxml = f0.read()
+            metadata = getMetadata(cnxml)
+            title = metadata['title']
+            return Material.objects.filter(title=title).count() == 0
+
+        return True
+
+
+# manage.py shell
 def checkMissingModules(root_path):
     """Checks and returns all missing modules inside root path"""
 
@@ -354,7 +379,6 @@ def checkMissingModules(root_path):
     mlog.close()
 
 
-# manage.py shell
 def migrateMissingModules(root_path, resume=False):
     """Add all missing modules listed inside missing-materials.log"""
 
