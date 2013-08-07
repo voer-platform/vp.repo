@@ -7,9 +7,10 @@ import requests as rq
 
 
 #VPR_URL = 'http://vpr.net/1'
-VPR_URL = 'http://localhost:8000/1'
+VPR_URL = 'http://localhost:2013/1'
 LOG_FILE = 'migrate.log'
 RESUME_FILE = 'migrate.rs'
+FAILED_FILE = 'migrate.er'
 
 vpr_categories = {}
 vpr_persons = {}
@@ -143,7 +144,7 @@ def migrateModule(module_path):
     """Convert current module at given path into material inside VPR"""
     
     global vpr_persons
-    out("--------------\nMigrating: " + module_path)
+    out("Migrating: " + module_path)
 
     cnxml_path = path.join(module_path, 'index.cnxml')
     if path.exists(cnxml_path):
@@ -161,7 +162,6 @@ def migrateModule(module_path):
             metadata = getMetadata(cnxml)
 
         # convert module into html and load the content
-        out('Converting CNXML > HTML')
         convert2HTML(module_path)
         with open(path.join(module_path, 'index.html')) as f1:
             html = f1.read()
@@ -172,7 +172,6 @@ def migrateModule(module_path):
         module_files.remove('index.cnxml')
 
         # add persons into VPR
-        out('+ author information')
         author_ids = []
         authors = roles.get('author', ['unknown'])
         for author_uid in authors:
@@ -200,11 +199,9 @@ def migrateModule(module_path):
             author_ids.append(author_id)
 
         # getting categories
-        out('+ material categories')
         cat_ids = prepareCategory(metadata['subject'])
 
         # add material into VPR
-        out('+ material metadata')
         m_info = {
             'material_type': 1,
             'title': metadata['title'],
@@ -225,9 +222,8 @@ def migrateModule(module_path):
             mf.close()
 
         # post to the site
-        out('Posting material...')
         res = rq.post(VPR_URL+'/materials/', files=mfiles, data=m_info)
-        out('POST code: ' + str(res.status_code))
+        out('%s: %d' % (module_path, res.status_code))
     
         return res
 
@@ -247,17 +243,29 @@ def migrateAllModules(root_path, resume=False):
             os.remove(os.path.realpath(rf.filename))    
     except:
         pass
+        
+    nok_file = open(FAILED_FILE, 'w')
 
     m_count = 1
     m_total = len(module_list)
-    for module in module_list:
-        if module not in done_list:
-            if path.isdir(path.join(root_path,module)):
-                migrateModule(path.join(root_path,module))
-                print '\n[%d/%d] OK\n' % (m_count, m_total) 
-        else:
-            out('Bypassing module: ' + module)
-        m_count += 1
+    try:
+        for module in module_list:
+            if module not in done_list:
+                if path.isdir(path.join(root_path,module)):
+                    res = migrateModule(path.join(root_path,module))
+                    if res.status_code == 201:
+                        print '[%d/%d] OK\n' % (m_count, m_total) 
+                    else:
+                        nok_file.write('%d\t%s\n' % (res.status_code, module))
+                        print '[%d/%d] %d - %s\n' % (m_count, m_total, res.status_code, module) 
+            else:
+                out('Bypassing module: ' + module)
+            m_count += 1
+    except:
+        pass
+    finally:
+        nok_file.close()
+
 
 def out2File(file_name, content):
     """Export the content into file"""
@@ -322,6 +330,57 @@ def getAllCategories():
         categories[cid] = item 
     out('Categories downloaded')
     return categories
+
+
+# manage.py shell
+def checkMissingModules(root_path):
+    """Checks and returns all missing modules inside root path"""
+
+    module_list = listdir(root_path)
+    mlog = open('missing-materials.log', 'w')     
+
+    m_count = 1
+    m_total = len(module_list)
+    for module in module_list:
+        if path.isdir(path.join(root_path,module)):
+            missed = isMissing(path.join(root_path,module))
+            if missed:
+                mlog.write(module + '\n')
+                print '[%d/%d]' % (m_count, m_total)
+        else:
+            print 'Invalid module: ' + module
+        m_count += 1
+
+    mlog.close()
+
+
+# manage.py shell
+def migrateMissingModules(root_path, resume=False):
+    """Add all missing modules listed inside missing-materials.log"""
+
+    mfile = open('missing-materials.log', 'r')
+    module_list = mfile.read().split('\n')
+     
+    # prepare the resume list
+    done_list = []
+    try:
+        rf = open(RESUME_FILE, 'r')
+        if resume:
+            done_list = rf.read()
+            done_list = done_list.split('\n')
+            rf.close()
+        else:
+            os.remove(os.path.realpath(rf.filename))    
+    except:
+        pass
+
+    m_count = 1 
+    m_total = len(module_list)
+    for module in module_list:
+        if path.isdir(path.join(root_path,module)):
+            migrateModule(path.join(root_path,module))
+            print '\n[%d/%d] OK\n' % (m_count, m_total) 
+        m_count += 1
 
 
 # MUST RUN FIRST
