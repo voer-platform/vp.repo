@@ -10,7 +10,7 @@ echo $PIDFILE
 ADDRESS=127.0.0.1:8001
 LOGFILE=$DIRNAME/server.log
 LOGDIR=$(dirname $LOGFILE)
-NUM_WORKERS=3
+NUM_WORKERS=4
 case "$1" in
     "stop" )
         if [ -f $PIDFILE ]; then

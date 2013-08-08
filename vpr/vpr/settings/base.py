@@ -192,6 +192,20 @@ RAVEN_CONFIG = {
     'dsn': 'http://0c540c36128343fa9a723e46d9b755cd:7bf6f5f0b4914533b76dc2a89d816d70@localhost:9000/2',
 }
 
+# CACHING
+
+CACHES = {
+    'default': {
+        'BACKEND': 'caching.backends.memcached.MemcachedCache',
+        'LOCATION': ['127.0.0.1:11211',],
+        'PREFIX': 'material',
+    }
+}
+
+CACHE_COUNT_TIMEOUT = 60
+
+CACHE_EMPTY_QUERYSETS = True
+
 # VOER PLATFORM 
 
 EXPORT_DIR = os.path.join(PROJECT_DIR, 'mexports')
@@ -199,7 +213,7 @@ IMAGES_DIR = os.path.join(PROJECT_DIR, 'mimgs')
 MATERIAL_FILE_DIR = os.path.join(PROJECT_DIR, 'mfiles')
 TEMP_DIR = os.path.join(PROJECT_DIR, 'tmp')
 
-VPT_URL = 'http://dev.voer.edu.vn:6543/'
+VPT_URL = 'http://voer.edu.vn:6543/'
 
 TOKEN_REQUIRED = True 
 

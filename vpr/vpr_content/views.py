@@ -14,6 +14,7 @@ from datetime import datetime
 from rest_framework import mixins
 from haystack.query import SearchQuerySet 
 from django.conf import settings
+from django.core.cache import cache
 
 import os
 import mimetypes
@@ -32,6 +33,10 @@ logger = get_logger('api')
 apilog = APILogger() 
 
 mimetypes.init()
+
+
+CACHE_TIMEOUT_CATEGORY = 60
+CACHE_TIMEOUT_MATERIAL = 60
 
 
 def raise404(request, message=''):
@@ -111,15 +116,27 @@ class CategoryDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.CategorySerializer
 
     def retrieve(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        serializer = self.get_serializer(self.object)
+        cid = kwargs.get('pk', None)
+        do_count = (request.GET.get('count', None) == '1')
+        cache_key = 'category-%s%s' % (
+            str(cid),
+            (do_count and '-count') or '')
+        result = cache.get(cache_key)
 
-        # check if request for counting
-        if request.GET.get('count', None) == '1':
-            cid = kwargs.get('pk', None)
-            serializer.data['material'] = models.countAssignedMaterial(cid)
+        if not result:
+            self.object = self.get_object()
+            serializer = self.get_serializer(self.object)
 
-        return Response(serializer.data)
+            # check if request for counting
+            if do_count:
+                serializer.data['material'] = models.countAssignedMaterial(cid)
+           
+            sr_data = dict(serializer.data)
+            cache.set(cache_key, sr_data, CACHE_TIMEOUT_CATEGORY)
+        else:
+            sr_data = result
+
+        return Response(sr_data)
 
     @api_token_required
     def get(self, request, *args, **kwargs):
@@ -291,11 +308,9 @@ class MaterialList(generics.ListCreateAPIView):
         """ Customized function for listing materials with same ID
         """
         try: 
-            m_objects = self.model.objects
+            self.object_list = self.model.objects
             if kwargs.get('mid', None):
-                self.object_list = m_objects.filter(material_id=kwargs['mid'])
-            else:
-                self.object_list = m_objects.all()
+                self.object_list = self.object_list.filter(material_id=kwargs['mid'])
 
             # filter by person roles
             mp_objs = models.MaterialPerson.objects
@@ -402,13 +417,24 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
 
     def retrieve(self, request, *args, **kwargs):
         """ Customized to the Material objects """
-        self.object = self.get_object(material_id=kwargs.get('mid', ''),
-                                      version=kwargs.get('version', ''),
-                                      request=request)
+        # implement cache
+        mid = kwargs.get('mid', '')
+        mvs = kwargs.get('version', '')
+        cache_key = mid + '__' + str(mvs)
+        result = cache.get(cache_key)
+        
+        if not result:
+            self.object = self.get_object(material_id=kwargs.get('mid', ''),
+                                        version=kwargs.get('version', ''),
+                                        request=request)
 
-        serializer = self.get_serializer(self.object)
+            serializer = self.get_serializer(self.object)
+            sr_data = dict(serializer.data)
+            cache.set(cache_key, sr_data, CACHE_TIMEOUT_MATERIAL)
+        else:
+            sr_data = result
 
-        response = Response(serializer.data)
+        response = Response(sr_data)
         apilog.record(request, response.status_code)
         return response
 

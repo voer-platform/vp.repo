@@ -9,6 +9,7 @@ from datetime import datetime
 from vpr_api.models import APIClient
 from repository import MaterialBase
 
+
 MATERIAL_ID_SIZE = 8
 
 # Create your models here.

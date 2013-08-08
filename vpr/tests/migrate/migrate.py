@@ -398,13 +398,24 @@ def migrateMissingModules(root_path, resume=False):
     except:
         pass
 
-    m_count = 1 
+    nok_file = open(FAILED_FILE, 'w')
+
+    m_count = 1
     m_total = len(module_list)
-    for module in module_list:
-        if path.isdir(path.join(root_path,module)):
-            migrateModule(path.join(root_path,module))
-            print '\n[%d/%d] OK\n' % (m_count, m_total) 
-        m_count += 1
+    try:
+        for module in module_list:
+            if path.isdir(path.join(root_path,module)):
+                res = migrateModule(path.join(root_path,module))
+                if res.status_code == 201:
+                    print '[%d/%d] OK\n' % (m_count, m_total)
+                else:
+                    nok_file.write('%d\t%s\n' % (res.status_code, module))
+                    print '[%d/%d] %d - %s\n' % (m_count, m_total, res.status_code, module)
+            m_count += 1
+    except:
+        pass
+    finally:
+        nok_file.close()
 
 
 # MUST RUN FIRST
