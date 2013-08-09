@@ -22,6 +22,7 @@ import mimetypes
 from vpr_api.models import APIRecord
 from vpr_api.decorators import api_token_required
 from vpr_api.utils import APILogger
+from vpr_api.decorators import api_token_required, api_log
 from vpr_storage.views import zipMaterial, requestMaterialPDF
 
 import models
@@ -30,7 +31,7 @@ import serializers
 
 #from vpr_log.logger import get_logger
 #logger = get_logger('api')
-apilog = APILogger() 
+#apilog = APILogger() 
 
 mimetypes.init()
 
@@ -41,37 +42,7 @@ CACHE_TIMEOUT_MATERIAL = 60
 
 def raise404(request, message=''):
     """Record failed API call and raise 404 exception"""
-    apilog.record(request, 404)
     raise Http404(message)
-
-
-def dispatchModuleCalls(request):
-    """ Analyze the requests and call the appropriate function
-    """
-    # analyze the URL
-    path = splitPath(path)
-    if request.method == 'POST':
-        params = request.POST
-        params['path'] = path
-        if len(path) > 1:
-            checkInModule(params)
-        else:
-            createModule(params)
-    elif request.method == 'GET':
-        # check if getting metadata or download
-        if 'content' in request.GET:
-            download = request.GET['content']
-        if download:
-            downloadModule(request)
-        else:    
-            getModuleMetadata(request)
-    elif request.method == 'DELETE':
-        # check for permission
-        user = request.user
-        if user.is_superuser:
-            deleteModule(request)
-        else:
-            pass
 
 
 def splitPath(path):
@@ -95,18 +66,19 @@ class CategoryList(generics.ListCreateAPIView):
     serializer_class = serializers.CategorySerializer
     paginate_by = None
 
+    @api_log
     @api_token_required
     def get(self, request, *args, **kwargs):
         """Old post method with decorator"""
         response = self.list(request, *args, **kwargs)        
-        apilog.record(request, response.status_code)
+        #apilog.record(request, response.status_code)
         return response
 
+    @api_log
     @api_token_required
     def post(self, request, *args, **kwargs):
         """Old post method with decorator"""
         response = self.create(request, *args, **kwargs)
-        apilog.record(request, response.status_code)
         return response
 
 
@@ -138,25 +110,25 @@ class CategoryDetail(generics.RetrieveUpdateDestroyAPIView):
 
         return Response(sr_data)
 
+    @api_log
     @api_token_required
     def get(self, request, *args, **kwargs):
         """docstring for get"""
         response = self.retrieve(request, *args, **kwargs)
-        apilog.record(request, response.status_code)
         return response
 
+    @api_log
     @api_token_required
     def put(self, request, *args, **kwargs):
         """docstring for get"""
         response = self.update(request, *args, **kwargs)
-        apilog.record(request, response.status_code)
         return response
 
+    @api_log
     @api_token_required
     def delete(self, request, *args, **kwargs):
         """docstring for get"""
         response = self.destroy(request, *args, **kwargs)
-        apilog.record(request, response.status_code)
         return response
 
 
@@ -167,20 +139,20 @@ class PersonList(generics.ListCreateAPIView):
     model = models.Person
     serializer_class = serializers.MiniPersonSerializer
 
+    @api_log
     @api_token_required
     def get(self, request, *args, **kwargs):
         """Old post method with decorator"""
         response = self.list(request, *args, **kwargs)
-        apilog.record(request, response.status_code)
         return response
 
+    @api_log
     @api_token_required
     def post(self, request, *args, **kwargs):
         """Old post method with decorator"""
         self.serializer_class = serializers.PersonSerializer
         response = self.create(request, *args, **kwargs)
         self.serializer_class = serializers.MiniPersonSerializer
-        apilog.record(request, response.status_code)
         return response
 
     def create(self, request, *args, **kwargs):
@@ -218,13 +190,14 @@ class PersonDetail(generics.RetrieveUpdateDestroyAPIView):
 
         return Response(serializer.data)
 
+    @api_log
     @api_token_required
     def get(self, request, *args, **kwargs):
         """docstring for get"""
         response = self.retrieve(request, *args, **kwargs)
-        apilog.record(request, response.status_code)
         return response
 
+    @api_log
     @api_token_required
     def put(self, request, *args, **kwargs):
         """docstring for get"""
@@ -236,14 +209,13 @@ class PersonDetail(generics.RetrieveUpdateDestroyAPIView):
             self.object.avatar = avatar 
             self.object.save()
 
-        apilog.record(request, response.status_code)
         return response
 
+    @api_log
     @api_token_required
     def delete(self, request, *args, **kwargs):
         """docstring for get"""
         response = self.destroy(request, *args, **kwargs)
-        apilog.record(request, response.status_code)
         return response
 
 
@@ -303,6 +275,7 @@ class MaterialList(generics.ListCreateAPIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @api_log
     @api_token_required
     def list(self, request, *args, **kwargs):
         """ Customized function for listing materials with same ID
@@ -376,14 +349,13 @@ class MaterialList(generics.ListCreateAPIView):
             pass
 
         response = Response(serializer.data)
-        apilog.record(request, response.status_code)
         return response
 
+    @api_log
     @api_token_required
     def post(self, request, *args, **kwargs):
         """Old post method with decorator"""
         response = self.create(request, *args, **kwargs)
-        apilog.record(request, response.status_code)
         return response 
 
 
@@ -435,16 +407,16 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
             sr_data = result
 
         response = Response(sr_data)
-        apilog.record(request, response.status_code)
         return response
 
+    @api_log
     @api_token_required
     def get(self, request, *args, **kwargs):
         """docstring for get"""
         response = self.retrieve(request, *args, **kwargs)
-        apilog.record(request, response.status_code)
         return response
 
+    @api_log
     @api_token_required
     def put(self, request, *args, **kwargs):
         """ Check in a material  """
@@ -468,12 +440,12 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
             else:
                 response = Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)            
 
-            apilog.record(request, response.status_code)
             return response
         except: 
             raise 
             raise404(request)
 
+    @api_log
     @api_token_required
     def destroy(self, request, *args, **kwargs):
         """ Delete the material """
@@ -482,7 +454,6 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
                                           version=kwargs.get('version', ''))
             self.object.delete()
             response = Response(status=status.HTTP_204_NO_CONTENT)
-            apilog.record(request, response.status_code)
             return response
         except:
             raise404(request)
@@ -492,6 +463,7 @@ class GeneralSearch(generics.ListAPIView):
     """docstring for Search"""
     model = models.Material
 
+    @api_log
     @api_token_required
     def list(self, request, *args, **kwargs):
         """docstring for list"""
@@ -531,7 +503,6 @@ class GeneralSearch(generics.ListAPIView):
             serializer = self.get_serializer(self.object_list)
 
         response = Response(serializer.data) 
-        apilog.record(request, response.status_code)
         return response
 
 
@@ -558,14 +529,13 @@ class MaterialFiles(generics.ListCreateAPIView):
         serializer = self.get_serializer(self.object)
 
         response = Response(serializer.data)
-        apilog.record(request, response.status_code)
         return response
 
+    @api_log
     @api_token_required
     def get(self, request, *args, **kwargs):
         """docstring for get"""
         response = self.retrieve(request, *args, **kwargs)
-        apilog.record(request, response.status_code)
         return response
 
 

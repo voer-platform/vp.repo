@@ -5,6 +5,7 @@ from django.db.models import DateTimeField, ImageField
 from django.conf import settings
 from hashlib import md5
 from datetime import datetime
+import time
 
 from vpr_api.models import APIClient
 from repository import MaterialBase
@@ -45,7 +46,8 @@ def generateMaterialId():
     """
     sugar = ''
     while True:
-        temp_id = md5(str(datetime.now()) + sugar).hexdigest()
+        #temp_id = md5(str(datetime.now()) + sugar).hexdigest()
+        temp_id = md5(str(time.time()) + sugar).hexdigest()
         temp_id = temp_id[:MATERIAL_ID_SIZE]
         if Material.objects.filter(material_id=temp_id).count() > 0:
             sugar += '1'
