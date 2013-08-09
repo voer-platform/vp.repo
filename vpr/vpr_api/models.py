@@ -66,7 +66,10 @@ class APIRecord(models.Model):
     time = models.DateTimeField()
     method = models.CharField(max_length=10)
     path = models.CharField(max_length=256) 
-    ip = models.CharField(max_length=40) 
+    ip = models.CharField(max_length=40, blank=True, null=True) 
+    query = models.CharField(max_length=256, blank=True, null=True)
+    extra = models.CharField(max_length=256, blank=True, null=True)
+
 
     class Meta:
         verbose_name = 'API Record'
