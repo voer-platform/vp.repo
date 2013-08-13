@@ -64,7 +64,6 @@ def requestMaterialPDF(material):
         else:
             raise
     except:
-        import pdb;pdb.set_trace()
         print '[ERR] Exporting to PDF failed. Error occurs when calling the VPT export'
         if res: 
             print '\t' + res.content.replace('\n', '\n\t') + '\n'
@@ -126,18 +125,17 @@ def zipMaterial(material):
                 mf.mfile.close()
             zf.writestr(m_id+'/'+ZIP_HTML_FILE, m_object.text)
 
-        # generate chapters.txt
+        # generate collection.json
         try:
             index_content = eval(material.text)
-            index_content.id = material.material_id
-            index_content.title = material.title
+            index_content['id'] = material.material_id
+            index_content['title'] = material.title
+            index_content = json.dumps(index_content)
         except:
             # another way
             index_content = '{"id":"%s", "title":"%s",' % (material.material_id, material.title)
             index_content += material.text[material.text.index('{')+1:]
         zf.writestr('collection.json', index_content)
-
-        # generate collection json file
         
     zf.close()
     return realpath(zf.filename)
