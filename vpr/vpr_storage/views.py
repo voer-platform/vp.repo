@@ -2,6 +2,7 @@
 from os.path import realpath
 import requests
 import os
+import json
 
 from zipfile import ZipFile, ZIP_DEFLATED
 from django.http import Http404, HttpResponse
@@ -63,6 +64,7 @@ def requestMaterialPDF(material):
         else:
             raise
     except:
+        import pdb;pdb.set_trace()
         print '[ERR] Exporting to PDF failed. Error occurs when calling the VPT export'
         if res: 
             print '\t' + res.content.replace('\n', '\n\t') + '\n'
@@ -105,26 +107,38 @@ def zipMaterial(material):
         zf.writestr(ZIP_HTML_FILE, raw_content)
 
     elif mtype == MTYPE_COLLECTION:
+
         # get list of all contained materials    
         all_materials = getNestedMaterials(material)
+
         # load materials into ZIP
-        index_content = '"' + material.title + '"\n'
         for cid in range(len(all_materials)):
             m_id = all_materials[cid][0]
             m_version = all_materials[cid][1]
             m_title = all_materials[cid][2]
+            if m_version is None:
+                m_version = getMaterialLatestVersion(m_id)
             mfids = listMaterialFiles(m_id, m_version)
             m_object = Material.objects.get(material_id=m_id)
-            chapter_dir = 'm%d' % (cid+1)
             for mfid in mfids:
                 mf = MaterialFile.objects.get(id=mfid)
-                zf.writestr(chapter_dir+'/'+mf.name, mf.mfile.read())
+                zf.writestr(m_id+'/'+mf.name, mf.mfile.read())
                 mf.mfile.close()
-            zf.writestr(chapter_dir+'/'+ZIP_HTML_FILE, m_object.text)
-            index_content += chapter_dir + ', "'+m_title+'"\n' 
-        # generate chapters.txt
-        zf.writestr('chapters.txt', index_content)
+            zf.writestr(m_id+'/'+ZIP_HTML_FILE, m_object.text)
 
+        # generate chapters.txt
+        try:
+            index_content = eval(material.text)
+            index_content.id = material.material_id
+            index_content.title = material.title
+        except:
+            # another way
+            index_content = '{"id":"%s", "title":"%s",' % (material.material_id, material.title)
+            index_content += material.text[material.text.index('{')+1:]
+        zf.writestr('collection.json', index_content)
+
+        # generate collection json file
+        
     zf.close()
     return realpath(zf.filename)
 
@@ -134,7 +148,7 @@ def getNestedMaterials(material):
     materials = []
     try:
         # get all material IDs and versions
-        nodes = eval(material.text)
+        nodes = eval(material.text)['content']
         for node in nodes:
             materials.extend(extractMaterialInfo(node))
     except:
@@ -147,16 +161,18 @@ def extractMaterialInfo(node):
     found = []
     try:
         # extract current node
-        mid = node['attr']['id']
-        mver = node['attr']['version']
-        mtitle = node['data']
+        mid = node['id']
+        mver = node.get('version', None)
+        mtitle = node['title']
         found.append((mid, mver, mtitle))
 
         # extract child nodes
-        if node.get('children', []):
+        if node.get('content', []):
             for child_node in node['children']:
                 found.extend(extractMaterialInfo(child_node))
     except:
+        # where is the error?
+        print "Error when getting collection modules"
         pass
     return found
         
@@ -222,3 +238,4 @@ def handlePersonAvatar(request, *args, **kwargs):
             return HttpResponse('Person avatar deleted', status=200)
     except:
         raise Http404
+

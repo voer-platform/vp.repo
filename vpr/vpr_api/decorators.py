@@ -55,11 +55,12 @@ def api_log(func):
             if not client_id:
                 client_id = request.GET.get(COOKIE_CLIENT, CLIENT_ID_UNKNOWN)
             qr_keys = request.GET.keys()
+            path = '/'.join(request.path.split('/')[2:])
             query = '&'.join([k+'='+request.GET.get(k,'') for k in qr_keys])
             rec = APIRecord(
                 client_id = client_id,
                 method = request.method,
-                path = request.path,
+                path = path,
                 time = datetime.now(),
                 result = res.status_code,
                 query = query,

@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, connection, transaction
 from datetime import datetime
 import hashlib
 import random
@@ -76,3 +76,24 @@ class APIRecord(models.Model):
 
     def __unicode__(self):
         return "API Record: %s" % (self.request)
+
+
+# MIGRATIONS
+
+def removeVersionInPath():
+    cur = connection.cursor()
+    cur.execute('select id, path from vpr_api_apirecord;')
+    select_records = []
+    record = cur.fetchone()
+    while record:
+        record = list(record)
+        if record[1][0] == '/':
+            rf_path = '/'.join(record[1].split('/')[2:])
+            select_records.append((record[0], rf_path))
+        record = cur.fetchone()
+
+    # update inside db
+    for item in select_records:
+        cmd = "update vpr_api_apirecord set path='%s' where id=%d;" % (item[1], item[0])
+        cur.execute(cmd)
+    transaction.commit_unless_managed()

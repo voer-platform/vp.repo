@@ -199,7 +199,7 @@ IMAGES_DIR = os.path.join(PROJECT_DIR, 'mimgs')
 MATERIAL_FILE_DIR = os.path.join(PROJECT_DIR, 'mfiles')
 TEMP_DIR = os.path.join(PROJECT_DIR, 'tmp')
 
-VPT_URL = 'http://dev.voer.edu.vn:6543/'
+VPT_URL = 'http://dev.voer.vn:6543/'
 
 TOKEN_REQUIRED = True 
 
