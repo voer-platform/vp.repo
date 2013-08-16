@@ -254,7 +254,7 @@ class MaterialList(generics.ListCreateAPIView):
                 mfile.version = material_version
                 file_content = request.FILES.get(key, None)
                 mfile.mfile = file_content 
-                mfile.mfile.close()
+                #mfile.mfile.close()
                 mfile.name = request.FILES[key].name
                 mfile.description = request.DATA.get(key+'_description', '')
                 mfile.mime_type = mimetypes.guess_type(

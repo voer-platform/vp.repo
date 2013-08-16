@@ -11,6 +11,7 @@ VPR_URL = 'http://localhost:2013/1'
 LOG_FILE = 'migrate.log'
 RESUME_FILE = 'migrate.rs'
 FAILED_FILE = 'migrate.er'
+NO_AUTHOR_ID = 999999
 
 vpr_categories = {}
 vpr_persons = {}
@@ -153,7 +154,6 @@ def migrateModule(module_path):
         module_id = module_path.split('/')[-1]
         if module_id.strip() == '':
             module_id = module_path.split('/')[-2]
-        toResume(module_id)
 
         # extract the module information
         with open(cnxml_path, 'r') as f0:
@@ -195,7 +195,7 @@ def migrateModule(module_path):
                     # add back to the global list
                     vpr_persons[author_uid] = per_dict
                 else:
-                    author_id = 999999
+                    author_id = NO_AUTHOR_ID
             author_ids.append(author_id)
 
         # getting categories
@@ -223,6 +223,8 @@ def migrateModule(module_path):
 
         # post to the site
         res = rq.post(VPR_URL+'/materials/', files=mfiles, data=m_info)
+        if res.status_code == 201:
+            toResume(module_id)
         out('%s: %d' % (module_path, res.status_code))
     
         return res
