@@ -8,6 +8,7 @@ from migrate import getTagContent, getAuthorInfo, buildRegex
 
 URL = 'http://rhaptos.voer.vn/content/%s/latest/source/'
 URL_ZIP = 'http://rhaptos.voer.vn/content/%s/latest/complete/'
+URL_ZIP_2 = 'http://rhaptos.voer.vn/content/%s/latest/module_export?format=zip'
 
 def getCollectionCNXML(cid):
     """Download and save cnxml file of specific collection"""
@@ -18,9 +19,9 @@ def getCollectionCNXML(cid):
             ofile = open(cid+'.zip', 'w')
             ofile.write(res.content)
             ofile.close()
-            print "CNXML downloaded: " + cid
+            print "ZIP downloaded: " + cid
         else:
-            print "Error while getting CNXML content of collection %s. Try to download ZIP file... " % cid
+            print "Error while getting ZIP content of collection %s. Try to download CNXML file... " % cid
             url = URL % cid
             res = requests.get(url)
             if res.status_code == 200:
@@ -33,7 +34,32 @@ def getCollectionCNXML(cid):
         print "Both were failed. Pls try this manually (%s)" % cid
     
 
-def getAllCollectionCNXML():
+def downloadModule(mid):
+    """ """
+    try:
+        url = URL_ZIP_2 % mid
+        res = requests.get(url)
+        if res.status_code == 200:
+            ofile = open(mid+'.zip', 'w')
+            ofile.write(res.content)
+            ofile.close()
+            print "ZIP downloaded: " + mid
+        else:
+            raise
+    except:
+        print 'Error when downloading module ' + mid
+
+
+def downloadAllModules():
+    """ """
+    mf = open('missing_modules.txt', 'r')
+    missing = json.loads(mf.read())
+    for mid in missing:
+        downloadModule(mid)
+    return 'DONE'
+
+
+def getAllCollections():
     all_ids = [cid.strip() for cid in RAW_COLLECTION_IDS.split('\n')]
     for cid in all_ids:
         if cid:
@@ -108,8 +134,12 @@ def getMissingModules(mfile='needed_modules.txt'):
 
     for item in modules:
         try:
-            oid = OriginalID.objects.get(original_id=item)
-            print item + ' exists'
+            oid = OriginalID.objects.filter(original_id__startswith=item)
+            if len(oid) > 0:
+                print item + ' exists'
+            else:
+                missing[item] = modules[item]
+                print item + ' missing'
         except OriginalID.DoesNotExist:
             missing[item] = modules[item]
             print item + ' missing'
