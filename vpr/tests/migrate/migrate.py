@@ -408,12 +408,12 @@ def migrateMissingModules(root_path, resume=False):
 
 
 # MUST RUN FIRST
-
-try:
-    os.remove(LOG_FILE)
-except:
-    pass
-vpr_persons = getAllPersons()
-vpr_categories = getAllCategories()
+if __name__ == '__main__':
+    try:
+        os.remove(LOG_FILE)
+    except:
+        pass
+    vpr_persons = getAllPersons()
+    vpr_categories = getAllCategories()
 
 
