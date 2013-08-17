@@ -2,15 +2,23 @@ import requests
 import zipfile
 import re
 import json
+import requests as rq
+import os
 
 from os import path, listdir
-from migrate import getTagContent, getAuthorInfo, buildRegex
+from migrate import getTagContent, getAuthorInfo, buildRegex, getMetadata
+from migrate import getAllPersons, getAllCategories, out, prepareCategory, toResume
+from migrate import VPR_URL, LOG_FILE, FAILED_FILE, RESUME_FILE
 
 URL = 'http://rhaptos.voer.vn/content/%s/latest/source/'
 URL_ZIP = 'http://rhaptos.voer.vn/content/%s/latest/complete/'
 URL_ZIP_2 = 'http://rhaptos.voer.vn/content/%s/latest/module_export?format=zip'
 
-def getCollectionCNXML(cid):
+vpr_categories = {}
+vpr_persons = {}
+vpr_idmap = {}
+
+def downloadCollectionCNXML(cid):
     """Download and save cnxml file of specific collection"""
     try:
         url = URL_ZIP % cid
@@ -59,15 +67,15 @@ def downloadAllModules():
     return 'DONE'
 
 
-def getAllCollections():
+def downloadAllCollections():
     all_ids = [cid.strip() for cid in RAW_COLLECTION_IDS.split('\n')]
     for cid in all_ids:
         if cid:
-            getCollectionCNXML(cid) 
+            downloadCollectionCNXML(cid) 
 
 
-def listIncludedModules(collection_path):
-    """Returns list of modules IDs inside a collection"""
+
+def getCollectionXML(collection_path):
     col_path = collection_path.lower().strip()
     xml_content = ''
 
@@ -89,6 +97,14 @@ def listIncludedModules(collection_path):
         xml_content = cf.read()
         cf.close()
     xml_content = xml_content.replace('\n', '')
+
+    return xml_content
+
+
+def listIncludedModules(collection_path):
+    """Returns list of modules IDs inside a collection"""
+
+    xml_content = getCollectionXML(collection_path) 
 
     # read the list of modules
     re_module = re.compile('(?<=document=").*?(?=")')
@@ -148,6 +164,204 @@ def getMissingModules(mfile='needed_modules.txt'):
     mf.write(json.dumps(missing))
     mf.close()
 
+
+# NEXT: EXTRACT COLLECTION INFORMATION
+
+
+NO_AUTHOR_ID = 999999
+
+def migrateCollection(col_path, dry=True):
+    """Convert current module at given path into material inside VPR"""
+    
+    global vpr_persons
+    out("Migrating: " + col_path)
+
+    if path.exists(col_path):
+
+        col_xml = getCollectionXML(col_path)
+
+        # extract the correct module id
+        collection_id = col_path.split('/')[-1]
+        collection_id = collection_id.split('.')[0]
+
+
+        # extract the module information
+        persons, roles = getAuthorInfo(col_xml)
+        metadata = getMetadata(col_xml)
+
+        # add persons into VPR
+        author_ids = []
+        authors = roles.get('author', ['unknown'])
+        for author_uid in authors:
+            # check for existence first
+            if vpr_persons.has_key(author_uid):
+                author_id = vpr_persons[author_uid]['id']
+            else:
+                # post the new person into VPR
+                p_info = {}
+                p_info['user_id'] = author_uid
+                try:
+                    p_info['fullname'] = persons[author_uid]['fullname'][0] or ''
+                    p_info['email'] = persons[author_uid]['email'][0] or ''
+                except:
+                    p_info['fullname'] = 'unknown'
+                    p_info['email'] = ''
+                res = rq.post(VPR_URL + '/persons/', data=p_info)
+                if res.status_code == 201:
+                    per_dict = eval(res.content.replace('null', 'None'))
+                    author_id = per_dict['id']
+                    # add back to the global list
+                    vpr_persons[author_uid] = per_dict
+                else:
+                    out('Error adding author for ' + collection_id)
+                    author_id = NO_AUTHOR_ID
+            author_ids.append(author_id)
+
+        # getting categories
+        cat_ids = prepareCategory(metadata['subject'])
+
+        # prepate material content
+        col_text = genCollectionContent(col_xml)
+        m_info = {
+            'material_type': 2,
+            'title': metadata['title'],
+            'text': col_text,
+            'version': 1, 
+            'description': metadata['abstract'] or '-',
+            'language': metadata.get('language', 'na'),
+            'author': author_ids,
+            'editor': author_id,
+            'categories': cat_ids,
+            'keywords': '\n'.join(metadata['keyword']),
+            'original_id': collection_id,
+            }
+
+        # post to the site
+        if not dry:
+            res = rq.post(VPR_URL+'/materials/', data=m_info)
+            if res.status_code == 201:
+                toResume(collection_id)
+            out('%s: %d' % (col_path, res.status_code))
+        else:
+            res = m_info 
+        
+        return res
+
+
+def migrateAllCollections(root_path, dry=True, resume=False):
+    """Do the migrate to all collections found inside path"""
+    col_list = listdir(root_path)
+     
+    # prepare the resume list
+    done_list = []
+    try:
+        rf = open(RESUME_FILE, 'r')
+        if resume:
+            done_list = rf.read()
+            done_list = done_list.split('\n')
+            rf.close()
+        else:
+            os.remove(os.path.realpath(rf.filename))    
+    except:
+        out('Error with resume file')
+        
+
+    nok_file = open(FAILED_FILE, 'w')
+    m_count = 1
+    m_total = len(col_list)
+
+    try:
+        for col in col_list:
+            if col not in done_list:
+                try:
+                    res = migrateCollection(path.join(root_path, col), dry=dry)
+                    if res.status_code == 201:
+                        print '[%d/%d] OK\n' % (m_count, m_total) 
+                    else:
+                        nok_file.write('%d\t%s\n' % (res.status_code, col))
+                        print '[%d/%d] %d - %s\n' % (m_count, m_total, res.status_code, col) 
+                except:
+                    nok_file.write('ERR\t%s\n' % col)
+                    print '[%d/%d] ERR - %s\n' % (m_count, m_total, col) 
+            else:
+                out('Bypassing: ' + col)
+            m_count += 1
+    except:
+        pass
+    finally:
+        nok_file.close()
+
+from xml.dom import minidom
+
+def parseContentNode(node):
+    """Return correspondent dict to content node"""
+
+    if node.nodeName == '#text':
+        return None
+    res = {}
+    # subcollection / section
+    if node.nodeName == 'col:subcollection':
+        res['type'] = 'subcollection'
+        node_title = node.getElementsByTagName('md:title')[0]
+        res['title'] = node_title.childNodes[0].nodeValue
+        node_content = node.getElementsByTagName('col:content')[0] 
+        res['content'] = parseContentNode(node_content)
+    # module list
+    elif node.nodeName == 'col:content':
+        res = []
+        for child in node.childNodes:
+            cres = parseContentNode(child)
+            if cres is not None:
+                res.append(cres)
+    # module
+    elif node.nodeName == 'col:module':
+        res['type'] = 'module'
+        res['id'] = vpr_idmap[node.getAttribute('document')]
+        node_title = node.getElementsByTagName('md:title')[0]
+        res['title'] = node_title.childNodes[0].nodeValue
+
+    return res
+                
+
+def genCollectionContent(xml):
+    """Convert from CNXML collection structure to JSON"""
+    xml = xml.replace('\n', '')
+    root = minidom.parseString(xml)
+    dom_content = root.getElementsByTagName('col:content')[0]
+    col_dict = {'content':parseContentNode(dom_content)}
+
+    return json.dumps(col_dict)
+     
+
+# ./manage.py shell
+def exportOriginalIDs():
+    from django.db import connection
+    cur = connection.cursor()
+    cur.execute('select original_id, material_id from vpr_content_originalid;')
+    records = cur.fetchall()
+    all_ids = {}
+    for rec in records:
+        old_id = rec[0].split('_')[0]
+        all_ids[old_id] = rec[1]
+
+    print 'Export ID mapper to file idmapper.json'
+    id_file = open('idmapper.json', 'w')
+    id_file.write(json.dumps(all_ids))
+    id_file.close()
+
+    return all_ids 
+
+
+def importIDMapper():
+    """Loads all IDs from file and put into global var"""
+    try:
+        out('Import all ID mappers')
+        mf = open('idmapper.json')
+        all_ids = json.loads(mf.read())
+        mf.close()
+        return all_ids
+    except:
+        print 'Error when importing ID mapper'
 
 
 RAW_COLLECTION_IDS = """
@@ -427,3 +641,14 @@ col10273
 col10274
 col10275
 """
+
+# MUST RUN FIRST
+if __name__ == '__main__':
+    try:
+        os.remove(LOG_FILE)
+        vpr_idmap = importIDMapper()
+        vpr_persons = getAllPersons()
+        vpr_categories = getAllCategories()
+    except:
+        raise
+        print 'Error when initializing'

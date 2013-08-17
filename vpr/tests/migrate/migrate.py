@@ -70,7 +70,9 @@ def getAuthorInfo(cnxml):
         key, value = item.split('">')
         if not roles.has_key(key):
             roles[key] = []
-        roles[key].append(value)
+        # some value has many user ids inside
+        value = value.split(' ')
+        roles[key].extend(value)
 
     # extract the person info
     cnxml = cnxml.replace('\n', '')
@@ -254,12 +256,16 @@ def migrateAllModules(root_path, resume=False):
         for module in module_list:
             if module not in done_list:
                 if path.isdir(path.join(root_path,module)):
-                    res = migrateModule(path.join(root_path,module))
-                    if res.status_code == 201:
-                        print '[%d/%d] OK\n' % (m_count, m_total) 
-                    else:
-                        nok_file.write('%d\t%s\n' % (res.status_code, module))
-                        print '[%d/%d] %d - %s\n' % (m_count, m_total, res.status_code, module) 
+                    try:
+                        res = migrateModule(path.join(root_path,module))
+                        if res.status_code == 201:
+                            print '[%d/%d] OK\n' % (m_count, m_total) 
+                        else:
+                            nok_file.write('%d\t%s\n' % (res.status_code, module))
+                            print '[%d/%d] %d - %s\n' % (m_count, m_total, res.status_code, module) 
+                    except:
+                        nok_file.write('ERR\t%s\n' % module)
+                        print '[%d/%d] ERR - %s\n' % (m_count, m_total, module) 
             else:
                 out('Bypassing module: ' + module)
             m_count += 1
