@@ -7,7 +7,7 @@ import os
 
 from os import path, listdir
 from migrate import getTagContent, getAuthorInfo, buildRegex, getMetadata
-from migrate import getAllPersons, getAllCategories, out, prepareCategory, toResume
+from migrate import getAllPersons, getAllCategories, out, toResume
 from migrate import VPR_URL, LOG_FILE, FAILED_FILE, RESUME_FILE
 
 URL = 'http://rhaptos.voer.vn/content/%s/latest/source/'
@@ -218,7 +218,7 @@ def migrateCollection(col_path, dry=True):
             author_ids.append(author_id)
 
         # getting categories
-        cat_ids = prepareCategory(metadata['subject'])
+        cat_ids = prepareCategory(metadata['subject'], )
 
         # prepate material content
         col_text = genCollectionContent(col_xml)
@@ -364,6 +364,33 @@ def importIDMapper():
     except:
         print 'Error when importing ID mapper'
 
+
+def prepareCategory(categories):
+    """Return the category ID of every category in list. Creating new in
+    case of not existed"""
+
+    global vpr_categories
+
+    cat_ids = []
+    for cat in categories:
+        norm_cat = cat.lower().strip()
+        if vpr_categories.has_key(norm_cat):
+            cat_id = vpr_categories[norm_cat]['id']
+        else:
+            # create new category
+            out('Create new category: ' + cat.strip())
+            data = {'name': cat.strip(),
+                    'description':''}
+            res = rq.post(VPR_URL+'/categories/', data=data)
+            res = eval(res.content.replace('null', 'None'))
+            cat_id = res['id']
+
+            # add back to the global list
+            vpr_categories[norm_cat] = res
+
+        cat_ids.append(cat_id)
+
+    return cat_ids
 
 RAW_COLLECTION_IDS = """
 col10001
