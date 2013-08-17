@@ -188,7 +188,7 @@ def migrateModule(module_path):
                     p_info['fullname'] = persons[author_uid]['fullname'][0] or ''
                     p_info['email'] = persons[author_uid]['email'][0] or ''
                 except:
-                    p_info['fullname'] = 'unknown'
+                    p_info['fullname'] = author_uid 
                     p_info['email'] = ''
                 res = rq.post(VPR_URL + '/persons/', data=p_info)
                 if res.status_code == 201:

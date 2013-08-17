@@ -184,7 +184,6 @@ def migrateCollection(col_path, dry=True):
         collection_id = col_path.split('/')[-1]
         collection_id = collection_id.split('.')[0]
 
-
         # extract the module information
         persons, roles = getAuthorInfo(col_xml)
         metadata = getMetadata(col_xml)
@@ -204,7 +203,7 @@ def migrateCollection(col_path, dry=True):
                     p_info['fullname'] = persons[author_uid]['fullname'][0] or ''
                     p_info['email'] = persons[author_uid]['email'][0] or ''
                 except:
-                    p_info['fullname'] = 'unknown'
+                    p_info['fullname'] = author_uid 
                     p_info['email'] = ''
                 res = rq.post(VPR_URL + '/persons/', data=p_info)
                 if res.status_code == 201:
@@ -391,6 +390,69 @@ def prepareCategory(categories):
         cat_ids.append(cat_id)
 
     return cat_ids
+
+
+# ./manage.py shell
+def correctPersonRecords():
+    """Correct person records with spaces in user ID"""
+
+    global vpr_persons
+
+    out('Get list of incorrect person IDs')
+    fault_ids = [pid for pid in vpr_persons.keys() if pid.find(' ')>0]
+
+    out('Determine which is really missing')
+    really_missing = []
+    for ids  in fault_ids:
+        for pid in ids.split(' '):
+            if not vpr_persons.has_key(pid):
+                really_missing.append(pid)
+    
+    out('Add the missing persons (if needed)')
+    for pid in really_missing:
+        p_info = {
+            'user_id': pid,
+            'fullname': pid,
+            'email': '',
+            }
+        res = rq.post(VPR_URL + '/persons/', data=p_info)
+        if res.status_code != 201:
+            out('Error when adding person: ' + pid)
+            raise 
+
+    out('Reload the person list')
+    vpr_persons = getAllPersons()
+
+    out('Mapping the old and new IDs')
+    idmaps = []
+    for fid in fault_ids:
+        current_id = vpr_persons[fid]['id']
+        new_ids = []
+        for pid in fid.split(' '):
+            new_ids.append(vpr_persons[pid]['id'])
+        idmaps.append((current_id, new_ids))
+
+    out('Update on database')
+    from vpr_content.models import MaterialPerson, Person
+    for idmap in idmaps:
+        out(str(idmap))
+        mps = MaterialPerson.objects.filter(person_id=idmap[0])
+        for mp in mps:
+            material_rid = mp.material_rid
+            role = mp.role
+            for neo_pid in idmap[1]:
+                neo_mp = MaterialPerson(
+                    material_rid = material_rid,
+                    role = role,
+                    person_id = neo_pid,
+                    )
+                neo_mp.save()
+            mp.delete()
+        # delete the person record
+        Person.objects.get(id=idmap[0]).delete()
+
+    return None 
+        
 
 RAW_COLLECTION_IDS = """
 col10001
