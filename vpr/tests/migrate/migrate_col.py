@@ -399,13 +399,13 @@ def correctPersonRecords():
     global vpr_persons
 
     out('Get list of incorrect person IDs')
-    fault_ids = [pid for pid in vpr_persons.keys() if pid.find(' ')>0]
+    fault_ids = [pid for pid in vpr_persons.keys() if pid.find(' ') > 0]
 
     out('Determine which is really missing')
     really_missing = []
     for ids  in fault_ids:
-        for pid in ids.split(' '):
-            if not vpr_persons.has_key(pid):
+        for pid in ids.strip().split(' '):
+            if not vpr_persons.has_key(pid) and pid.strip() != '':
                 really_missing.append(pid)
     
     out('Add the missing persons (if needed)')
@@ -428,7 +428,7 @@ def correctPersonRecords():
     for fid in fault_ids:
         current_id = vpr_persons[fid]['id']
         new_ids = []
-        for pid in fid.split(' '):
+        for pid in fid.trip().split(' '):
             new_ids.append(vpr_persons[pid]['id'])
         idmaps.append((current_id, new_ids))
 
