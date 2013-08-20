@@ -288,12 +288,14 @@ class MaterialList(generics.ListCreateAPIView):
             # filter by person roles
             mp_objs = models.MaterialPerson.objects
             mp_list = []
+            role_in_query = False
             for role in settings.VPR_MATERIAL_ROLES:
                 role_id = settings.VPR_MATERIAL_ROLES.index(role)
                 if request.GET.get(role, ''):
                     query = request.GET.get(role, '').split(',')
                     query = [int(pid) for pid in query]
                     mp_list.extend(mp_objs.filter(role=role_id, person_id__in=query))
+                    role_in_query = True
             allow_materials = []
             for mp in mp_list:
                 if mp.material_rid not in allow_materials:
@@ -303,7 +305,7 @@ class MaterialList(generics.ListCreateAPIView):
             browse_on = {}
             fields = [item for item in request.GET if item in self.br_fields]
             [browse_on.update({item:request.GET[item]}) for item in fields]
-            if allow_materials:
+            if role_in_query:
                 browse_on['pk__in'] = allow_materials
             self.object_list = self.object_list.filter(**browse_on)
 
@@ -314,7 +316,6 @@ class MaterialList(generics.ListCreateAPIView):
                     org_cat = models.refineAssignedCategory(cat)
                     self.object_list = self.object_list.filter(
                         categories__contains=org_cat)
-
 
             # continue with sorting
             sort_fields = request.GET.get('sort_on', '')

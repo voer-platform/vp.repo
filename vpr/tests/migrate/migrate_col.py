@@ -428,7 +428,7 @@ def correctPersonRecords():
     for fid in fault_ids:
         current_id = vpr_persons[fid]['id']
         new_ids = []
-        for pid in fid.trip().split(' '):
+        for pid in fid.strip().split(' '):
             new_ids.append(vpr_persons[pid]['id'])
         idmaps.append((current_id, new_ids))
 
