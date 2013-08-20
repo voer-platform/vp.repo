@@ -8,9 +8,13 @@ from django.template import RequestContext
 from django.http import HttpResponse
 from django import forms
 
+from datetime import datetime, timedelta
+import json
+
 from forms import ClientRegForm
 from vpr_api.models import APIClient, generateClientKey, APIToken
 from vpr_log.logger import get_logger
+from vpr_admin import stats
 
 logger = get_logger('dashboard')
 
@@ -124,9 +128,19 @@ def clientListView(request):
 def tokenListView(request):
     """docstring for tokenListView"""
     tokens = APIToken.objects.all().order_by('since') 
-    logger.error('What\'s going on here?')
     return render(request, 'tokens.html', {'tokens': tokens})
 
+@login_required
+def statsView(request):
+    t_end = datetime.now()
+    t_start = t_end - timedelta(days=3)
+    rs = stats.APIRecordStats(t_start)
+    p_results = rs.getPeriodResults(36)
+    to_chart = [['Time', 'Aggregated', 'GET', 'POST', 'PUT', 'DELETE'],]
+    for pi in range(len(p_results)):
+        to_chart.append(['', p_results[pi], 0, 0, 0, 0])
+
+    return render(request, 'stats.html', {'chart_data': to_chart})
 
 def getNavigationBar(request):
     """ """
