@@ -75,7 +75,7 @@ class APIRecord(models.Model):
         verbose_name = 'API Record'
 
     def __unicode__(self):
-        return "API Record: %s" % (self.request)
+        return "API Record: %s - %s" % (self.method, self.path)
 
 
 # MIGRATIONS
