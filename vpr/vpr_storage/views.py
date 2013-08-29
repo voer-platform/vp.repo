@@ -14,9 +14,14 @@ from vpr_content import models
 
 from django.conf import settings
 
+ZIP_INDEX_MODULE = 'metadata.json'
+ZIP_INDEX_COLLECTION = 'collection.json'
 ZIP_HTML_FILE = 'index.html'
 MTYPE_MODULE = 1
 MTYPE_COLLECTION = 2
+
+# hard-coded
+MATERIAL_SOURCE_URL = 'http://voer.edu.vn/m/%s/%d'
 
 def requestMaterialPDF(material):
     """ Create the zip package and post it to vpt in order to 
@@ -105,6 +110,24 @@ def zipMaterial(material):
             raw_content = raw_content.decode('utf-8').encode('utf-8')
         zf.writestr(ZIP_HTML_FILE, raw_content)
 
+        # generate material json
+        persons = models.getMaterialPersons(material.id)
+        try: 
+            author_ids = persons['author'].split(',')
+        except:
+            author_ids = []
+        author_names = models.getPersonName(author_ids)
+        index_content = {
+            'title': material.title,
+            'url': MATERIAL_SOURCE_URL % (
+                material.material_id,
+                material.version),
+            'authors': ', '.join(author_names),
+            'version': material.version,
+            }
+        index_content = json.dumps(index_content)
+        zf.writestr(ZIP_INDEX_MODULE, index_content)
+
     elif mtype == MTYPE_COLLECTION:
 
         # get list of all contained materials    
@@ -135,7 +158,7 @@ def zipMaterial(material):
             # another way
             index_content = '{"id":"%s", "title":"%s",' % (material.material_id, material.title)
             index_content += material.text[material.text.index('{')+1:]
-        zf.writestr('collection.json', index_content)
+        zf.writestr(ZIP_INDEX_COLLECTION, index_content)
         
     zf.close()
     return realpath(zf.filename)
