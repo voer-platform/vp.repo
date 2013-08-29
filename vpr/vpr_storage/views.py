@@ -122,7 +122,7 @@ def zipMaterial(material):
             'url': MATERIAL_SOURCE_URL % (
                 material.material_id,
                 material.version),
-            'authors': ', '.join(author_names),
+            'authors': author_names,
             'version': material.version,
             }
         index_content = json.dumps(index_content)
