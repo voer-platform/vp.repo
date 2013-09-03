@@ -1,5 +1,7 @@
 from django.db import connection
 from vpr_content import models
+from vpr_api.models import APIRecord
+import json 
 
 def removeDuplicatedTitleInMaterial():
     cur = connection.cursor()
@@ -61,3 +63,46 @@ def correctAllLanguages(dry=True):
     targets = models.Material.objects.exclude(language='vi')
     for material in targets:
         correctMaterialLanguage(material, dry)
+
+
+import re
+rg_number_end = re.compile('/\d+/?$')
+
+def analyzeLogPath(filename):
+    pf = open(filename, 'r')
+    vals = json.loads(pf.read())
+    pf.close()
+    
+    # stage 1: count all single objects
+    res = {}
+    new_vals = []
+    for _ in vals:
+        elements = _.split('/')
+        if elements[-1] == '':
+            elements = elements[:-1]
+        try:
+            test = int(elements[-1])
+            key = '/'.join(elements[:-1])+'/<NUM>/'
+            if res.has_key(key):
+                res[key] += 1
+            else:
+                res[key] = 1
+        except:
+            # in case of getting material
+            if len(elements)>=2 and elements[-2] == 'materials':
+                key = u'materials/<MID>/'
+                if res.has_key(key):
+                    res[key] += 1
+                else:
+                    res[key] = 1
+            else:
+                new_vals.append(_)
+
+    # now counting the rest requests
+    for item in new_vals:
+        res[item] = APIRecord.objects.filter(path=item).count()
+
+    return res
+            
+
+

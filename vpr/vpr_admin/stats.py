@@ -17,8 +17,7 @@ class APIRecordStats(object):
             period = 72
         self.__time_start = time_end - timedelta(hours=period)
         self.__time_end = time_end
-        self.__period = period
-
+        self.__period = period 
     def countResult(self, t_start=None, t_end=None):
         """ """
         if t_start == None or t_end == None:
@@ -55,4 +54,18 @@ class APIRecordStats(object):
         
         print 'Elapsed time: ', datetime.now()-t0
         return results
+
+    
+    def countPathQueries(self):
+        """Return number of calls from each query path"""
+        path_values = APIRecord.objects.distinct('path').order_by('path')
+        path_values = path_values.values('path').values()
+        
+        # now count for each one
+        path_count = {}
+        for pv in path_values:
+            path_count[pv] = APIRecord.objects.filter(path=pv).count()
+
+        return path_count
+
 
