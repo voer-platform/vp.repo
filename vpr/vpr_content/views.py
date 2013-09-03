@@ -15,6 +15,7 @@ from rest_framework import mixins
 from haystack.query import SearchQuerySet 
 from django.conf import settings
 from django.core.cache import cache
+import json
 
 import os
 import mimetypes
@@ -66,12 +67,42 @@ class CategoryList(generics.ListCreateAPIView):
     serializer_class = serializers.CategorySerializer
     paginate_by = None
 
+
+    def list(self, request, *args, **kwargs):
+        cache_key = 'category-all'
+        result = cache.get(cache_key)
+        sr_data = None
+        if result:
+            sr_data = eval(result)
+        else:
+            self.object_list = self.get_filtered_queryset()
+
+            # Default is to allow empty querysets.  This can be altered by setting
+            # `.allow_empty = False`, to raise 404 errors on empty querysets.
+            allow_empty = self.get_allow_empty()
+            if not allow_empty and len(self.object_list) == 0:
+                error_args = {'class_name': self.__class__.__name__}
+                raise Http404(self.empty_error % error_args)
+
+            # Pagination size is set by the `.paginate_by` attribute,
+            # which may be `None` to disable pagination.
+            page_size = self.get_paginate_by(self.object_list)
+            if page_size:
+                packed = self.paginate_queryset(self.object_list, page_size)
+                paginator, page, queryset, is_paginated = packed
+                serializer = self.get_pagination_serializer(page)
+            else:
+                serializer = self.get_serializer(self.object_list)
+            sr_data = serializer.data
+            cache.set(cache_key, json.dumps(sr_data), CACHE_TIMEOUT_CATEGORY)
+
+        return Response(sr_data)
+
     @api_log
     @api_token_required
     def get(self, request, *args, **kwargs):
         """Old post method with decorator"""
         response = self.list(request, *args, **kwargs)        
-        #apilog.record(request, response.status_code)
         return response
 
     @api_log
