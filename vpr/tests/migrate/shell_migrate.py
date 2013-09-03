@@ -1,5 +1,7 @@
 from django.db import connection
 from vpr_content import models
+from vpr_api.models import APIRecord
+import json 
 
 def removeDuplicatedTitleInMaterial():
     cur = connection.cursor()
@@ -30,5 +32,77 @@ def removeDuplicatedTitleInMaterial():
         except:
             raise
             print 'Updating failed at ' + str(mid)
+
+
+
+def determineLanguage(title, text):
+    VI_ELEMENTS_0 = (u'\u1ea1', u'\u1ebf', u'\u01b0')
+    VI_ELEMENTS_1 = ('&#226;', '&#432;', '&#224;')
+    for item in VI_ELEMENTS_0:
+        if item in title:
+            return 'vi'
+    for item in VI_ELEMENTS_1:
+        if item in text:
+            return 'vi'
+    return 'en'
+
+
+def correctMaterialLanguage(material, dry=False):
+    if type(material) == str:
+        material = models.Material.objects.get(material_id=material)
+
+    new_lang = determineLanguage(material.title, material.text)
+    print str(material.language) + ' > ' + new_lang
+    
+    if not dry:
+        material.language = new_lang 
+        material.save()
+
+
+def correctAllLanguages(dry=True):
+    targets = models.Material.objects.exclude(language='vi')
+    for material in targets:
+        correctMaterialLanguage(material, dry)
+
+
+import re
+rg_number_end = re.compile('/\d+/?$')
+
+def analyzeLogPath(filename):
+    pf = open(filename, 'r')
+    vals = json.loads(pf.read())
+    pf.close()
+    
+    # stage 1: count all single objects
+    res = {}
+    new_vals = []
+    for _ in vals:
+        elements = _.split('/')
+        if elements[-1] == '':
+            elements = elements[:-1]
+        try:
+            test = int(elements[-1])
+            key = '/'.join(elements[:-1])+'/<NUM>/'
+            if res.has_key(key):
+                res[key] += 1
+            else:
+                res[key] = 1
+        except:
+            # in case of getting material
+            if len(elements)>=2 and elements[-2] == 'materials':
+                key = u'materials/<MID>/'
+                if res.has_key(key):
+                    res[key] += 1
+                else:
+                    res[key] = 1
+            else:
+                new_vals.append(_)
+
+    # now counting the rest requests
+    for item in new_vals:
+        res[item] = APIRecord.objects.filter(path=item).count()
+
+    return res
+            
 
 

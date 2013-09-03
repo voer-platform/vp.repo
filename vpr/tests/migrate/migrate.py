@@ -11,6 +11,7 @@ VPR_URL = 'http://localhost:2013/1'
 LOG_FILE = 'migrate.log'
 RESUME_FILE = 'migrate.rs'
 FAILED_FILE = 'migrate.er'
+NO_AUTHOR_ID = 999999
 
 vpr_categories = {}
 vpr_persons = {}
@@ -69,7 +70,9 @@ def getAuthorInfo(cnxml):
         key, value = item.split('">')
         if not roles.has_key(key):
             roles[key] = []
-        roles[key].append(value)
+        # some value has many user ids inside
+        value = value.split(' ')
+        roles[key].extend(value)
 
     # extract the person info
     cnxml = cnxml.replace('\n', '')
@@ -153,7 +156,6 @@ def migrateModule(module_path):
         module_id = module_path.split('/')[-1]
         if module_id.strip() == '':
             module_id = module_path.split('/')[-2]
-        toResume(module_id)
 
         # extract the module information
         with open(cnxml_path, 'r') as f0:
@@ -186,7 +188,7 @@ def migrateModule(module_path):
                     p_info['fullname'] = persons[author_uid]['fullname'][0] or ''
                     p_info['email'] = persons[author_uid]['email'][0] or ''
                 except:
-                    p_info['fullname'] = 'unknown'
+                    p_info['fullname'] = author_uid 
                     p_info['email'] = ''
                 res = rq.post(VPR_URL + '/persons/', data=p_info)
                 if res.status_code == 201:
@@ -195,7 +197,7 @@ def migrateModule(module_path):
                     # add back to the global list
                     vpr_persons[author_uid] = per_dict
                 else:
-                    author_id = 999999
+                    author_id = NO_AUTHOR_ID
             author_ids.append(author_id)
 
         # getting categories
@@ -223,6 +225,8 @@ def migrateModule(module_path):
 
         # post to the site
         res = rq.post(VPR_URL+'/materials/', files=mfiles, data=m_info)
+        if res.status_code == 201:
+            toResume(module_id)
         out('%s: %d' % (module_path, res.status_code))
     
         return res
@@ -252,12 +256,16 @@ def migrateAllModules(root_path, resume=False):
         for module in module_list:
             if module not in done_list:
                 if path.isdir(path.join(root_path,module)):
-                    res = migrateModule(path.join(root_path,module))
-                    if res.status_code == 201:
-                        print '[%d/%d] OK\n' % (m_count, m_total) 
-                    else:
-                        nok_file.write('%d\t%s\n' % (res.status_code, module))
-                        print '[%d/%d] %d - %s\n' % (m_count, m_total, res.status_code, module) 
+                    try:
+                        res = migrateModule(path.join(root_path,module))
+                        if res.status_code == 201:
+                            print '[%d/%d] OK\n' % (m_count, m_total) 
+                        else:
+                            nok_file.write('%d\t%s\n' % (res.status_code, module))
+                            print '[%d/%d] %d - %s\n' % (m_count, m_total, res.status_code, module) 
+                    except:
+                        nok_file.write('ERR\t%s\n' % module)
+                        print '[%d/%d] ERR - %s\n' % (m_count, m_total, module) 
             else:
                 out('Bypassing module: ' + module)
             m_count += 1
@@ -419,12 +427,12 @@ def migrateMissingModules(root_path, resume=False):
 
 
 # MUST RUN FIRST
-
-try:
-    os.remove(LOG_FILE)
-except:
-    pass
-vpr_persons = getAllPersons()
-vpr_categories = getAllCategories()
+if __name__ == '__main__':
+    try:
+        os.remove(LOG_FILE)
+    except:
+        pass
+    vpr_persons = getAllPersons()
+    vpr_categories = getAllCategories()
 
 

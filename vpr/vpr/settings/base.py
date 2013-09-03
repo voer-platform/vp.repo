@@ -46,7 +46,7 @@ MEDIA_URL = ''
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT ='static/'
+STATIC_ROOT ='/collected-static'
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
@@ -213,7 +213,7 @@ IMAGES_DIR = os.path.join(PROJECT_DIR, 'mimgs')
 MATERIAL_FILE_DIR = os.path.join(PROJECT_DIR, 'mfiles')
 TEMP_DIR = os.path.join(PROJECT_DIR, 'tmp')
 
-VPT_URL = 'http://voer.edu.vn:6543/'
+VPT_URL = 'http://dev.voer.vn:6543/'
 
 TOKEN_REQUIRED = True 
 

@@ -41,24 +41,28 @@ COLLECTION_ITEM = """{"attr":{"id":"%s","version": %d,"rel" : "default"},
                       "state" : ""
                       }"""
 
+
 def createCollection(title='Sample Collection Title'):
-    collection_text = '[' 
+    collection_dict = {'id': 'some_id',
+                       'title': title
+                      }
+    collection_content = []
     # create sample modules first
     for i in range(2):
-        res = ct1('Sample collection module '+str(i+1))
+        res = createMaterial('Sample collection module '+str(i+1))
         res = eval(res.content.replace('null', 'None'))
-        node_text = COLLECTION_ITEM % (res['material_id'],
-                                       res['version'],
-                                       res['title'])
-        collection_text += node_text + ','
-    collection_text += ']'
-
+        collection_content.append(
+            {'type': 'module',
+             'id': res['material_id'],
+             'title': res['title']
+            })
+    collection_dict['content'] = collection_content
     i0 = 'tests/test.png'
     image = open(i0, 'r')
     mdata = {}
     mdata['material_type'] = 2
     mdata['title'] = title
-    mdata['text'] = collection_text
+    mdata['text'] = str(collection_dict)
     mdata['version'] = 1
     mdata['description'] = 'Just a quick intro of this material'
     mdata['categories'] = [1]

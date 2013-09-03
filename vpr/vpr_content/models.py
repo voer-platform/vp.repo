@@ -5,6 +5,7 @@ from django.db.models import DateTimeField, ImageField
 from django.conf import settings
 from hashlib import md5
 from datetime import datetime
+import time
 
 from vpr_api.models import APIClient
 from repository import MaterialBase
@@ -46,7 +47,8 @@ def generateMaterialId():
     """
     sugar = ''
     while True:
-        temp_id = md5(str(datetime.now()) + sugar).hexdigest()
+        #temp_id = md5(str(datetime.now()) + sugar).hexdigest()
+        temp_id = md5(str(time.time()) + sugar).hexdigest()
         temp_id = temp_id[:MATERIAL_ID_SIZE]
         if Material.objects.filter(material_id=temp_id).count() > 0:
             sugar += '1'
@@ -112,7 +114,6 @@ class MaterialPerson(models.Model):
 
 # ----------------
 
-
 def getLatestMaterial(material_id):
     """ Returns the latest version of the material with given ID """
     material = Material.objects.filter(material_id=material_id)\
@@ -141,8 +142,9 @@ def listMaterialFiles(material_id, version):
 
 
 def getMaterialPersons(material_rid):
-    """
-    """
+    """Returns dict of persons related to specific material. This uses
+    material raw ID instead of material_id"""
+
     roles = settings.VPR_MATERIAL_ROLES
     mapped_roles = MaterialPerson.objects.filter(material_rid=material_rid)
     material_roles = {}
@@ -156,7 +158,26 @@ def getMaterialPersons(material_rid):
         material_roles[role] = ','.join(material_roles[role])
 
     return material_roles
-            
+
+
+def getPersonName(person_id):
+    """Returns name of given person IDs. Accept input as string or 
+    list & tuple"""
+
+    if isinstance(person_id, list) or isinstance(person_id, tuple):
+        persons = Person.objects.filter(pk__in=person_id)
+        name_dict = {}
+        for p in persons:
+            name_dict[str(p.id)] = p.fullname
+        result = [name_dict[pid] for pid in person_id if pid in name_dict]
+    else:
+        try:
+            person = Person.object.get(id=person_id)
+            result = person.fullname
+        except:
+            result = ''
+    return result
+
 
 def setMaterialPersons(material_rid, request):
     """ """
