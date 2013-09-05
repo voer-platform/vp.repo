@@ -636,3 +636,46 @@ def listMaterialFiles(request, *args, **kwargs):
     file_ids = models.listMaterialFiles(material_id, version)
 
     return Response(file_ids)   
+
+
+SM_WEIGHT_KEYWORD = 3
+SM_WEIGHT_TITLE = 2
+SM_WEIGHT_TITLE = 1
+
+
+@api_view(['GET'])
+def getSimilarMaterials(request, *args, **kwargs):
+    """Lists all files attached to the specific material, except the material image
+    """
+    material_id = kwargs.get('mid', None)
+    version = kwargs.get('version', None)
+    # why possibly version gets nothing as value?
+    if not version:
+        version = models.getMaterialLatestVersion(material_id)
+
+    try:
+        weight_list = {}
+        material = models.Material.objects.filter(
+            material_id=material_id, 
+            version=version).values('keywords')[0]
+
+        # build the keyword query
+        keywords = material.get('keywords', '')
+        keywords = keywords.split('\n')
+        for kw in keywords:
+            objs = models.Material.objects.exclude(material_id=material_id).\
+                filter(keywords__contains=kw).values('material_id')
+            m_list = [item['material_id'] for item in objs]
+            for mid in m_list:
+                if not weight_list.has_key(mid):
+                    weight_list[mid] = [0, mid]
+                weight_list[mid][0] += SM_WEIGHT_KEYWORD 
+        
+        # sort by weights then limit the results
+        couples = weight_list.values()
+        couples.sort(reverse=True)
+        result = [item[1] for item in couples[:10]]
+    except:
+        raise404(request, 404)
+
+    return Response(result)

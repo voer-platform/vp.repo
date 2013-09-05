@@ -20,6 +20,9 @@ from vpr_api.models import APIToken as Token
 from vpr_api.models import generateClientKey, generateClientID
 
 
+TOKEN_LIFETIME = 30 # minutes
+
+
 @api_view(['GET'])
 def api_root(request, format=None):
     """The entry endpoint of our API.
@@ -73,7 +76,7 @@ def createToken(client, ip='1.1.1.1'):
     token = Token(client=client,
                   client_ip=ip,
                   )
-    expire = datetime.now() + timedelta(minutes=30)
+    expire = datetime.now() + timedelta(minutes=TOKEN_LIFETIME)
     token.expire = expire.isoformat()
     token.token = md5.md5(client.client_id + token.expire).hexdigest()
     token.save()

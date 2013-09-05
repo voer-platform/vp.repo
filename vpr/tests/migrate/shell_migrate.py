@@ -1,7 +1,9 @@
 from django.db import connection
 from vpr_content import models
 from vpr_api.models import APIRecord
+from datetime import datetime
 import json 
+
 
 def removeDuplicatedTitleInMaterial():
     cur = connection.cursor()
@@ -105,4 +107,11 @@ def analyzeLogPath(filename):
     return res
             
 
+def timeFunction(func, lap=1):
+    t0 = datetime.now()
+    for i in range(lap):
+        func()
+    delta = datetime.now() - t0
+    print 'Total of %d lap: %fs' % (lap, delta.total_seconds())
+    print 'Average lap: %.6fs' % (delta.total_seconds()/lap)
 
