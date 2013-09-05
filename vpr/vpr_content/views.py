@@ -15,7 +15,6 @@ from rest_framework import mixins
 from haystack.query import SearchQuerySet 
 from django.conf import settings
 from django.core.cache import cache
-import json
 
 import os
 import mimetypes
@@ -38,6 +37,7 @@ mimetypes.init()
 
 
 CACHE_TIMEOUT_CATEGORY = 60
+CACHE_TIMEOUT_PERSON = 60
 CACHE_TIMEOUT_MATERIAL = 60
 
 
@@ -67,11 +67,10 @@ class CategoryList(generics.ListCreateAPIView):
     serializer_class = serializers.CategorySerializer
     paginate_by = None
 
-
     def list(self, request, *args, **kwargs):
-        cache_key = 'category-all'
+        """Original list function with caching implemented"""
+        cache_key = 'list-categories:'
         result = cache.get(cache_key)
-        sr_data = None
         if result:
             sr_data = eval(result)
         else:
@@ -94,7 +93,7 @@ class CategoryList(generics.ListCreateAPIView):
             else:
                 serializer = self.get_serializer(self.object_list)
             sr_data = serializer.data
-            cache.set(cache_key, json.dumps(sr_data), CACHE_TIMEOUT_CATEGORY)
+            cache.set(cache_key, str(sr_data), CACHE_TIMEOUT_CATEGORY)
 
         return Response(sr_data)
 
@@ -121,7 +120,7 @@ class CategoryDetail(generics.RetrieveUpdateDestroyAPIView):
     def retrieve(self, request, *args, **kwargs):
         cid = kwargs.get('pk', None)
         do_count = (request.GET.get('count', None) == '1')
-        cache_key = 'category-%s%s' % (
+        cache_key = 'get-category:%s-%s' % (
             str(cid),
             (do_count and '-count') or '')
         result = cache.get(cache_key)
@@ -177,6 +176,7 @@ class PersonList(generics.ListCreateAPIView):
         response = self.list(request, *args, **kwargs)
         return response
 
+
     @api_log
     @api_token_required
     def post(self, request, *args, **kwargs):
@@ -201,25 +201,69 @@ class PersonList(generics.ListCreateAPIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def list(self, request, *args, **kwargs):
+        """Original list function with caching implemented"""
+        cache_key = 'list-persons:'
+        result = cache.get(cache_key)
+        if result:
+            sr_data = eval(result)
+        else:
+            self.object_list = self.get_filtered_queryset()
+
+            # Default is to allow empty querysets.  This can be altered by setting
+            # `.allow_empty = False`, to raise 404 errors on empty querysets.
+            allow_empty = self.get_allow_empty()
+            if not allow_empty and len(self.object_list) == 0:
+                error_args = {'class_name': self.__class__.__name__}
+                raise Http404(self.empty_error % error_args)
+
+            # Pagination size is set by the `.paginate_by` attribute,
+            # which may be `None` to disable pagination.
+            page_size = self.get_paginate_by(self.object_list)
+            if page_size:
+                packed = self.paginate_queryset(self.object_list, page_size)
+                paginator, page, queryset, is_paginated = packed
+                serializer = self.get_pagination_serializer(page)
+            else:
+                serializer = self.get_serializer(self.object_list)
+            sr_data = serializer.data
+            cache.set(cache_key, str(sr_data), CACHE_TIMEOUT_PERSON)
+
+        return Response(sr_data)
+
+
 class PersonDetail(generics.RetrieveUpdateDestroyAPIView):
     """docstring for PersonDetail"""
     model = models.Person
     serializer_class = serializers.PersonSerializer
 
     def retrieve(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        serializer = self.get_serializer(self.object)
+        pid = kwargs.get('pk', None)
+        do_count = (request.GET.get('count', None) == '1')
+        cache_key = 'get-person:%s-%s' % (
+            str(pid),
+            (do_count and 'count') or '')
+        result = cache.get(cache_key)
 
-        # check if request for counting
-        if request.GET.get('count', None) == '1':
-            pid = kwargs.get('pk', None)
-            person_stats = models.countPersonMaterial(
-                person_id = pid,
-                roles = range(len(settings.VPR_MATERIAL_ROLES)))
-            for role in person_stats:
-                serializer.data[role] = person_stats[role]
+        if not result:
+            self.object = self.get_object()
+            serializer = self.get_serializer(self.object)
 
-        return Response(serializer.data)
+            # check if request for counting
+            if request.GET.get('count', None) == '1':
+                pid = kwargs.get('pk', None)
+                person_stats = models.countPersonMaterial(
+                    person_id = pid,
+                    roles = range(len(settings.VPR_MATERIAL_ROLES)))
+                for role in person_stats:
+                    serializer.data[role] = person_stats[role]
+
+            sr_data = dict(serializer.data)
+            cache.set(cache_key, sr_data, CACHE_TIMEOUT_PERSON)
+        else:
+            sr_data = result
+
+        return Response(sr_data)
 
     @api_log
     @api_token_required
@@ -311,77 +355,86 @@ class MaterialList(generics.ListCreateAPIView):
     def list(self, request, *args, **kwargs):
         """ Customized function for listing materials with same ID
         """
-        try: 
-            self.object_list = self.model.objects
-            if kwargs.get('mid', None):
-                self.object_list = self.object_list.filter(material_id=kwargs['mid'])
-
-            # filter by person roles
-            mp_objs = models.MaterialPerson.objects
-            mp_list = []
-            role_in_query = False
-            for role in settings.VPR_MATERIAL_ROLES:
-                role_id = settings.VPR_MATERIAL_ROLES.index(role)
-                if request.GET.get(role, ''):
-                    query = request.GET.get(role, '').split(',')
-                    query = [int(pid) for pid in query]
-                    mp_list.extend(mp_objs.filter(role=role_id, person_id__in=query))
-                    role_in_query = True
-            allow_materials = []
-            for mp in mp_list:
-                if mp.material_rid not in allow_materials:
-                    allow_materials.append(int(mp.material_rid))
-
-            # do the filtering
-            browse_on = {}
-            fields = [item for item in request.GET if item in self.br_fields]
-            [browse_on.update({item:request.GET[item]}) for item in fields]
-            if role_in_query:
-                browse_on['pk__in'] = allow_materials
-            self.object_list = self.object_list.filter(**browse_on)
-
-            # custom fileting with categories 
-            if request.GET.get('categories', ''):
-                sel_cats = request.GET.get('categories', '').split(',')
-                for cat in sel_cats:
-                    org_cat = models.refineAssignedCategory(cat)
-                    self.object_list = self.object_list.filter(
-                        categories__contains=org_cat)
-
-            # continue with sorting
-            sort_fields = request.GET.get('sort_on', '')
-            if sort_fields:
-                self.object_list = self.object_list.order_by(sort_fields)
-        except:
-            raise404(request) 
-
-        # Default is to allow empty querysets.  This can be altered by setting
-        # `.allow_empty = False`, to raise 404 errors on empty querysets.
-        allow_empty = self.get_allow_empty()
-        if not allow_empty and len(self.object_list) == 0:
-            error_args = {'class_name': self.__class__.__name__}
-            raise404(request, self.empty_error % error_args)
-
-        # Pagination size is set by the `.paginate_by` attribute,
-        # which may be `None` to disable pagination.
-        page_size = self.get_paginate_by(self.object_list)
-        if page_size:
-            packed = self.paginate_queryset(self.object_list, page_size)
-            paginator, page, queryset, is_paginated = packed
-            serializer = self.get_pagination_serializer(page)
+        query_st = request.GET.urlencode() or 'all'
+        cache_key = 'list-materials:' + query_st
+        result = cache.get(cache_key)
+        if result:
+            sr_data = eval(result)
         else:
-            serializer = self.get_serializer(self.object_list)
+            try: 
+                self.object_list = self.model.objects
 
-        # silly steps: remove heavy data from response
-        try:
-            for res in range(len(serializer.data['results'])):
-                serializer.data['results'][res]['text'] = ''
-        except:
-            # should we shout anything?
-            pass
+                # filter by person roles
+                mp_objs = models.MaterialPerson.objects
+                mp_list = []
+                role_in_query = False
+                for role in settings.VPR_MATERIAL_ROLES:
+                    role_id = settings.VPR_MATERIAL_ROLES.index(role)
+                    if request.GET.get(role, ''):
+                        query = request.GET.get(role, '').split(',')
+                        query = [int(pid) for pid in query]
+                        mp_list.extend(mp_objs.filter(role=role_id, person_id__in=query))
+                        role_in_query = True
+                allow_materials = []
+                for mp in mp_list:
+                    if mp.material_rid not in allow_materials:
+                        allow_materials.append(int(mp.material_rid))
 
-        response = Response(serializer.data)
-        return response
+                # do the filtering
+                browse_on = {}
+                fields = [item for item in request.GET if item in self.br_fields]
+                [browse_on.update({item:request.GET[item]}) for item in fields]
+                if role_in_query:
+                    browse_on['pk__in'] = allow_materials
+                self.object_list = self.object_list.filter(**browse_on)
+
+                # custom fileting with categories 
+                if request.GET.get('categories', ''):
+                    sel_cats = request.GET.get('categories', '').split(',')
+                    for cat in sel_cats:
+                        org_cat = models.refineAssignedCategory(cat)
+                        self.object_list = self.object_list.filter(
+                            categories__contains=org_cat)
+
+                # continue with sorting
+                sort_fields = request.GET.get('sort_on', '')
+                if sort_fields:
+                    self.object_list = self.object_list.order_by(sort_fields)
+            except:
+                raise404(request) 
+
+            # Default is to allow empty querysets.  This can be altered by setting
+            # `.allow_empty = False`, to raise 404 errors on empty querysets.
+            allow_empty = self.get_allow_empty()
+            if not allow_empty and len(self.object_list) == 0:
+                error_args = {'class_name': self.__class__.__name__}
+                raise404(request, self.empty_error % error_args)
+
+            # Pagination size is set by the `.paginate_by` attribute,
+            # which may be `None` to disable pagination.
+            page_size = self.get_paginate_by(self.object_list)
+            if page_size:
+                packed = self.paginate_queryset(self.object_list, page_size)
+                paginator, page, queryset, is_paginated = packed
+                serializer = self.get_pagination_serializer(page)
+            else:
+                serializer = self.get_serializer(self.object_list)
+
+            # silly steps: remove heavy data from response
+            try:
+                for res in range(len(serializer.data['results'])):
+                    serializer.data['results'][res]['text'] = ''
+            except:
+                # should we shout anything?
+                pass
+
+            # setting cache
+            sr_data = serializer.data
+            for mi in sr_data['results']:
+                mi['modified'] = str(mi['modified'])
+            cache.set(cache_key, str(sr_data), CACHE_TIMEOUT_MATERIAL)
+
+        return Response(sr_data)
 
     @api_log
     @api_token_required
@@ -424,7 +477,7 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
         # implement cache
         mid = kwargs.get('mid', '')
         mvs = kwargs.get('version', '')
-        cache_key = mid + '__' + str(mvs)
+        cache_key = 'get-material:'+mid + '-' + str(mvs)
         result = cache.get(cache_key)
         
         if not result:
