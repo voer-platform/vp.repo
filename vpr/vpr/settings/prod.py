@@ -3,8 +3,6 @@
 from base import *
 
 DEBUG = TEMPLATE_DEBUG = False 
-#DEVELOPMENT = False 
-#PRODUCTION = True
 
 DATABASES = {
     'default': {
@@ -21,3 +19,6 @@ DATABASES = {
 
 ROOT_URLCONF = 'vpr.urls.prod'
 
+VPT_URL = 'http://voer.edu.vn:6543/'
+
+TOKEN_REQUIRED = True 

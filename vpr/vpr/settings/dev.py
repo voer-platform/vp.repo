@@ -36,4 +36,7 @@ STATICFILES_DIRS = (
     # Don't forget to use absolute paths, not relative paths.
 )
 
+
+VPT_URL = 'http://dev.voer.vn:6543/'
+
 TOKEN_REQUIRED = False 

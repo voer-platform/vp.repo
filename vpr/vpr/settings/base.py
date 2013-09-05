@@ -116,7 +116,6 @@ INSTALLED_APPS = (
     'rest_framework',
     'south',
     'gunicorn',
-#    'raven.contrib.django.raven_compat',
     'haystack',
     'vpr_api',
     'vpr_content',
@@ -196,7 +195,7 @@ RAVEN_CONFIG = {
 
 CACHES = {
     'default': {
-        'BACKEND': 'caching.backends.memcached.MemcachedCache',
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
         'LOCATION': ['127.0.0.1:11211',],
         'PREFIX': 'material',
     }
@@ -212,9 +211,5 @@ EXPORT_DIR = os.path.join(PROJECT_DIR, 'mexports')
 IMAGES_DIR = os.path.join(PROJECT_DIR, 'mimgs')
 MATERIAL_FILE_DIR = os.path.join(PROJECT_DIR, 'mfiles')
 TEMP_DIR = os.path.join(PROJECT_DIR, 'tmp')
-
-VPT_URL = 'http://dev.voer.vn:6543/'
-
-TOKEN_REQUIRED = True 
 
 VPR_MATERIAL_ROLES = ('author', 'editor', 'licensor', 'maintainer', 'translator', 'contributor')
