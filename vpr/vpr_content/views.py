@@ -643,6 +643,8 @@ SM_WEIGHT_TITLE = 2
 SM_WEIGHT_TITLE = 1
 
 
+#@api_log
+@api_token_required
 @api_view(['GET'])
 def getSimilarMaterials(request, *args, **kwargs):
     """Lists all files attached to the specific material, except the material image
@@ -664,11 +666,13 @@ def getSimilarMaterials(request, *args, **kwargs):
         keywords = keywords.split('\n')
         for kw in keywords:
             objs = models.Material.objects.exclude(material_id=material_id).\
-                filter(keywords__contains=kw).values('material_id')
-            m_list = [item['material_id'] for item in objs]
-            for mid in m_list:
+                filter(keywords__contains=kw).values('material_id', 'title')
+            m_list = [(item['material_id'], item['title']) for item in objs]
+            for m_item in m_list:
+                mid = m_item[0]
                 if not weight_list.has_key(mid):
-                    weight_list[mid] = [0, mid]
+                    item_dict = {'material_id': m_item[0], 'title': m_item[1]}
+                    weight_list[mid] = [0, item_dict]
                 weight_list[mid][0] += SM_WEIGHT_KEYWORD 
         
         # sort by weights then limit the results
