@@ -1,25 +1,20 @@
+from __future__ import unicode_literals
 from django.contrib.admin.options import ModelAdmin
+from django.contrib.admin.options import csrf_protect_m
 from django.contrib.admin.views.main import ChangeList, SEARCH_VAR
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, InvalidPage
 from django.shortcuts import render_to_response
 from django import template
-from django.utils.encoding import force_unicode
 from django.utils.translation import ungettext
-from haystack import site
+from haystack import connections
 from haystack.query import SearchQuerySet
+
 try:
-    from django.contrib.admin.options import csrf_protect_m
+    from django.utils.encoding import force_text
 except ImportError:
-    from haystack.utils.decorators import method_decorator
+    from django.utils.encoding import force_unicode as force_text
 
-    # Do nothing on Django 1.1 and below.
-    def csrf_protect(view):
-        def wraps(request, *args, **kwargs):
-            return view(request, *args, **kwargs)
-        return wraps
-
-    csrf_protect_m = method_decorator(csrf_protect)
 
 def list_max_show_all(changelist):
     """
@@ -80,7 +75,7 @@ class SearchModelAdmin(ModelAdmin):
 
         # Do a search of just this model and populate a Changelist with the
         # returned bits.
-        if not self.model in site.get_indexed_models():
+        if not self.model in connections['default'].get_unified_index().get_indexed_models():
             # Oops. That model isn't being indexed. Return the usual
             # behavior instead.
             return super(SearchModelAdmin, self).changelist_view(request, extra_context)
@@ -89,7 +84,25 @@ class SearchModelAdmin(ModelAdmin):
         # Why copy-paste a few lines when you can copy-paste TONS of lines?
         list_display = list(self.list_display)
 
-        changelist = SearchChangeList(request, self.model, list_display, self.list_display_links, self.list_filter, self.date_hierarchy, self.search_fields, self.list_select_related, self.list_per_page, self.list_editable, self)
+        kwargs = {
+            'request': request,
+            'model': self.model,
+            'list_display': list_display,
+            'list_display_links': self.list_display_links,
+            'list_filter': self.list_filter,
+            'date_hierarchy': self.date_hierarchy,
+            'search_fields': self.search_fields,
+            'list_select_related': self.list_select_related,
+            'list_per_page': self.list_per_page,
+            'list_editable': self.list_editable,
+            'model_admin': self
+        }
+
+        # Django 1.4 compatibility.
+        if hasattr(self, 'list_max_show_all'):
+            kwargs['list_max_show_all'] = self.list_max_show_all
+
+        changelist = SearchChangeList(**kwargs)
         formset = changelist.formset = None
         media = self.media
 
@@ -108,7 +121,7 @@ class SearchModelAdmin(ModelAdmin):
             'All %(total_count)s selected', changelist.result_count)
 
         context = {
-            'module_name': force_unicode(self.model._meta.verbose_name_plural),
+            'module_name': force_text(self.model._meta.verbose_name_plural),
             'selection_note': selection_note % {'count': len(changelist.result_list)},
             'selection_note_all': selection_note_all % {'total_count': changelist.result_count},
             'title': changelist.title,
@@ -116,7 +129,8 @@ class SearchModelAdmin(ModelAdmin):
             'cl': changelist,
             'media': media,
             'has_add_permission': self.has_add_permission(request),
-            'root_path': self.admin_site.root_path,
+            # More Django 1.4 compatibility
+            'root_path': getattr(self.admin_site, 'root_path', None),
             'app_label': self.model._meta.app_label,
             'action_form': action_form,
             'actions_on_top': self.actions_on_top,
