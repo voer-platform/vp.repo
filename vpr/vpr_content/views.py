@@ -555,6 +555,8 @@ class GeneralSearch(generics.ListAPIView):
         keywords = request.GET.get('kw', '')
         try:
             limit = request.GET.get('on', '')
+            material_type = request.GET.get('type', '')
+            query = {'content': keywords}
 
             # branching for the person case
             if limit.lower() == 'p':  
@@ -563,9 +565,16 @@ class GeneralSearch(generics.ListAPIView):
             else: 
                 self.serializer_class = serializers.IndexMaterialSerializer
                 allow_models = [models.Material]
+                try:
+                    material_type = int(material_type)
+                    query['material_type'] = material_type
+                except ValueError:
+                    pass
+
+            print query
 
             results = SearchQuerySet().models(*allow_models)
-            results = results.filter(content=keywords)
+            results = results.filter(**query)
             self.object_list = [obj.object for obj in results] 
         except:
             raise404(request)

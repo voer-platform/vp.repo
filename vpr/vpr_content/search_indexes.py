@@ -12,7 +12,7 @@ class MaterialIndex(RealTimeSearchIndex):
     title = CharField(model_attr='title')
     description = CharField(model_attr='description')
     modified = DateTimeField(model_attr='modified')
-    material_type = DateTimeField(model_attr='modified')
+    material_type = DateTimeField(model_attr='material_type')
 
     def index_queryset(self):
         """When entired index for model is updated"""
