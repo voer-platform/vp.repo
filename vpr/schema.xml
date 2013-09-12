@@ -66,7 +66,7 @@
         <tokenizer class="solr.StandardTokenizerFactory"/>
         <filter class="solr.StopFilterFactory"
                 ignoreCase="true"
-                words="stopwords_en.txt"
+                words="lang/stopwords_en.txt"
                 enablePositionIncrements="true"
                 />
         <filter class="solr.LowerCaseFilterFactory"/>
@@ -82,7 +82,7 @@
         <filter class="solr.SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>
         <filter class="solr.StopFilterFactory"
                 ignoreCase="true"
-                words="stopwords_en.txt"
+                words="lang/stopwords_en.txt"
                 enablePositionIncrements="true"
                 />
         <filter class="solr.LowerCaseFilterFactory"/>
@@ -130,9 +130,10 @@
 
   <fields>
     <!-- general -->
-    <field name="{{ ID }}" type="string" indexed="true" stored="true" multiValued="false" required="true"/>
-    <field name="{{ DJANGO_CT }}" type="string" indexed="true" stored="true" multiValued="false"/>
-    <field name="{{ DJANGO_ID }}" type="string" indexed="true" stored="true" multiValued="false"/>
+    <field name="id" type="string" indexed="true" stored="true" multiValued="false" required="true"/>
+    <field name="django_ct" type="string" indexed="true" stored="true" multiValued="false"/>
+    <field name="django_id" type="string" indexed="true" stored="true" multiValued="false"/>
+    <field name="_version_" type="long" indexed="true" stored="true" multiValued="false"/>
 
     <dynamicField name="*_i"  type="int"    indexed="true"  stored="true"/>
     <dynamicField name="*_s"  type="string"  indexed="true"  stored="true"/>
@@ -145,17 +146,32 @@
     <dynamicField name="*_p" type="location" indexed="true" stored="true"/>
     <dynamicField name="*_coordinate"  type="tdouble" indexed="true"  stored="false"/>
 
-{% for field in fields %}
-    <field name="{{ field.field_name }}" type="{{ field.type }}" indexed="{{ field.indexed }}" stored="{{ field.stored }}" multiValued="{{ field.multi_valued }}" />
-{% endfor %}
+
+    <field name="description" type="text_en" indexed="true" stored="true" multiValued="false" />
+
+    <field name="title" type="text_en" indexed="true" stored="true" multiValued="false" />
+
+    <field name="text" type="text_en" indexed="true" stored="true" multiValued="false" />
+
+    <field name="material_type" type="date" indexed="true" stored="true" multiValued="false" />
+
+    <field name="modified" type="date" indexed="true" stored="true" multiValued="false" />
+
+    <field name="material_id" type="text_en" indexed="true" stored="true" multiValued="false" />
+
+    <field name="user_id" type="text_en" indexed="true" stored="true" multiValued="false" />
+
+    <field name="email" type="text_en" indexed="true" stored="true" multiValued="false" />
+
   </fields>
 
   <!-- field to use to determine and enforce document uniqueness. -->
-  <uniqueKey>{{ ID }}</uniqueKey>
+  <uniqueKey>id</uniqueKey>
 
   <!-- field for the QueryParser to use when an explicit fieldname is absent -->
-  <defaultSearchField>{{ content_field_name }}</defaultSearchField>
+  <defaultSearchField>text</defaultSearchField>
 
   <!-- SolrQueryParser configuration: defaultOperator="AND|OR" -->
-  <solrQueryParser defaultOperator="{{ default_operator }}"/>
+  <solrQueryParser defaultOperator="AND"/>
 </schema>
+

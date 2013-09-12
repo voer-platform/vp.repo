@@ -1,3 +1,4 @@
+import requests
 from django.test.client import Client
 
 client = Client()
@@ -77,11 +78,10 @@ def createCollection(title='Sample Collection Title'):
 
     return res
 
-def createPerson(fullname='Person Name'):
-    i0 = 'tests/test.png'
-    image = open(i0, 'r')
+
+def getPersonData():
     mdata = {}
-    mdata['fullname'] = fullname
+    mdata['fullname'] = 'Test Fullname'
     mdata['first_name'] = 'First name'
     mdata['last_name'] = 'Last name'
     mdata['email'] = 'e@mail.com'
@@ -90,13 +90,32 @@ def createPerson(fullname='Person Name'):
     mdata['affiliation'] = 'none'
     mdata['affiliation_url'] = 'none_url'
     mdata['national'] = 'vietnam' 
-    mdata['avatar'] = image 
     mdata['biography'] = 'Hello this is the bio'
     mdata['client_id'] = 1 
     mdata['user_id'] = 'jamesbond' 
+    return mdata
+
+
+def createPerson():
+    i0 = 'tests/test.png'
+    image = open(i0, 'r')
+    mdata = getPersonData()
+    mdata['avatar'] = image 
     res = client.post('/1/persons/', mdata)
     res.status_code
     image.close()
+
+    return res
+
+def createPerson2():
+    i0 = 'tests/test.png'
+    mdata = getPersonData()
+    mfile = {'avatar': open('tests/test.png', 'rb')}
+    res = requests.post(
+        'http://dev.voer.vn:2013/1/persons/', 
+        data = mdata,
+        files = mfile)
+    res.status_code
 
     return res
 

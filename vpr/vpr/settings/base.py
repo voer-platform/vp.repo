@@ -181,11 +181,31 @@ INTERNAL_IPS = ('127.0.0.1',)
 
 LOGIN_URL = '/dashboard/login'
 
-# INDEX & SEARCHING 
+# INDEX & SEARCHING -------------------
 
-HAYSTACK_SEARCH_ENGINE = 'whoosh'
-HAYSTACK_SITECONF = 'vpr.search_sites'
-HAYSTACK_WHOOSH_PATH = os.path.join(os.path.dirname(__file__), 'whoosh_index')
+# Old Haystack (1.2.7)
+
+#HAYSTACK_SEARCH_ENGINE = 'whoosh'
+#HAYSTACK_SITECONF = 'vpr.search_sites'
+#HAYSTACK_WHOOSH_PATH = os.path.join(os.path.dirname(__file__), 'whoosh_index')
+
+# Haystack 2.1.0
+
+HAYSTACK_CONNECTIONS = {
+#    'default': {
+#        'ENGINE': 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
+#        'URL': 'http://127.0.0.1:9200/',
+#        'INDEX_NAME': 'haystack',
+#        },
+    'default': {
+        'ENGINE': 'haystack.backends.solr_backend.SolrEngine',
+        'URL': 'http://127.0.0.1:8983/solr'
+        },
+}
+
+HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
+
+# -------------------------------------
 
 RAVEN_CONFIG = {
     'dsn': 'http://0c540c36128343fa9a723e46d9b755cd:7bf6f5f0b4914533b76dc2a89d816d70@localhost:9000/2',
