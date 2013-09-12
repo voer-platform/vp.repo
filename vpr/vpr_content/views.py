@@ -355,51 +355,62 @@ class MaterialList(generics.ListCreateAPIView):
     def list(self, request, *args, **kwargs):
         """ Customized function for listing materials with same ID
         """
-        query_st = request.GET.urlencode() or 'all'
+        # in case of listing all version of specific material
+        material_id = kwargs.get('mid', None)
+
+        # caching
+        query_st = request.GET.urlencode() or material_id or 'all'
         cache_key = 'list-materials:' + query_st
         result = cache.get(cache_key)
+
+        print cache_key
+
         if result:
             sr_data = eval(result)
         else:
             try: 
-                self.object_list = self.model.objects
+                # show all versions of specific material
+                if kwargs.get('mid', None):
+                    self.object_list = self.model.objects.filter(material_id=kwargs['mid'])
+                # list materials
+                else:
+                    self.object_list = self.model.objects
+                    # filter by person roles
+                    mp_objs = models.MaterialPerson.objects
+                    mp_list = []
+                    role_in_query = False
+                    for role in settings.VPR_MATERIAL_ROLES:
+                        role_id = settings.VPR_MATERIAL_ROLES.index(role)
+                        if request.GET.get(role, ''):
+                            query = request.GET.get(role, '').split(',')
+                            query = [int(pid) for pid in query]
+                            mp_list.extend(mp_objs.filter(role=role_id, person_id__in=query))
+                            role_in_query = True
+                    allow_materials = []
+                    for mp in mp_list:
+                        if mp.material_rid not in allow_materials:
+                            allow_materials.append(int(mp.material_rid))
 
-                # filter by person roles
-                mp_objs = models.MaterialPerson.objects
-                mp_list = []
-                role_in_query = False
-                for role in settings.VPR_MATERIAL_ROLES:
-                    role_id = settings.VPR_MATERIAL_ROLES.index(role)
-                    if request.GET.get(role, ''):
-                        query = request.GET.get(role, '').split(',')
-                        query = [int(pid) for pid in query]
-                        mp_list.extend(mp_objs.filter(role=role_id, person_id__in=query))
-                        role_in_query = True
-                allow_materials = []
-                for mp in mp_list:
-                    if mp.material_rid not in allow_materials:
-                        allow_materials.append(int(mp.material_rid))
+                    # do the filtering
+                    browse_on = {}
+                    fields = [item for item in request.GET if item in self.br_fields]
+                    [browse_on.update({item:request.GET[item]}) for item in fields]
+                    if role_in_query:
+                        browse_on['pk__in'] = allow_materials
+                    self.object_list = self.object_list.filter(**browse_on)
 
-                # do the filtering
-                browse_on = {}
-                fields = [item for item in request.GET if item in self.br_fields]
-                [browse_on.update({item:request.GET[item]}) for item in fields]
-                if role_in_query:
-                    browse_on['pk__in'] = allow_materials
-                self.object_list = self.object_list.filter(**browse_on)
+                    # custom fileting with categories 
+                    if request.GET.get('categories', ''):
+                        sel_cats = request.GET.get('categories', '').split(',')
+                        for cat in sel_cats:
+                            org_cat = models.refineAssignedCategory(cat)
+                            self.object_list = self.object_list.filter(
+                                categories__contains=org_cat)
 
-                # custom fileting with categories 
-                if request.GET.get('categories', ''):
-                    sel_cats = request.GET.get('categories', '').split(',')
-                    for cat in sel_cats:
-                        org_cat = models.refineAssignedCategory(cat)
-                        self.object_list = self.object_list.filter(
-                            categories__contains=org_cat)
-
-                # continue with sorting
-                sort_fields = request.GET.get('sort_on', '')
-                if sort_fields:
-                    self.object_list = self.object_list.order_by(sort_fields)
+                    # continue with sorting
+                    sort_fields = request.GET.get('sort_on', '')
+                    if sort_fields:
+                        self.object_list = self.object_list.order_by(sort_fields)
             except:
                 raise404(request) 
 
