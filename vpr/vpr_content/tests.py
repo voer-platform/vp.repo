@@ -6,65 +6,67 @@ Replace this with more appropriate tests for your application.
 """
 
 from django.test import TestCase
-
 from vpr_api.models import APIClient
-from views import createEditor, createModule
-from models import Metadata, Category
+from models import Category
 
-"""
-class AuthorTestCase(TestCase):
 
-    fn = 'Barrack Obama',
-    aid = 'b_obama',
-    bio = 'Re-elected US president'
+VPR_LOCAL = 'http://127.0.0.1:8000'
+
+class PersonTestCase(TestCase):
+
+    sample_dict = {
+        'fullname' : 'Barrack Obama',
+        'biography' : 're-elected US president',
+        'first_name' : 'Barrack',
+        'last_name' : 'Obama',
+        'email' : 'president@us.com',
+        'title' : 'Mr',
+        'homepage' : 'us.com',
+        'affiliation' : 'Nothing',
+        'affiliation_url' : 'nothing.com',
+        'national' : 'US',
+        'client_id' : 1,
+        'user_id' : 'barracko',
+        }
 
     def setUp(self):
         # call the function
-        params = {
-            'fullname': self.fn,
-            'author_id': self.aid,
-            'bio': self.bio
-            }
-        self.author = createAuthor(**params)
+        pass
 
-    def testCreate(self):
-        self.assertNotEqual(self.author.id, None)
-        self.assertEqual(self.author.fullname, self.fn)
-        self.assertEqual(self.author.author_id, self.aid)
-        self.assertEqual(self.author.bio, self.bio)
-"""
+    def test_create_success(self):
+        res = self.client.post('/1/persons/', self.sample_dict)
+        self.assertEqual(res.status_code, 201)
+        content = eval(res.content.replace('null', 'None'))
+        for k in self.sample_dict:
+            self.assertEqual(self.sample_dict[k], content[k])
 
-def createAPIClient(name, cid, org='Sample Org', secret='secret'):
-    return APIClient.objects.create(client_id=cid, name=name, organization=org, secret_key=secret)
+    def test_create_missing(self):
+        miss_dict = self.sample_dict.copy()
+        miss_dict['user_id'] = ''
+        res = self.client.post('/1/persons/', miss_dict)
+        content = eval(res.content.replace('null', 'None'))
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(content['user_id'], ["This field is required."])
+
+    def test_list(self):
+        self.client.post('/1/persons/', self.sample_dict)
+        self.client.post('/1/persons/', self.sample_dict)
+        res = self.client.get('/1/persons/')
+        content = eval(res.content.replace('null', 'None'))
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(content['count'], 2)
+
+    def test_update(self):
+        self.client.post('/1/persons/', self.sample_dict)
+        update_dict = self.sample_dict.copy()
+        update_dict['fullname'] = 'Osama'
+        res = self.client.put('/1/persons/1/', update_dict)
+        content = eval(res.content.replace('null', 'None'))
+        self.assertEqual(res.status_code, 201)
+        for k in update_dict:
+            self.assertEqual(update_dict[k], content[k])
 
 
-def createCategory(number=1):
-    cats = []
-    for cat in range(number):
-        cats.append(Category.objects.create(name='Category '+str(cat+1), 
-                                            description='Description '+str(cat+1)))
-    return cats
-
-
-class EditorTestCase(TestCase):
-    client = None
-    eid = 'my_editor_id'
-    editor = None
-
-    def setUp(self):
-        self.client = createAPIClient('John Service', 'johnser')
-        params = {
-            'editor_id': self.eid,
-            'client': self.client,
-            }
-        self.editor = createEditor(**params)
-
-    def testCreate(self):
-        self.assertNotEqual(self.editor.id, None)
-        self.assertEqual(self.editor.editor_id, self.eid)
-        self.assertEqual(self.editor.client, self.client)
-
-       
 class ModuleTestCase(TestCase):
     """docstring for ModuleTestCase"""
 

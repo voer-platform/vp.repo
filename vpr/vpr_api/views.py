@@ -61,8 +61,6 @@ def authenticate(request, cid):
             res['result'] = 'OK'
         else:
             raise NotAcceptable('Authentication failed (invalid combination)')
-            # or...
-            #return Response({'details':'Authentication ...'}, status=406)
     except:
         raise
         res['result'] = 'ERROR'
