@@ -163,7 +163,7 @@ def zipMaterial(material):
 
         # generate collection.json
         try:
-            index_content = eval(material.text)
+            index_content = json.loads(material.text)
             index_content['id'] = material.material_id
             index_content['title'] = material.title
             index_content['version'] = str(material.version)
