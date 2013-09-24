@@ -153,8 +153,10 @@ def zipMaterial(material):
             zf.writestr(m_id+'/'+ZIP_HTML_FILE, m_object.text)
 
         # prepare some fields
-        persons = models.getMaterialPersons(material.id)
-        editors = models.getPersonName(persons['editor'])
+        editor_ids = models.getMaterialPersons(material.id)['editor']
+        editor_ids = editor_ids.split(',')
+        editors = models.getPersonName(editor_ids)
+        if isinstance(editors, str): editors = [editors,]
         material_url = MATERIAL_SOURCE_URL % (
             material.material_id,
             material.version)

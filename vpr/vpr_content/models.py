@@ -152,7 +152,6 @@ def getMaterialRawID(material_id, version=None):
             material_id=material_id, version=version).values('id')[0]
         mrid = mrid['id']
     except:
-        raise
         mrid = None
     return mrid
 

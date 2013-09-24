@@ -16,7 +16,9 @@ def updateCollectionContent():
             # prepare authors 
             mrid = models.getMaterialRawID(node['id'], node['version'])
             persons = models.getMaterialPersons(mrid)
-            authors = models.getPersonName(persons['author'])
+            author_ids = persons['author'].split(',')
+            authors = models.getPersonName(author_ids)
+            if isinstance(authors, str): authors = [authors,]
             node['authors'] = authors
         elif node['type'] == 'subcollection':
             neo_node = []
@@ -39,8 +41,6 @@ def updateCollectionContent():
 
         except:
             print 'Error with (' + col.material_id + '): ' + col.title
-    
-
 
 def removeDuplicatedTitleInMaterial():
     cur = connection.cursor()
