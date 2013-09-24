@@ -168,12 +168,12 @@ def getPersonName(person_id):
         persons = Person.objects.filter(pk__in=person_id)
         name_dict = {}
         for p in persons:
-            name_dict[str(p.id)] = p.fullname
-        result = [name_dict[pid] for pid in person_id if pid in name_dict]
+            name_dict[str(p.id)] = p.fullname or p.user_id
+        result = [name_dict[str(pid)] for pid in person_id if pid in name_dict]
     else:
         try:
-            person = Person.object.get(id=person_id)
-            result = person.fullname
+            person = Person.objects.get(id=person_id)
+            result = person.fullname or person.user_id
         except:
             result = ''
     return result
