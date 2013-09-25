@@ -125,8 +125,10 @@ def getLatestMaterial(material_id):
 def getMaterialLatestVersion(material_id):
     """ Returns the value of newest material version
     """
-    material = getLatestMaterial(material_id)
-    return material.version
+    version = Material.objects.filter(material_id=material_id)\
+                                      .order_by('version') \
+                                      .reverse().values('version')[0]
+    return version['version'] 
 
 
 def listMaterialFiles(material_id, version):
@@ -139,6 +141,19 @@ def listMaterialFiles(material_id, version):
         file_ids = [mf.id for mf in mfiles]
 
     return file_ids   
+
+
+def getMaterialRawID(material_id, version=None):
+    """Returns the raw ID of specific material"""
+    try:
+        if not version:
+            version = getMaterialLatestVersion(material_id)
+        mrid = Material.objects.filter(
+            material_id=material_id, version=version).values('id')[0]
+        mrid = mrid['id']
+    except:
+        mrid = None
+    return mrid
 
 
 def getMaterialPersons(material_rid):
@@ -168,12 +183,12 @@ def getPersonName(person_id):
         persons = Person.objects.filter(pk__in=person_id)
         name_dict = {}
         for p in persons:
-            name_dict[str(p.id)] = p.fullname
-        result = [name_dict[pid] for pid in person_id if pid in name_dict]
+            name_dict[str(p.id)] = p.fullname or p.user_id
+        result = [name_dict[str(pid)] for pid in person_id if pid in name_dict]
     else:
         try:
-            person = Person.object.get(id=person_id)
-            result = person.fullname
+            person = Person.objects.get(id=person_id)
+            result = person.fullname or person.user_id
         except:
             result = ''
     return result

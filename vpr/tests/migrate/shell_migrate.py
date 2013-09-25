@@ -5,6 +5,43 @@ from datetime import datetime
 import json 
 
 
+def updateCollectionContent():
+    """This will put more info into collection 'content' field in order to 
+    fulfill request from export component"""
+
+    def updateNode(node):
+        if node['type'] == 'module':
+            node['url'] = 'http://www.voer.edu.vn/m/' + node['id']
+            node['license'] = "http://creativecommons.org/licenses/by/3.0/"
+            # prepare authors 
+            mrid = models.getMaterialRawID(node['id'], node['version'])
+            persons = models.getMaterialPersons(mrid)
+            author_ids = persons['author'].split(',')
+            authors = models.getPersonName(author_ids)
+            if isinstance(authors, str): authors = [authors,]
+            node['authors'] = authors
+        elif node['type'] == 'subcollection':
+            neo_node = []
+            for sub_node in node['content']:
+                neo_node.append(updateNode(sub_node))
+            node['content'] = neo_node
+        return node
+
+    cols = models.Material.objects.filter(material_type=2)
+    for col in cols:
+        try:
+            content = json.loads(col.text)
+            neo_content = []
+            for node in content['content']:
+                neo_content.append(updateNode(node))
+            content = {'content': neo_content}
+            col.text = json.dumps(content)
+            col.save()
+            print 'DONE ' + col.material_id
+
+        except:
+            print 'Error with (' + col.material_id + '): ' + col.title
+
 def removeDuplicatedTitleInMaterial():
     cur = connection.cursor()
     qr0 = 'select id from vpr_content_material'
