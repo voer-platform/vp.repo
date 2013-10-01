@@ -90,6 +90,7 @@ class PersonTestCase(TestCase):
 
     def test_list(self):
         self.client.post('/1/persons/', self.sample_dict)
+        self.assertEqual(res.status_code, CODE_CREATED)
         res = self.client.get('/1/persons/')
         content = normRes(res)
         self.assertEqual(res.status_code, CODE_SUCCESS)
@@ -417,6 +418,6 @@ class MaterialTestCase(TestCase):
         res = self.client.get('/1/materials/%s/pdf/' % self.content0['material_id'])
         while res.status_code == 102:
             print 'retry getting PDF file...'
-            time.sleep(2)    
+            time.sleep(1)    
             res = self.client.get('/1/materials/%s/pdf/' % self.content0['material_id'])
         self.assertEqual(res.status_code, 200)
