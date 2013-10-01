@@ -369,8 +369,8 @@ class MaterialTestCase(TestCase):
 
     def test_list_order(self):
         sm1 = self.sample_material.copy()
-        time.sleep(1)
-        sm1['modified'] = datetime.utcnow()
+        sm1['modified'] = None
+        time.sleep(2)
         res = self.client.post('/1/materials/', sm1)
         self.assertEqual(res.status_code, CODE_CREATED)
         mid1 = normRes(res)['material_id']
