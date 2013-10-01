@@ -78,13 +78,6 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'parent', 'description')
 
 
-class EditorSerializer(serializers.ModelSerializer):
-    """docstring for EditorSerializer"""
-    class Meta:
-        model = models.Editor
-        fields = ('id', 'fullname', 'user_id', 'client_id')
-
-
 class PersonSerializer(serializers.ModelSerializer):
     """docstring for PersonSerializer"""
     class Meta:

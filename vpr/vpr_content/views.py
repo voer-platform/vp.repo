@@ -315,6 +315,9 @@ class MaterialList(generics.ListCreateAPIView):
             # update the person and roles
             models.setMaterialPersons(self.object.id, request.DATA)
 
+            # correct modified time to now
+            self.object.modified = datetime.utcnow()
+
             # add the attached image manually
             self.object.image = request.FILES.get('image', None)
             self.object.save()
@@ -344,7 +347,7 @@ class MaterialList(generics.ListCreateAPIView):
                 orgid.save()
 
             # (module/collection) create the zip package and post to vpt
-            if request.DATA.get('export-now', 0):
+            if not request.DATA.get('export-later', 0):
                 requestMaterialPDF(self.object) 
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -362,8 +365,6 @@ class MaterialList(generics.ListCreateAPIView):
         query_st = request.GET.urlencode() or material_id or 'all'
         cache_key = 'list-materials:' + query_st
         result = cache.get(cache_key)
-
-        print cache_key
 
         if result:
             sr_data = eval(result)
@@ -410,6 +411,7 @@ class MaterialList(generics.ListCreateAPIView):
                     # continue with sorting
                     sort_fields = request.GET.get('sort_on', '')
                     if sort_fields:
+                        #import pdb;pdb.set_trace()
                         self.object_list = self.object_list.order_by(sort_fields)
             except:
                 raise404(request) 
@@ -523,22 +525,48 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
                 # check if valid editor or new material will be created
                 sobj = serializer.object
                 sobj.material_id = kwargs.get('mid')
-
-                last_material = models.getLatestMaterial(sobj.material_id)
+                last_version = models.getMaterialLatestVersion(sobj.material_id)
                 try:
-                    sobj.version = last_material.version + 1
+                    sobj.version = last_version + 1
                 except AttributeError:
                     sobj.version = 1
-
                 self.pre_save(sobj)
                 self.object = serializer.save()
+
+                # update the person and roles
+                models.setMaterialPersons(self.object.id, request.DATA)
+
+                # add the attached image manually
+                self.object.image = request.FILES.get('image', None)
+                self.object.save()
+
+                # next, add all other files submitted
+                material_id = self.object.material_id
+                material_version = self.object.version 
+                for key in request.FILES.keys():
+                    if key == 'image': continue
+                    mfile = models.MaterialFile()
+                    mfile.material_id = material_id 
+                    mfile.version = material_version
+                    file_content = request.FILES.get(key, None)
+                    mfile.mfile = file_content 
+                    #mfile.mfile.close()
+                    mfile.name = request.FILES[key].name
+                    mfile.description = request.DATA.get(key+'_description', '')
+                    mfile.mime_type = mimetypes.guess_type(
+                        os.path.realpath(mfile.mfile.name))[0] or ''
+                    mfile.save()
+
+                # (module/collection) create the zip package and post to vpt
+                if not request.DATA.get('export-later', 0):
+                    requestMaterialPDF(self.object) 
+
                 response = Response(serializer.data, status=status.HTTP_201_CREATED)
             else:
                 response = Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)            
 
             return response
         except: 
-            raise 
             raise404(request)
 
     @api_log
