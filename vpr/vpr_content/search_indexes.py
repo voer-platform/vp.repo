@@ -12,6 +12,8 @@ class MaterialIndex(SearchIndex, Indexable):
     description = CharField(model_attr='description')
     modified = DateTimeField(model_attr='modified')
     material_type = IntegerField(model_attr='material_type')
+    version = IntegerField(model_attr='version')
+    categories = CharField(model_attr='categories', null=True)
 
     def get_model(self):
         return Material

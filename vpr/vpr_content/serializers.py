@@ -105,12 +105,14 @@ class MaterialFileSerializer(serializers.ModelSerializer):
 
 # SERIALIZERS FOR SEARCHING
 
-class IndexMaterialSerializer(serializers.ModelSerializer):
+class IndexMaterialSerializer(serializers.Serializer):
     
-    class Meta:
-        model = models.Material
-        fields = ('material_id', 'material_type', 'title',
-                  'categories', 'version', 'modified')
+    material_id = serializers.Field()
+    title = serializers.Field()
+    material_type = serializers.Field()
+    version = serializers.Field()
+    modified = serializers.Field()
+    categories = serializers.Field()
 
     def convert_object(self, obj):
         """
@@ -133,7 +135,7 @@ class IndexMaterialSerializer(serializers.ModelSerializer):
         ret['categories'] = ','.join(cids)
 
         # vpr: custom process for material author, editor
-        material_roles = models.getMaterialPersons(obj.id)
+        material_roles = models.getMaterialPersons(obj.pk)
         for person_role in material_roles:
             ret[person_role] = material_roles[person_role] 
 

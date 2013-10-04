@@ -585,7 +585,6 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
 
 class GeneralSearch(generics.ListAPIView):
     """docstring for Search"""
-    model = models.Material
 
     @api_log
     @api_token_required
@@ -608,13 +607,17 @@ class GeneralSearch(generics.ListAPIView):
                     material_type = int(material_type)
                     query['material_type'] = material_type
                 except ValueError:
-                    pass
+                    pass    
 
-            print query
+            # get paging infomation
+            pg_size = settings.REST_FRAMEWORK['PAGINATE_BY']
+            pg_at = int(request.GET.get('page', 1))
+            pg_start = (pg_at-1)*pg_size
 
-            results = SearchQuerySet().models(*allow_models)
-            results = results.filter(**query)
-            self.object_list = [obj.object for obj in results] 
+            # perform search
+            res = SearchQuerySet().models(*allow_models).filter(**query)
+            result_count = res.count()
+            self.object_list = [_ for _ in res[pg_start:pg_start+pg_size]]
         except:
             raise404(request)
 
@@ -625,18 +628,41 @@ class GeneralSearch(generics.ListAPIView):
             error_args = {'class_name': self.__class__.__name__}
             raise404(self.empty_error % error_args)
 
-        # Pagination size is set by the `.paginate_by` attribute,
-        # which may be `None` to disable pagination.
-        page_size = self.get_paginate_by(self.object_list)
-        if page_size:
-            packed = self.paginate_queryset(self.object_list, page_size)
-            paginator, page, queryset, is_paginated = packed
-            serializer = self.get_pagination_serializer(page)
-        else:
-            serializer = self.get_serializer(self.object_list)
+        # build the next and previous pages
+        page_prev, page_next = buildPageURLs(request) 
+        if pg_at <= 1:
+            page_prev = None
+        if pg_size * pg_at >= result_count:
+            page_next = None
+        serializer = self.get_serializer(self.object_list)
+
+        # alter serialization data
+        new_data = {
+            'next': page_next,
+            'previous': page_prev,
+            'results': serializer.data,
+            'count': result_count,
+            }
+        serializer._data = new_data
 
         response = Response(serializer.data) 
         return response
+
+
+def buildPageURLs(request):
+    """Return the URLs of next and previous page from current one"""
+    page = int(request.GET.get('page', 1))
+    query = request.GET.dict()
+    pre_location = request.path + '?' 
+    query['page'] = page + 1
+    query_st = '&'.join([k+'='+unicode(query[k]) for k in query])
+    next_location = pre_location + query_st 
+    query['page'] = page - 1
+    query_st = '&'.join([k+'='+unicode(query[k]) for k in query])
+    prev_location= pre_location + query_st 
+    url_next = request.build_absolute_uri(next_location)
+    url_prev = request.build_absolute_uri(prev_location)
+    return url_prev, url_next
 
 
 class MaterialFiles(generics.ListCreateAPIView):
