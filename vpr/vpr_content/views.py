@@ -762,10 +762,6 @@ def getSimilarByHaystack(material_id, version):
             material_id = material_id,
             version = version)[0]
 
-    m2 = models.Material.objects.get(
-        material_id = material_id,
-        version = 1)
-
     similar = SearchQuerySet().more_like_this(material)[:10]
     result = []
     for item in similar:
