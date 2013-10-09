@@ -36,9 +36,9 @@ import serializers
 mimetypes.init()
 
 
-CACHE_TIMEOUT_CATEGORY = 60
-CACHE_TIMEOUT_PERSON = 60
-CACHE_TIMEOUT_MATERIAL = 60
+CACHE_TIMEOUT_CATEGORY = 180
+CACHE_TIMEOUT_PERSON = 180
+CACHE_TIMEOUT_MATERIAL = 180
 
 
 def raise404(request, message=''):
@@ -788,5 +788,15 @@ def getSimilarMaterials(request, *args, **kwargs):
     """
     material_id = kwargs.get('mid', None)
     version = kwargs.get('version', None)
-    result = getSimilarByHaystack(material_id, version)
+    cache_key = 'get-similar:'+material_id + '-' + str(version)
+    res_cache = cache.get(cache_key)
+    if res_cache:
+        result = res_cache
+    else:               
+        result = getSimilarByHaystack(material_id, version)
+        cache.set(cache_key, result, CACHE_TIMEOUT_MATERIAL)
+
     return Response(result)
+
+
+
