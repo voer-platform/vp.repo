@@ -22,10 +22,15 @@ DATABASES = {
 # Make this unique, and don't share it with anybody.
 #SECRET_KEY = 'kw7#s$8t&amp;6d9*7*$a$(gui0r1ze7f#u%(hua=^a3u66+vyj+9g'
 
+MIDDLEWARE_CLASSES += (
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    )
+
 ROOT_URLCONF = 'vpr.urls.dev'
 
 INSTALLED_APPS += (
     'django_extensions',   
+    'debug_toolbar',
     )
 
 STATICFILES_DIRS = (

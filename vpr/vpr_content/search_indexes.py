@@ -8,8 +8,9 @@ class MaterialIndex(SearchIndex, Indexable):
     # "text" combines normal body, title, description and keywords
     text = CharField(document=True, use_template=True)
     material_id = CharField(model_attr='material_id')
-    title = CharField(model_attr='title')
-    description = CharField(model_attr='description')
+    title = CharField(model_attr='title', boost=1.5)
+    description = CharField(model_attr='description', boost=1.125)
+    keywords = CharField(model_attr='description', boost=1.25)
     modified = DateTimeField(model_attr='modified')
     material_type = IntegerField(model_attr='material_type')
     version = IntegerField(model_attr='version')

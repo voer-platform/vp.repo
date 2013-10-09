@@ -717,14 +717,9 @@ SM_WEIGHT_TITLE = 2
 SM_WEIGHT_TITLE = 1
 
 
-#@api_log
-@api_token_required
-@api_view(['GET'])
-def getSimilarMaterials(request, *args, **kwargs):
-    """Lists all files attached to the specific material, except the material image
-    """
-    material_id = kwargs.get('mid', None)
-    version = kwargs.get('version', None)
+def getSimilarByKeywords(material_id, version):
+    """Returns list of similar materials getting by comparing keywords"""
+
     # why possibly version gets nothing as value?
     if not version:
         version = models.getMaterialLatestVersion(material_id)
@@ -755,5 +750,43 @@ def getSimilarMaterials(request, *args, **kwargs):
         result = [item[1] for item in couples[:10]]
     except:
         raise404(request, 404)
+    return result
 
+
+def getSimilarByHaystack(material_id, version):
+    """Return list of similar materials using Haystack"""
+    if not version:
+        material = models.getLatestMaterial(material_id)
+    else:
+        material = models.Material.objects.filter(
+            material_id = material_id,
+            version = version)[0]
+
+    m2 = models.Material.objects.get(
+        material_id = material_id,
+        version = 1)
+
+    similar = SearchQuerySet().more_like_this(material)[:10]
+    result = []
+    for item in similar:
+        item_dict = {}
+        item_dict['material_id'] = item.material_id
+        item_dict['title'] = item.title
+        item_dict['version'] = item.version
+        item_dict['material_type'] = item.material_type
+        item_dict['modified'] = item.modified
+        result.append(item_dict)
+
+    return result
+
+
+#@api_log
+@api_token_required
+@api_view(['GET'])
+def getSimilarMaterials(request, *args, **kwargs):
+    """Lists all files attached to the specific material, except the material image
+    """
+    material_id = kwargs.get('mid', None)
+    version = kwargs.get('version', None)
+    result = getSimilarByHaystack(material_id, version)
     return Response(result)
