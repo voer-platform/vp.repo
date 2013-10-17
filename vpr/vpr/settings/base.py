@@ -147,10 +147,10 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler'
         },
-#        'sentry': {
-#            'level': 'INFO',
-#            'class': 'raven.contrib.django.handlers.SentryHandler',
-#        },
+        'database': {
+            'level': 'INFO',
+            'class': 'vpr_log.logger.DatabaseHandler',
+        },
     },
     'loggers': {
         'django.request': {
@@ -158,13 +158,13 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': True,
         },
-        'vpr.api': {
-            'handlers': ['console'],
+        'vpr.api.requests': {
+            'handlers': ['console', 'database'],
             'level': 'INFO',
             'propagate': True,
         },
         'vpr.dashboard': {
-            'handlers': ['console'],            
+            'handlers': ['console'],
             'level': 'ERROR',
             'propagate': True,
         },

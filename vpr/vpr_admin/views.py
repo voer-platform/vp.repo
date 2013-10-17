@@ -13,10 +13,7 @@ import json
 
 from forms import ClientRegForm
 from vpr_api.models import APIClient, generateClientKey, APIToken
-from vpr_log.logger import get_logger
 from vpr_admin import stats
-
-logger = get_logger('dashboard')
 
 class DashboardView(TemplateView):
     

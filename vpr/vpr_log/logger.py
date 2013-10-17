@@ -8,16 +8,13 @@ vpr_loggers = {'api': 'vpr.api',
            }
 
 
-class Logger(logging.Logger):
-    """Customized logger of VPR"""
-    pass        
+class DatabaseHandler(logging.Handler):
+    """ """
+    
+    def __init__(self):
+        logging.Handler.__init__(self)
 
+    def emit(self, record):
+        print 'What is going on here?'
 
-def get_logger(name='root'):
-    """
-    Return a logger with the specified name, creating it if necessary.
-
-    If no name is specified, return the root logger.
-    """
-    return Logger.manager.getLogger(vpr_loggers[name])
 

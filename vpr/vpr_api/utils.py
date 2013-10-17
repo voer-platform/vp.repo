@@ -1,7 +1,13 @@
 from datetime import datetime
 
-from vpr_api.models import APIRecord 
-from vpr_log.logger import get_logger
+from django.dispatch import receiver
+from django.utils.log import getLogger
+
+from models import APIRecord 
+from signals import after_apicall
+
+
+logger = getLogger('vpr.api.request')
 
 # Logs, records
 
@@ -13,7 +19,7 @@ COOKIE_TOKEN = 'vpr_token'
 COOKIE_CLIENT = 'vpr_client'
 CLIENT_ID_UNKNOWN = -1
 
-logger = get_logger('api')
+logger = getLogger('vpr.api.requests')
 
 class APILogger():
     """Provides methods for recording API activities"""
@@ -50,3 +56,13 @@ class APILogger():
         except:
             logger.error(LOG_ERROR_RECORDING)
             
+
+@receiver(after_apicall)
+def handle_apicall(sender, **kwargs):
+    """Handle of API call signal. This does two things:
+        1. Send an update to statsd
+        2. Store a log record into DB
+    """
+    logger.info('Hello there')
+
+

@@ -1,15 +1,15 @@
 from rest_framework.response import Response
 from django.conf import settings
+from django.utils.log import getLogger
 from datetime import datetime
-import logging
 
 from vpr_api.views import validateToken
 from vpr_api.utils import COOKIE_CLIENT, COOKIE_TOKEN
 from vpr_api.models import APIRecord
-from vpr_log.logger import get_logger
+from vpr_api.signals import after_apicall
 
 
-logger = get_logger('api')
+logger = getLogger('vpr.api.request')
 
 CLIENT_ID_UNKNOWN = -1
 LOG_CHECK_TOKEN = 'Check API token (%s): %s'
@@ -57,16 +57,7 @@ def api_log(func):
             qr_keys = request.GET.keys()
             path = '/'.join(request.path.split('/')[2:])
             query = '&'.join([k+'='+request.GET.get(k,'') for k in qr_keys])
-            rec = APIRecord(
-                client_id = client_id,
-                method = request.method,
-                path = path,
-                time = datetime.now(),
-                result = res.status_code,
-                query = query,
-                )
-            #rec.ip = request.META.get('REMOTE_ADDR', ''),
-            rec.save()
+            after_apicall.send(sender=None)
         except:
             raise
             logger.error(LOG_RECORD_FAILED)
