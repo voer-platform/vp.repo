@@ -36,12 +36,6 @@ class Person(models.Model):
     avatar = ImageField(upload_to="./mimgs/persons", blank=True, null=True) 
 
 
-class Editor(models.Model):
-    fullname = CharField(max_length=255, blank=True)
-    user_id = CharField(max_length=64, blank=True)
-    client_id = IntegerField(default=0)
-
-
 def generateMaterialId():
     """ Ensure generating of unique material ID
     """
@@ -76,7 +70,7 @@ class Material(models.Model, MaterialBase):
     keywords = TextField(blank=True, null=True)
     language = CharField(max_length=2, blank=True)
     license_id = IntegerField(null=True)
-    modified = DateTimeField(default=datetime.now)
+    modified = DateTimeField(default=datetime.utcnow)
     derived_from = CharField(max_length=64, blank=True, null=True)
     image = ImageField(upload_to="./mimgs", blank=True, null=True) 
 
@@ -125,8 +119,10 @@ def getLatestMaterial(material_id):
 def getMaterialLatestVersion(material_id):
     """ Returns the value of newest material version
     """
-    material = getLatestMaterial(material_id)
-    return material.version
+    version = Material.objects.filter(material_id=material_id)\
+                                      .order_by('version') \
+                                      .reverse().values('version')[0]
+    return version['version'] 
 
 
 def listMaterialFiles(material_id, version):
@@ -139,6 +135,19 @@ def listMaterialFiles(material_id, version):
         file_ids = [mf.id for mf in mfiles]
 
     return file_ids   
+
+
+def getMaterialRawID(material_id, version=None):
+    """Returns the raw ID of specific material"""
+    try:
+        if not version:
+            version = getMaterialLatestVersion(material_id)
+        mrid = Material.objects.filter(
+            material_id=material_id, version=version).values('id')[0]
+        mrid = mrid['id']
+    except:
+        mrid = None
+    return mrid
 
 
 def getMaterialPersons(material_rid):
@@ -208,8 +217,8 @@ def countAssignedMaterial(category_id):
     category"""
     res = None
     try:
-        category_id = SINGLE_ASSIGNED_CATEGORY % str(category_id)
-        cmd = "SELECT COUNT(id) FROM vpr_content_material WHERE categories LIKE '%s';" % category_id
+        enclosed_id = SINGLE_ASSIGNED_CATEGORY % str(category_id)
+        cmd = "SELECT COUNT(id) FROM vpr_content_material WHERE categories LIKE '%%%s%%';" % enclosed_id 
         cur = connection.cursor()
         cur.execute(cmd)
         res = cur.fetchone()[0]

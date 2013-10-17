@@ -36,9 +36,9 @@ import serializers
 mimetypes.init()
 
 
-CACHE_TIMEOUT_CATEGORY = 60
-CACHE_TIMEOUT_PERSON = 60
-CACHE_TIMEOUT_MATERIAL = 60
+CACHE_TIMEOUT_CATEGORY = 180
+CACHE_TIMEOUT_PERSON = 180
+CACHE_TIMEOUT_MATERIAL = 180
 
 
 def raise404(request, message=''):
@@ -315,6 +315,9 @@ class MaterialList(generics.ListCreateAPIView):
             # update the person and roles
             models.setMaterialPersons(self.object.id, request.DATA)
 
+            # correct modified time to now
+            self.object.modified = datetime.utcnow()
+
             # add the attached image manually
             self.object.image = request.FILES.get('image', None)
             self.object.save()
@@ -344,7 +347,7 @@ class MaterialList(generics.ListCreateAPIView):
                 orgid.save()
 
             # (module/collection) create the zip package and post to vpt
-            if request.DATA.get('export-now', 0):
+            if not request.DATA.get('export-later', 0):
                 requestMaterialPDF(self.object) 
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -362,8 +365,6 @@ class MaterialList(generics.ListCreateAPIView):
         query_st = request.GET.urlencode() or material_id or 'all'
         cache_key = 'list-materials:' + query_st
         result = cache.get(cache_key)
-
-        print cache_key
 
         if result:
             sr_data = eval(result)
@@ -410,6 +411,7 @@ class MaterialList(generics.ListCreateAPIView):
                     # continue with sorting
                     sort_fields = request.GET.get('sort_on', '')
                     if sort_fields:
+                        #import pdb;pdb.set_trace()
                         self.object_list = self.object_list.order_by(sort_fields)
             except:
                 raise404(request) 
@@ -523,22 +525,48 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
                 # check if valid editor or new material will be created
                 sobj = serializer.object
                 sobj.material_id = kwargs.get('mid')
-
-                last_material = models.getLatestMaterial(sobj.material_id)
+                last_version = models.getMaterialLatestVersion(sobj.material_id)
                 try:
-                    sobj.version = last_material.version + 1
+                    sobj.version = last_version + 1
                 except AttributeError:
                     sobj.version = 1
-
                 self.pre_save(sobj)
                 self.object = serializer.save()
+
+                # update the person and roles
+                models.setMaterialPersons(self.object.id, request.DATA)
+
+                # add the attached image manually
+                self.object.image = request.FILES.get('image', None)
+                self.object.save()
+
+                # next, add all other files submitted
+                material_id = self.object.material_id
+                material_version = self.object.version 
+                for key in request.FILES.keys():
+                    if key == 'image': continue
+                    mfile = models.MaterialFile()
+                    mfile.material_id = material_id 
+                    mfile.version = material_version
+                    file_content = request.FILES.get(key, None)
+                    mfile.mfile = file_content 
+                    #mfile.mfile.close()
+                    mfile.name = request.FILES[key].name
+                    mfile.description = request.DATA.get(key+'_description', '')
+                    mfile.mime_type = mimetypes.guess_type(
+                        os.path.realpath(mfile.mfile.name))[0] or ''
+                    mfile.save()
+
+                # (module/collection) create the zip package and post to vpt
+                if not request.DATA.get('export-later', 0):
+                    requestMaterialPDF(self.object) 
+
                 response = Response(serializer.data, status=status.HTTP_201_CREATED)
             else:
                 response = Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)            
 
             return response
         except: 
-            raise 
             raise404(request)
 
     @api_log
@@ -557,7 +585,6 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
 
 class GeneralSearch(generics.ListAPIView):
     """docstring for Search"""
-    model = models.Material
 
     @api_log
     @api_token_required
@@ -580,13 +607,17 @@ class GeneralSearch(generics.ListAPIView):
                     material_type = int(material_type)
                     query['material_type'] = material_type
                 except ValueError:
-                    pass
+                    pass    
 
-            print query
+            # get paging infomation
+            pg_size = settings.REST_FRAMEWORK['PAGINATE_BY']
+            pg_at = int(request.GET.get('page', 1))
+            pg_start = (pg_at-1)*pg_size
 
-            results = SearchQuerySet().models(*allow_models)
-            results = results.filter(**query)
-            self.object_list = [obj.object for obj in results] 
+            # perform search
+            res = SearchQuerySet().models(*allow_models).filter(**query)
+            result_count = res.count()
+            self.object_list = [_ for _ in res[pg_start:pg_start+pg_size]]
         except:
             raise404(request)
 
@@ -597,18 +628,41 @@ class GeneralSearch(generics.ListAPIView):
             error_args = {'class_name': self.__class__.__name__}
             raise404(self.empty_error % error_args)
 
-        # Pagination size is set by the `.paginate_by` attribute,
-        # which may be `None` to disable pagination.
-        page_size = self.get_paginate_by(self.object_list)
-        if page_size:
-            packed = self.paginate_queryset(self.object_list, page_size)
-            paginator, page, queryset, is_paginated = packed
-            serializer = self.get_pagination_serializer(page)
-        else:
-            serializer = self.get_serializer(self.object_list)
+        # build the next and previous pages
+        page_prev, page_next = buildPageURLs(request) 
+        if pg_at <= 1:
+            page_prev = None
+        if pg_size * pg_at >= result_count:
+            page_next = None
+        serializer = self.get_serializer(self.object_list)
+
+        # alter serialization data
+        new_data = {
+            'next': page_next,
+            'previous': page_prev,
+            'results': serializer.data,
+            'count': result_count,
+            }
+        serializer._data = new_data
 
         response = Response(serializer.data) 
         return response
+
+
+def buildPageURLs(request):
+    """Return the URLs of next and previous page from current one"""
+    page = int(request.GET.get('page', 1))
+    query = request.GET.dict()
+    pre_location = request.path + '?' 
+    query['page'] = page + 1
+    query_st = '&'.join([k+'='+unicode(query[k]) for k in query])
+    next_location = pre_location + query_st 
+    query['page'] = page - 1
+    query_st = '&'.join([k+'='+unicode(query[k]) for k in query])
+    prev_location= pre_location + query_st 
+    url_next = request.build_absolute_uri(next_location)
+    url_prev = request.build_absolute_uri(prev_location)
+    return url_prev, url_next
 
 
 class MaterialFiles(generics.ListCreateAPIView):
@@ -663,14 +717,9 @@ SM_WEIGHT_TITLE = 2
 SM_WEIGHT_TITLE = 1
 
 
-#@api_log
-@api_token_required
-@api_view(['GET'])
-def getSimilarMaterials(request, *args, **kwargs):
-    """Lists all files attached to the specific material, except the material image
-    """
-    material_id = kwargs.get('mid', None)
-    version = kwargs.get('version', None)
+def getSimilarByKeywords(material_id, version):
+    """Returns list of similar materials getting by comparing keywords"""
+
     # why possibly version gets nothing as value?
     if not version:
         version = models.getMaterialLatestVersion(material_id)
@@ -701,5 +750,49 @@ def getSimilarMaterials(request, *args, **kwargs):
         result = [item[1] for item in couples[:10]]
     except:
         raise404(request, 404)
+    return result
+
+
+def getSimilarByHaystack(material_id, version):
+    """Return list of similar materials using Haystack"""
+    if not version:
+        material = models.getLatestMaterial(material_id)
+    else:
+        material = models.Material.objects.filter(
+            material_id = material_id,
+            version = version)[0]
+
+    similar = SearchQuerySet().more_like_this(material)[:10]
+    result = []
+    for item in similar:
+        item_dict = {}
+        item_dict['material_id'] = item.material_id
+        item_dict['title'] = item.title
+        item_dict['version'] = item.version
+        item_dict['material_type'] = item.material_type
+        item_dict['modified'] = item.modified
+        result.append(item_dict)
+
+    return result
+
+
+#@api_log
+@api_token_required
+@api_view(['GET'])
+def getSimilarMaterials(request, *args, **kwargs):
+    """Lists all files attached to the specific material, except the material image
+    """
+    material_id = kwargs.get('mid', None)
+    version = kwargs.get('version', None)
+    cache_key = 'get-similar:'+material_id + '-' + str(version)
+    res_cache = cache.get(cache_key)
+    if res_cache:
+        result = res_cache
+    else:               
+        result = getSimilarByHaystack(material_id, version)
+        cache.set(cache_key, result, CACHE_TIMEOUT_MATERIAL)
 
     return Response(result)
+
+
+

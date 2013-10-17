@@ -17,8 +17,12 @@ from django.conf import settings
 ZIP_INDEX_MODULE = 'metadata.json'
 ZIP_INDEX_COLLECTION = 'collection.json'
 ZIP_HTML_FILE = 'index.html'
+ZIP_FILE_NAME = 'm-%s-%s.zip'
+
 MTYPE_MODULE = 1
 MTYPE_COLLECTION = 2
+
+MATERIAL_LICENSE = "http://creativecommons.org/licenses/by/3.0/"
 
 # hard-coded
 MATERIAL_SOURCE_URL = 'http://voer.edu.vn/m/%s/%d'
@@ -89,7 +93,7 @@ def zipMaterial(material):
     # init the zip package
     zip_path = os.path.join(
         settings.TEMP_DIR,
-        'm-'+str(mid)+'-'+str(version)+'.zip'
+        ZIP_FILE_NAME % (str(mid), str(version))
         )
     zf = ZipFile(zip_path, 'w', ZIP_DEFLATED) 
 
@@ -148,15 +152,33 @@ def zipMaterial(material):
                 mf.mfile.close()
             zf.writestr(m_id+'/'+ZIP_HTML_FILE, m_object.text)
 
+        # prepare some fields
+        editor_ids = models.getMaterialPersons(material.id)['editor']
+        editor_ids = editor_ids.split(',')
+        editors = models.getPersonName(editor_ids)
+        if isinstance(editors, str): editors = [editors,]
+        material_url = MATERIAL_SOURCE_URL % (
+            material.material_id,
+            material.version)
+
         # generate collection.json
         try:
-            index_content = eval(material.text)
+            index_content = json.loads(material.text)
             index_content['id'] = material.material_id
             index_content['title'] = material.title
+            index_content['version'] = str(material.version)
+            index_content['license'] = MATERIAL_LICENSE
+            index_content['url'] = material_url
+            index_content['editors'] = editors 
             index_content = json.dumps(index_content)
         except:
             # another way
-            index_content = '{"id":"%s", "title":"%s",' % (material.material_id, material.title)
+            index_content = '{"id":"%s",' % material.material_id
+            index_content += '"title":"%s",' %  material.title
+            index_content += '"version":"%s",' % str(material.version)
+            index_content += '"license":"%s",' % MATERIAL_LICENSE
+            index_content += '"url":"%s",' % material_url
+            index_content += '"editors":"%s",' % editors 
             index_content += material.text[material.text.index('{')+1:]
         zf.writestr(ZIP_INDEX_COLLECTION, index_content)
         
