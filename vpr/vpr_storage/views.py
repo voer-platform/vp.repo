@@ -147,9 +147,12 @@ def zipMaterial(material):
             mfids = listMaterialFiles(m_id, m_version)
             m_object = Material.objects.get(material_id=m_id)
             for mfid in mfids:
-                mf = MaterialFile.objects.get(id=mfid)
-                zf.writestr(m_id+'/'+mf.name, mf.mfile.read())
-                mf.mfile.close()
+                try:
+                    mf = MaterialFile.objects.get(id=mfid)
+                    zf.writestr(m_id+'/'+mf.name, mf.mfile.read())
+                    mf.mfile.close()
+                except:
+                    print 'Error when reading material file: ' + mf.name
             zf.writestr(m_id+'/'+ZIP_HTML_FILE, m_object.text)
 
         # prepare some fields
@@ -195,7 +198,7 @@ def getNestedMaterials(material):
         for node in nodes:
             materials.extend(extractMaterialInfo(node))
     except:
-        pass
+        print 'Error when getting nested materials of ' + material.material_id
     return materials
     
 
@@ -203,20 +206,20 @@ def extractMaterialInfo(node):
     """(recursively) Returns material IDs and version found"""
     found = []
     try:
-        # extract current node
-        mid = node['id']
-        mver = node.get('version', None)
-        mtitle = node['title']
-        found.append((mid, mver, mtitle))
-
         # extract child nodes
         if node.get('content', []):
-            for child_node in node['children']:
+            for child_node in node['content']:
                 found.extend(extractMaterialInfo(child_node))
+        else:
+            # extract current node
+            mid = node['id']
+            mver = node.get('version', None)
+            mtitle = node['title']
+            found.append((mid, mver, mtitle))
     except:
         # where is the error?
         print "Error when getting collection modules"
-        pass
+
     return found
         
 
