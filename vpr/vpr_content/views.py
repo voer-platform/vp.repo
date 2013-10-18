@@ -777,8 +777,8 @@ def getSimilarByHaystack(material_id, version):
 
 
 #@api_log
-@api_token_required
 @api_view(['GET'])
+@api_token_required
 def getSimilarMaterials(request, *args, **kwargs):
     """Lists all files attached to the specific material, except the material image
     """

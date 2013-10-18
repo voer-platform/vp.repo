@@ -25,7 +25,10 @@ def api_token_required(func):
             logger.info('API authentication bypassed')
             return func(*args, **kwargs)
 
-        request = args[1]._request
+        if len(args) > 1:
+            request = args[1]._request
+        else:
+            request = args[0]._request
         token = request.COOKIES.get(COOKIE_TOKEN, None)
         client_id = request.COOKIES.get(COOKIE_CLIENT, None)
 
