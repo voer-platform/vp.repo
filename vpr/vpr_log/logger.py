@@ -1,13 +1,8 @@
 import logging
-
-vpr_loggers = {'api': 'vpr.api',
-           'content': 'vpr.content',
-           'system': 'vpr.system',
-           'dashboard': 'vpr.dashboard',
-           'root': 'vpr.root'
-           }
+#from utils import saveLog
 
 
+# not being used for now
 class DatabaseHandler(logging.Handler):
     """ """
     
@@ -15,6 +10,6 @@ class DatabaseHandler(logging.Handler):
         logging.Handler.__init__(self)
 
     def emit(self, record):
-        print 'What is going on here?'
-
+        pass
+        
 

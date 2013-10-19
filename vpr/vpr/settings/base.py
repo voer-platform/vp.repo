@@ -147,10 +147,6 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler'
         },
-        'database': {
-            'level': 'INFO',
-            'class': 'vpr_log.logger.DatabaseHandler',
-        },
     },
     'loggers': {
         'django.request': {
@@ -158,17 +154,6 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': True,
         },
-        'vpr.api.requests': {
-            'handlers': ['console', 'database'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-        'vpr.dashboard': {
-            'handlers': ['console'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
- 
    }
 }
 
@@ -233,3 +218,12 @@ MATERIAL_FILE_DIR = os.path.join(PROJECT_DIR, 'mfiles')
 TEMP_DIR = os.path.join(PROJECT_DIR, 'tmp')
 
 VPR_MATERIAL_ROLES = ('author', 'editor', 'licensor', 'maintainer', 'translator', 'contributor')
+
+
+# VPR LOG 
+
+LOG_DB_NAME = 'vpr'
+LOG_COLLECTION = {
+    'api': 'api',
+    'dashboard': 'dashboard',
+    }

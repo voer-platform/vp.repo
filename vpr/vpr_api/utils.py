@@ -1,8 +1,10 @@
 from datetime import datetime
-
 from django.dispatch import receiver
 from django.utils.log import getLogger
+from django.conf import settings 
 
+
+from vpr_log.utils import saveLog
 from models import APIRecord 
 from signals import after_apicall
 
@@ -63,6 +65,20 @@ def handle_apicall(sender, **kwargs):
         1. Send an update to statsd
         2. Store a log record into DB
     """
-    logger.info('Hello there')
-
+    request = kwargs['request']
+    client_id = request.COOKIES.get(COOKIE_CLIENT)
+    if not client_id:
+        client_id = request.GET.get(COOKIE_CLIENT, CLIENT_ID_UNKNOWN)
+    qr_keys = request.GET.keys()
+    query = '&'.join([k+'='+request.GET.get(k,'') for k in qr_keys])
+    rec = { 
+        'client_id': client_id,
+        'method': request.method,
+        'path': request.path,
+        'time': datetime.now(),
+        'result': kwargs.get('code', None),
+        'query': query,
+        'ip': request.META.get('REMOTE_ADDR', ''),
+        }
+    saveLog(settings.LOG_COLLECTION['api'], rec) 
 

@@ -57,7 +57,7 @@ def api_log(func):
             qr_keys = request.GET.keys()
             path = '/'.join(request.path.split('/')[2:])
             query = '&'.join([k+'='+request.GET.get(k,'') for k in qr_keys])
-            after_apicall.send(sender=None)
+            after_apicall.send(sender=None, request=request, result=res.status_code)
         except:
             raise
             logger.error(LOG_RECORD_FAILED)
