@@ -76,7 +76,7 @@ def handle_apicall(sender, **kwargs):
         'method': request.method,
         'path': request.path,
         'time': datetime.now(),
-        'result': kwargs.get('code', None),
+        'result': kwargs.get('result', None),
         'query': query,
         'ip': request.META.get('REMOTE_ADDR', ''),
         }
