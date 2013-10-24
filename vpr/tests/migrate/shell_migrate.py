@@ -1,13 +1,15 @@
+import json 
+from datetime import datetime
 from django.db import connection
+
 from vpr_content import models
 from vpr_api.models import APIRecord
-from datetime import datetime
-import json 
 
 
+# 10-2013, zniper
 def updateCollectionContent():
     """This will put more info into collection 'content' field in order to 
-    fulfill request from export component"""
+    fulfill request from export component."""
 
     def updateNode(node):
         if node['type'] == 'module':
@@ -42,7 +44,10 @@ def updateCollectionContent():
         except:
             print 'Error with (' + col.material_id + '): ' + col.title
 
+
 def removeDuplicatedTitleInMaterial():
+    """Remove duplicated title shown inside the body of material. It need
+    to be killed"""
     cur = connection.cursor()
     qr0 = 'select id from vpr_content_material'
     qr1 = 'select text from vpr_content_material where id=%d'
@@ -151,4 +156,5 @@ def timeFunction(func, lap=1):
     delta = datetime.now() - t0
     print 'Total of %d lap: %fs' % (lap, delta.total_seconds())
     print 'Average lap: %.6fs' % (delta.total_seconds()/lap)
+
 

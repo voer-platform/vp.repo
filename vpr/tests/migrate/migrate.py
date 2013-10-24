@@ -127,6 +127,7 @@ def prepareCategory(categories):
         if vpr_categories.has_key(norm_cat):
             cat_id = vpr_categories[norm_cat]['id']
         else:
+            import pdb;pdb.set_trace()
             # create new category
             out('Create new category: ' + cat.strip())
             data = {'name': cat.strip(),
@@ -179,7 +180,7 @@ def migrateModule(module_path):
         for author_uid in authors:
             # check for existence first
             if vpr_persons.has_key(author_uid):
-                author_id = vpr_persons[author_uid]['id']
+                author_id = int(vpr_persons[author_uid]['id'])
             else:
                 # post the new person into VPR
                 p_info = {}
@@ -193,6 +194,7 @@ def migrateModule(module_path):
                 res = rq.post(VPR_URL + '/persons/', data=p_info)
                 if res.status_code == 201:
                     per_dict = eval(res.content.replace('null', 'None'))
+                    per_dict['id'] = int(per_dict['id'])
                     author_id = per_dict['id']
                     # add back to the global list
                     vpr_persons[author_uid] = per_dict
@@ -327,6 +329,19 @@ def getAllPersons():
     return persons
 
 
+# 10-2013, zniper
+def shell_getAllPersons():
+    """shell version of getAllPersons inside migrate.py module"""
+    from vpr_content import models
+
+    db_persons = models.Person.objects.all().values()
+    persons = {}
+    for p in db_persons:
+        persons[p['user_id']] = p
+        
+    return persons
+
+
 def getAllCategories():
     """Download all categories and store inside global list"""
     out('Downloading categories...')
@@ -432,7 +447,13 @@ if __name__ == '__main__':
         os.remove(LOG_FILE)
     except:
         pass
-    vpr_persons = getAllPersons()
+
+    # prepare persons and cat DB
+    try:
+        vpr_persons = shell_getAllPersons()
+    except:
+        vpr_persons = getAllPersons()
+    
     vpr_categories = getAllCategories()
 
 
