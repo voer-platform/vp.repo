@@ -95,6 +95,30 @@ class MiniPersonSerializer(serializers.ModelSerializer):
                   'user_id', 'email', 'client_id')
 
 
+class IndexPersonSerializer(serializers.ModelSerializer):
+    """docstring for PersonSerializer"""
+    class Meta:
+        model = models.Person
+        fields = ('id', 'fullname', 'first_name', 'last_name', 'title',
+                  'user_id', 'email')
+
+    def convert_object(self, obj):
+        ret = self._dict_class()
+        ret.fields = {}
+
+        fields = self.get_fields(nested=bool(self.opts.depth))
+        for field_name, field in fields.items():
+            key = self.get_field_key(field_name)
+            value = field.field_to_native(obj, field_name)
+            ret[key] = value
+            ret.fields[key] = field
+
+        # vpr: custom settings for categories field
+        ret['id'] = obj.pk 
+
+        return ret
+
+
 class MaterialFileSerializer(serializers.ModelSerializer):
     """ File attached to material """
     class Meta:
