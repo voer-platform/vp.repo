@@ -598,7 +598,7 @@ class GeneralSearch(generics.ListAPIView):
 
             # branching for the person case
             if limit.lower() == 'p':  
-                self.serializer_class = serializers.PersonSerializer
+                self.serializer_class = serializers.IndexPersonSerializer
                 allow_models = [models.Person,]                                
             else: 
                 self.serializer_class = serializers.IndexMaterialSerializer
