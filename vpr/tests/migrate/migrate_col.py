@@ -256,7 +256,7 @@ def migrateCollection(col_path, dry=True):
             'editor': author_id,
             'categories': cat_ids,
             'keywords': '\n'.join(metadata['keyword']),
-            'original_id': collection_id,
+            'original_id': ORIGINAL_PREFIX + collection_id,
             }
 
         m_info['export_later'] = 1
@@ -342,7 +342,7 @@ def parseContentNode(node):
     elif node.nodeName == 'col:module':
       try:
         res['type'] = 'module'
-        res['id'] = vpr_idmap[node.getAttribute('document')]
+        res['id'] = vpr_idmap[ORIGINAL_PREFIX + node.getAttribute('document')]
         node_title = node.getElementsByTagName('md:title')[0]
         res['title'] = node_title.childNodes[0].nodeValue
         res['version'] = 1

@@ -13,6 +13,9 @@ RESUME_FILE = 'migrate.rs'
 FAILED_FILE = 'migrate.er'
 NO_AUTHOR_ID = 999999
 
+# please set this value to avoid duplication with other migrations
+ORIGINAL_PREFIX = 'osb_'
+
 vpr_categories = {}
 vpr_persons = {}
 
@@ -144,6 +147,12 @@ def prepareCategory(categories):
     return cat_ids
 
 
+def removeStrangeTag(text):
+    """Returns text with clean of strange tags like <?....?>"""
+    rg = re.compile('<\?.*\?>\s*')
+    return rg.sub('', text)
+
+
 def migrateModule(module_path):
     """Convert current module at given path into material inside VPR"""
     
@@ -168,6 +177,9 @@ def migrateModule(module_path):
         convert2HTML(module_path)
         with open(path.join(module_path, 'index.html')) as f1:
             html = f1.read()
+
+        # remove some tags
+        html = removeStrangeTag(html)
 
         # load all the files
         module_files = listdir(module_path)
@@ -217,8 +229,11 @@ def migrateModule(module_path):
             'editor': author_id,
             'categories': cat_ids,
             'keywords': '\n'.join(metadata['keyword']),
-            'original_id': module_id,
+            'original_id': ORIGINAL_PREFIX + module_id,
             }
+
+        m_info['export_later'] = 1
+
         mfiles = {}
         for mfid in module_files:
             mf = open(path.join(module_path, mfid), 'r')
