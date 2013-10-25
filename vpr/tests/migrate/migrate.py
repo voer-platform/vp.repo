@@ -14,7 +14,8 @@ FAILED_FILE = 'migrate.er'
 NO_AUTHOR_ID = 999999
 
 # please set this value to avoid duplication with other migrations
-ORIGINAL_PREFIX = 'osb_'
+# do not include _ inside the prefix
+ORIGINAL_PREFIX = 'osb-'
 
 vpr_categories = {}
 vpr_persons = {}

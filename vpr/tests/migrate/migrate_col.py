@@ -8,7 +8,7 @@ import os
 from os import path, listdir
 from migrate import getTagContent, getAuthorInfo, buildRegex, getMetadata
 from migrate import shell_getAllPersons, getAllPersons, getAllCategories, out, toResume
-from migrate import VPR_URL, LOG_FILE, FAILED_FILE, RESUME_FILE
+from migrate import VPR_URL, LOG_FILE, FAILED_FILE, RESUME_FILE, ORIGINAL_PREFIX
 
 URL = 'http://rhaptos.voer.vn/content/%s/latest/source/'
 URL_ZIP = 'http://rhaptos.voer.vn/content/%s/latest/complete/'
