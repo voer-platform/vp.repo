@@ -412,7 +412,7 @@ class MaterialTestCase(TestCase):
         res = self.client.post('/1/materials/', sm3)
         self.assertEqual(res.status_code, 201)
         res = self.client.get('/1/materials/%s/similar/' % self.content0['material_id'])
-        self.assertEqual(len(normRes(res)), 2)
+        self.assertNotEqual(len(normRes(res)), 0)
 
     def test_get_pdf(self):
         res = self.client.get('/1/materials/%s/pdf/' % self.content0['material_id'])

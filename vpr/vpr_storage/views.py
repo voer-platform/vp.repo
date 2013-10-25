@@ -23,9 +23,9 @@ MTYPE_MODULE = 1
 MTYPE_COLLECTION = 2
 
 MATERIAL_LICENSE = "http://creativecommons.org/licenses/by/3.0/"
-
-# hard-coded
 MATERIAL_SOURCE_URL = 'http://voer.edu.vn/m/%s/%d'
+
+HTTP_CODE_PROCESSING = 102
 
 def requestMaterialPDF(material):
     """ Create the zip package and post it to vpt in order to 
@@ -147,9 +147,12 @@ def zipMaterial(material):
             mfids = listMaterialFiles(m_id, m_version)
             m_object = Material.objects.get(material_id=m_id)
             for mfid in mfids:
-                mf = MaterialFile.objects.get(id=mfid)
-                zf.writestr(m_id+'/'+mf.name, mf.mfile.read())
-                mf.mfile.close()
+                try:
+                    mf = MaterialFile.objects.get(id=mfid)
+                    zf.writestr(m_id+'/'+mf.name, mf.mfile.read())
+                    mf.mfile.close()
+                except:
+                    print 'Error when reading material file: ' + mf.name
             zf.writestr(m_id+'/'+ZIP_HTML_FILE, m_object.text)
 
         # prepare some fields
@@ -195,7 +198,7 @@ def getNestedMaterials(material):
         for node in nodes:
             materials.extend(extractMaterialInfo(node))
     except:
-        pass
+        print 'Error when getting nested materials of ' + material.material_id
     return materials
     
 
@@ -203,54 +206,51 @@ def extractMaterialInfo(node):
     """(recursively) Returns material IDs and version found"""
     found = []
     try:
-        # extract current node
-        mid = node['id']
-        mver = node.get('version', None)
-        mtitle = node['title']
-        found.append((mid, mver, mtitle))
-
         # extract child nodes
         if node.get('content', []):
-            for child_node in node['children']:
+            for child_node in node['content']:
                 found.extend(extractMaterialInfo(child_node))
+        else:
+            # extract current node
+            mid = node['id']
+            mver = node.get('version', None)
+            mtitle = node['title']
+            found.append((mid, mver, mtitle))
     except:
         # where is the error?
         print "Error when getting collection modules"
-        pass
+
     return found
         
 
 def getMaterialPDF(request, *args, **kwargs):
-    """ Check and return the PDF file of given material if exist
-    """
+    """Check and return the PDF file of given material if exist"""
     mid = kwargs.get('mid', None)
     version = kwargs.get('version', None)
    
-    if not version:
-        version = getMaterialLatestVersion(mid)
-    try:
-        export_obj = MaterialExport.objects.get(material_id=mid,
-                                                version=version)
-        with open(export_obj.path, 'rb') as pdf:
-            data = pdf.read()
-        return HttpResponse(data, mimetype='application/pdf')
-
-    except MaterialExport.DoesNotExist:
-        material = Material.objects.get(material_id=mid,
-                                        version=version)
-        requestMaterialPDF(material)
-        return HttpResponse('Material PDF is being generated...',
-                            status=102)
-    except IOError:
-        export_obj.delete()
-        material = Material.objects.get(material_id=mid,
-                                        version=version)
-        requestMaterialPDF(material)
-        return HttpResponse('Material PDF is being generated...',
-                            status=102) 
+    if not version: 
+        version = getMaterialLatestVersion(mid) 
+    try: 
+        export_obj = MaterialExport.objects.get(material_id=mid, version=version)
+        with open(export_obj.path, 'rb') as pdf: 
+            data = pdf.read() 
+            return HttpResponse(data, mimetype='application/pdf') 
+    except (MaterialExport.DoesNotExist, IOError): 
+        return startPDFGeneration(mid, version)
     except:
         raise Http404
     
+
+def startPDFGeneration(material_id, version):
+    """Generates the collection PDF and return status""" 
+    MaterialExport.objects.filter(material_id=material_id,
+                                  version=version).delete()
+    material = Material.objects.get(material_id=material_id, 
+                                    version=version)
+    requestMaterialPDF(material)
+    return HttpResponse('Material PDF is being generated...', 
+                        status=HTTP_CODE_PROCESSING) 
+
 
 def getMaterialFile(request, *args, **kwargs):
     """Return request for downloading material file"""

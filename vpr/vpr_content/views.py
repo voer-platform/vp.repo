@@ -598,7 +598,7 @@ class GeneralSearch(generics.ListAPIView):
 
             # branching for the person case
             if limit.lower() == 'p':  
-                self.serializer_class = serializers.PersonSerializer
+                self.serializer_class = serializers.IndexPersonSerializer
                 allow_models = [models.Person,]                                
             else: 
                 self.serializer_class = serializers.IndexMaterialSerializer
@@ -777,8 +777,8 @@ def getSimilarByHaystack(material_id, version):
 
 
 #@api_log
-@api_token_required
 @api_view(['GET'])
+@api_token_required
 def getSimilarMaterials(request, *args, **kwargs):
     """Lists all files attached to the specific material, except the material image
     """
