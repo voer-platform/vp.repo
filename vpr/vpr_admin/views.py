@@ -15,6 +15,7 @@ from forms import ClientRegForm
 from vpr_api.models import APIClient, generateClientKey, APIToken
 from vpr_admin import stats
 
+
 class DashboardView(TemplateView):
     
     template_name = 'home.html'
@@ -127,6 +128,7 @@ def tokenListView(request):
     tokens = APIToken.objects.all().order_by('since') 
     return render(request, 'tokens.html', {'tokens': tokens})
 
+
 @login_required
 def statsView(request):
     t_end = datetime.now()
@@ -139,29 +141,27 @@ def statsView(request):
 
     return render(request, 'stats.html', {'chart_data': to_chart})
 
-def getNavigationBar(request):
-    """ """
-    BASE_URL = '/dashboard/'
-    dashboard_items = {
-        'Overview': BASE_URL,
-        'API SERVICE': {
-            'Client Management': BASE_URL + 'clients/',
-            'Statistics': BASE_URL + 'stats/',
-            },
-        'SYSTEM': {
-            'Processes': BASE_URL + 'processes/',
-            'Resource Usages': BASE_URL + '',
-            'Database': '',
-            },
-        'CONTENT MANAGEMENT': {
-            'Materials': '',
-            'Other Content': '',
-            'Statistics': '',
-            },
-        'VP COMPONENTS': {
-            'VP Web': '',
-            'VP Core': '',
-            'VP Transformer': '',
-            },
-        } 
-    return dashboard_items
+
+import pymongo
+
+@login_required
+def apiRecordsView(request):
+    client = pymongo.MongoClient()
+    col = client['vpr'].api
+    cur = col.find().sort('time', pymongo.DESCENDING).limit(50)
+    logs = [item for item in cur]
+    return render(request, 'api_records.html', {'logs': logs})
+
+
+@login_required
+def statsView(request):
+    t_end = datetime.now()
+    t_start = t_end - timedelta(days=3)
+    rs = stats.APIRecordStats(t_start)
+    p_results = rs.getPeriodResults(36)
+    to_chart = [['Time', 'Aggregated', 'GET', 'POST', 'PUT', 'DELETE'],]
+    for pi in range(len(p_results)):
+        to_chart.append(['', p_results[pi], 0, 0, 0, 0])
+
+    return render(request, 'stats.html', {'chart_data': to_chart})
+

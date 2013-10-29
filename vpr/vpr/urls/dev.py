@@ -6,3 +6,5 @@ urlpatterns += patterns('',
     url(r'^dev/token/(?P<cid>\w+)/$', api_views.getTokenView),
     )
 
+
+INTERCEPT_REDIRECTS = False
