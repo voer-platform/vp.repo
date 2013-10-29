@@ -12,4 +12,5 @@ urlpatterns = patterns('',
     url(r'^clients/(?P<client_id>\d+)/$', views.clientEditView, name='view-client'),
     url(r'^tokens/$', views.tokenListView, name='token-list'),
     url(r'^stats/$', views.statsView, name='dashboard-stats'),
+    url(r'^materials/$', views.materialsView, name='dashboard-materials'),
 )

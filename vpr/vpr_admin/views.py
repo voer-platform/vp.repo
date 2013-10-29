@@ -142,29 +142,41 @@ def statsView(request):
 
     return render(request, 'stats.html', {'chart_data': to_chart})
 
-def getNavigationBar(request):
-    """ """
-    BASE_URL = '/dashboard/'
-    dashboard_items = {
-        'Overview': BASE_URL,
-        'API SERVICE': {
-            'Client Management': BASE_URL + 'clients/',
-            'Statistics': BASE_URL + 'stats/',
-            },
-        'SYSTEM': {
-            'Processes': BASE_URL + 'processes/',
-            'Resource Usages': BASE_URL + '',
-            'Database': '',
-            },
-        'CONTENT MANAGEMENT': {
-            'Materials': '',
-            'Other Content': '',
-            'Statistics': '',
-            },
-        'VP COMPONENTS': {
-            'VP Web': '',
-            'VP Core': '',
-            'VP Transformer': '',
-            },
-        } 
-    return dashboard_items
+
+
+from vpr_content import serializers, models
+from haystack.query import SearchQuerySet
+
+MATERIAL_LIMIT = 20
+
+@login_required
+def materialsView(request):
+    """View of the material management"""
+
+    query = request.GET.get('kw', '')
+    try:
+        page = int(request.GET.get('page', 1))
+    except:
+        page = 1
+    res = SearchQuerySet().models(models.Material)
+    if query:
+        res = res.filter(title=query)
+    else:
+        res = res.order_by('-modified')
+    res_count = res.count()
+    page_start = (page-1)*MATERIAL_LIMIT
+
+    # variables to templates
+    res = res[page_start:page_start+MATERIAL_LIMIT]
+    page_total = res_count / MATERIAL_LIMIT
+    web_url = request.get_host().split(':')[0]
+
+    return render(request, 
+                  'materials.html', 
+                  {'materials': res, 
+                   'web_url': web_url,
+                   'current_page': page,
+                   'page_total': page_total,
+                   }
+                 )
+
