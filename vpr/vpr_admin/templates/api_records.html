@@ -1,0 +1,44 @@
+{% extends "base_home.html" %}
+
+    {% block home-content %}
+
+        <div>
+
+          <h3>API Log Records</h3>
+
+          <div class="row-fluid">
+          </div>
+
+          <div id="vpr-records" style="align:left; width: 100%; height: 300px;">
+            <table class="table table-striped table-condensed">
+                <tr class="record-header">
+                    <th>Time</th>
+                    <th>Path</th>
+                    <th>Method</th>
+                    <th>Query</th>
+                    <th>Result</th>
+                    <th>Client</th>
+                    <th>IP</th>
+                </tr>
+
+                {% for item in logs %}
+                <tr class="record-row">
+                    <td> {{ item.time|date:"y-m-d H:i:s" }} </th>
+                    <td> {{ item.path }} </th>
+                    <td> {{ item.method }} </th>
+                    <td> {{ item.query }} </th>
+                    <td> {{ item.result }} </th>
+                    <td> {{ item.client_id }} </th>
+                    <td> {{ item.ip }} </th>
+                </tr>
+                {% endfor %}
+
+            </table>
+
+
+          </div>
+
+        </div>
+
+
+   {% endblock %}

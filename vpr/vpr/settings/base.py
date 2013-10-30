@@ -230,7 +230,12 @@ VPR_MATERIAL_ROLES = ('author', 'editor', 'licensor', 'maintainer', 'translator'
 
 # VPR LOG 
 
-LOG_DB_NAME = 'vpr'
+LOG_DATABASE = {
+    'host': 'localhost',
+    'port': 27017,
+    'name': 'vpr',
+    }
+
 LOG_COLLECTION = {
     'api': 'api',
     'dashboard': 'dashboard',

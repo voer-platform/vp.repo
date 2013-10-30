@@ -15,9 +15,9 @@ def getNavigationItems(request):
     dashboard_items = (
         ('Overview', adminURL()),
         ('API SERVICE', ''),
-        ('Client Management', BASE_URL + 'clients/'),
-        ('Active Tokens', BASE_URL + 'tokens/'),
-        ('Records', BASE_URL + 'api-records/'),
+        ('Client Management', adminURL('clients/')),
+        ('Active Tokens', adminURL('tokens/')),
+        ('Records', adminURL('api-records/')),
         ('SYSTEM', ''), 
         ('Processes', adminURL('processes/')),
         ('Resource Usages', adminURL('resources/')),

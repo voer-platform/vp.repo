@@ -7,13 +7,19 @@ from django.shortcuts import render_to_response, redirect, render
 from django.template import RequestContext
 from django.http import HttpResponse
 from django import forms
-
+from haystack.query import SearchQuerySet
 from datetime import datetime, timedelta
+
 import json
+import pymongo
 
 from forms import ClientRegForm
 from vpr_api.models import APIClient, generateClientKey, APIToken
 from vpr_admin import stats
+from vpr_content import serializers, models
+
+
+MATERIAL_LIMIT = 20
 
 
 class DashboardView(TemplateView):
@@ -142,13 +148,11 @@ def statsView(request):
     return render(request, 'stats.html', {'chart_data': to_chart})
 
 
-import pymongo
-
 @login_required
 def apiRecordsView(request):
     client = pymongo.MongoClient()
     col = client['vpr'].api
-    cur = col.find().sort('time', pymongo.DESCENDING).limit(50)
+    cur = col.find().sort('time', pymongo.DESCENDING).limit(200)
     logs = [item for item in cur]
     return render(request, 'api_records.html', {'logs': logs})
 
@@ -166,10 +170,6 @@ def statsView(request):
     return render(request, 'stats.html', {'chart_data': to_chart})
 
 
-from vpr_content import serializers, models
-from haystack.query import SearchQuerySet
-
-MATERIAL_LIMIT = 20
 
 @csrf_protect
 @login_required
