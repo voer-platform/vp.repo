@@ -149,6 +149,7 @@ from haystack.query import SearchQuerySet
 
 MATERIAL_LIMIT = 20
 
+@csrf_protect
 @login_required
 def materialsView(request):
     """View of the material management"""
@@ -158,6 +159,16 @@ def materialsView(request):
         page = int(request.GET.get('page', 1))
     except:
         page = 1
+
+    page_data = {'current_page': page}
+
+    # process with request for deletion
+    if request.method == "POST":    
+        del_list = request.POST.getlist('check-delete')
+        #import pdb;pdb.set_trace()
+        models.Material.objects.filter(material_id__in=del_list).delete()
+        page_data['removed'] = del_list 
+
     res = SearchQuerySet().models(models.Material)
     if query:
         res = res.filter(title=query)
@@ -167,16 +178,9 @@ def materialsView(request):
     page_start = (page-1)*MATERIAL_LIMIT
 
     # variables to templates
-    res = res[page_start:page_start+MATERIAL_LIMIT]
-    page_total = res_count / MATERIAL_LIMIT
-    web_url = request.get_host().split(':')[0]
+    page_data['materials'] = res[page_start:page_start+MATERIAL_LIMIT]
+    page_data['page_total'] = res_count / MATERIAL_LIMIT
+    page_data['web_url'] = request.get_host().split(':')[0]
 
-    return render(request, 
-                  'materials.html', 
-                  {'materials': res, 
-                   'web_url': web_url,
-                   'current_page': page,
-                   'page_total': page_total,
-                   }
-                 )
+    return render(request, 'materials.html', dictionary=page_data)
 
