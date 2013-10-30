@@ -7,8 +7,8 @@ import os
 
 from os import path, listdir
 from migrate import getTagContent, getAuthorInfo, buildRegex, getMetadata
-from migrate import getAllPersons, getAllCategories, out, toResume
-from migrate import VPR_URL, LOG_FILE, FAILED_FILE, RESUME_FILE
+from migrate import shell_getAllPersons, getAllPersons, getAllCategories, out, toResume
+from migrate import VPR_URL, LOG_FILE, FAILED_FILE, RESUME_FILE, ORIGINAL_PREFIX
 
 URL = 'http://rhaptos.voer.vn/content/%s/latest/source/'
 URL_ZIP = 'http://rhaptos.voer.vn/content/%s/latest/complete/'
@@ -92,7 +92,7 @@ def getCollectionXML(collection_path):
             xml_content = xf.read()
             xf.close()
         zf.close()
-    elif col_path.endswith('.cnxml'):
+    elif col_path.endswith('.cnxml') or col_path.endswith('.xml'): 
         cf = open(col_path)
         xml_content = cf.read()
         cf.close()
@@ -256,8 +256,10 @@ def migrateCollection(col_path, dry=True):
             'editor': author_id,
             'categories': cat_ids,
             'keywords': '\n'.join(metadata['keyword']),
-            'original_id': collection_id,
+            'original_id': ORIGINAL_PREFIX + collection_id,
             }
+
+        m_info['export_later'] = 1
 
         # post to the site
         if not dry:
@@ -340,7 +342,7 @@ def parseContentNode(node):
     elif node.nodeName == 'col:module':
       try:
         res['type'] = 'module'
-        res['id'] = vpr_idmap[node.getAttribute('document')]
+        res['id'] = vpr_idmap[ORIGINAL_PREFIX + node.getAttribute('document')]
         node_title = node.getElementsByTagName('md:title')[0]
         res['title'] = node_title.childNodes[0].nodeValue
         res['version'] = 1
@@ -492,7 +494,10 @@ if __name__ == '__main__':
         except:
             pass
         vpr_idmap = importIDMapper()
-        vpr_persons = getAllPersons()
+        try:
+            vpr_persons = shell_getAllPersons()
+        except:
+            vpr_persons = getAllPersons()
         vpr_categories = getAllCategories()
     except:
         raise

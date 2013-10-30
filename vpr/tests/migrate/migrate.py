@@ -13,6 +13,10 @@ RESUME_FILE = 'migrate.rs'
 FAILED_FILE = 'migrate.er'
 NO_AUTHOR_ID = 999999
 
+# please set this value to avoid duplication with other migrations
+# do not include _ inside the prefix
+ORIGINAL_PREFIX = 'osb-'
+
 vpr_categories = {}
 vpr_persons = {}
 
@@ -127,6 +131,7 @@ def prepareCategory(categories):
         if vpr_categories.has_key(norm_cat):
             cat_id = vpr_categories[norm_cat]['id']
         else:
+            import pdb;pdb.set_trace()
             # create new category
             out('Create new category: ' + cat.strip())
             data = {'name': cat.strip(),
@@ -141,6 +146,12 @@ def prepareCategory(categories):
         cat_ids.append(cat_id)
 
     return cat_ids
+
+
+def removeStrangeTag(text):
+    """Returns text with clean of strange tags like <?....?>"""
+    rg = re.compile('<\?.*\?>\s*')
+    return rg.sub('', text)
 
 
 def migrateModule(module_path):
@@ -168,6 +179,9 @@ def migrateModule(module_path):
         with open(path.join(module_path, 'index.html')) as f1:
             html = f1.read()
 
+        # remove some tags
+        html = removeStrangeTag(html)
+
         # load all the files
         module_files = listdir(module_path)
         module_files.remove('index.html')
@@ -179,7 +193,7 @@ def migrateModule(module_path):
         for author_uid in authors:
             # check for existence first
             if vpr_persons.has_key(author_uid):
-                author_id = vpr_persons[author_uid]['id']
+                author_id = int(vpr_persons[author_uid]['id'])
             else:
                 # post the new person into VPR
                 p_info = {}
@@ -193,6 +207,7 @@ def migrateModule(module_path):
                 res = rq.post(VPR_URL + '/persons/', data=p_info)
                 if res.status_code == 201:
                     per_dict = eval(res.content.replace('null', 'None'))
+                    per_dict['id'] = int(per_dict['id'])
                     author_id = per_dict['id']
                     # add back to the global list
                     vpr_persons[author_uid] = per_dict
@@ -215,8 +230,11 @@ def migrateModule(module_path):
             'editor': author_id,
             'categories': cat_ids,
             'keywords': '\n'.join(metadata['keyword']),
-            'original_id': module_id,
+            'original_id': ORIGINAL_PREFIX + module_id,
             }
+
+        m_info['export_later'] = 1
+
         mfiles = {}
         for mfid in module_files:
             mf = open(path.join(module_path, mfid), 'r')
@@ -327,6 +345,19 @@ def getAllPersons():
     return persons
 
 
+# 10-2013, zniper
+def shell_getAllPersons():
+    """shell version of getAllPersons inside migrate.py module"""
+    from vpr_content import models
+
+    db_persons = models.Person.objects.all().values()
+    persons = {}
+    for p in db_persons:
+        persons[p['user_id']] = p
+        
+    return persons
+
+
 def getAllCategories():
     """Download all categories and store inside global list"""
     out('Downloading categories...')
@@ -432,7 +463,13 @@ if __name__ == '__main__':
         os.remove(LOG_FILE)
     except:
         pass
-    vpr_persons = getAllPersons()
+
+    # prepare persons and cat DB
+    try:
+        vpr_persons = shell_getAllPersons()
+    except:
+        vpr_persons = getAllPersons()
+    
     vpr_categories = getAllCategories()
 
 
