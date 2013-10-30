@@ -1,0 +1,86 @@
+{% extends "base_home.html" %}
+
+    {% block home-content %}
+
+        <div>
+
+          <h3>Material Management</h3>
+
+          <div>
+            <form id="material-search" action="{{ request.path }}" method="GET">
+                <input type="text" name="kw" value="{{ request.GET.kw }}" style="margin-bottom:0px">
+                <a id="button-search" onClick="submit();" class="btn btn-primary">Search</a>
+            </form>
+          </div>
+    
+          {% if removed %}
+          <div id="notifications" class="alert">
+            <h5>Material(s) deleted:</h5>
+            <ul>
+                {% for item in removed %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+
+
+          <div>
+            {% if page_total > 1 %}
+                {% if current_page > 1 %}
+                <a href="{{ request.path }}?page={{ current_page|add:-1 }}">Previous</a>
+                {% endif %}
+                <span> &lt; {{ current_page }}/{{ page_total }} &gt; </span>
+                {% if current_page < page_total %}
+                <a href="{{ request.path }}?page={{ current_page|add:+1 }}">Next</a>
+                {% endif %}
+            {% endif %}
+          </div>
+
+          <form name="material-list" action="{{ request.get_full_path }}" method="POST">
+            {% csrf_token %}
+
+          <table class="table table-striped table-bordered" 
+                 style="margin-bottom:5px">
+            <tr>
+              <th>Title</td>
+              <th>Material ID</td>
+              <th>Modified</td>
+              <th>Summary</td>
+              <th>Select</td>
+            </tr> 
+            
+                {% for material in materials %}
+                <tr style="font-size:0.85em">
+                <td><a href="http://{{ web_url }}/m/{{ material.material_id }}">{{ material.title }}</a></td>
+                <td>{{ material.material_id }}</td>
+                <td>{{ material.modified|date:"y-m-d h:i" }}</td>
+                <td>{{ material.description|truncatewords:4 }}</td>
+                <td style="text-align:center;"><input type="checkbox" name="check-delete" value="{{ material.material_id }}"></td>
+                </tr> 
+                {% endfor %}
+
+          </table>
+        
+          <div class="row-fluid">
+            <div class="span3" style="margin-top:5px;">
+            {% if page_total > 1 %}
+                {% if current_page > 1 %}
+                <a href="{{ request.path }}?page={{ current_page|add:-1 }}">Previous</a>
+                {% endif %}
+                <span> &lt; {{ current_page }}/{{ page_total }} &gt; </span>
+                {% if current_page < page_total %}
+                <a href="{{ request.path }}?page={{ current_page|add:+1 }}">Next</a>
+                {% endif %}
+            {% endif %}
+            </div>
+            <div class="span2 offset7" style="text-align:right">
+                <a class="btn btn-small btn-danger" onClick="submit();">&nbsp;Delete&nbsp;</a>
+            </div>
+          </div>
+
+          </form>
+
+        </div>
+
+   {% endblock %}

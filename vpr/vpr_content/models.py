@@ -3,8 +3,12 @@ from django.db.models import CharField, TextField, FileField
 from django.db.models import IntegerField, CommaSeparatedIntegerField
 from django.db.models import DateTimeField, ImageField 
 from django.conf import settings
+from django.dispatch import receiver
+from django.db.models.signals import post_delete
+
 from hashlib import md5
 from datetime import datetime
+
 import time
 
 from vpr_api.models import APIClient
@@ -300,6 +304,19 @@ def countPersonMaterial(person_id, roles=()):
         except:
             pass
     return result
+
+
+@receiver(post_delete, sender=Material)
+def finishDeleteMaterial(sender, **kwargs):
+    """Delete all related data right after deleting the material"""
+    material_id = kwargs['instance'].material_id
+    mrid = kwargs['instance'].id
+
+    # remove all related content
+    OriginalID.objects.filter(material_id=material_id).delete()
+    MaterialExport.objects.filter(material_id=material_id).delete()
+    MaterialFile.objects.filter(material_id=material_id).delete()
+    MaterialPerson.objects.filter(material_rid=mrid).delete()
 
 
 # MIGRATING FUNCTIONS

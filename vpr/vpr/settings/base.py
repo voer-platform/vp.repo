@@ -1,6 +1,9 @@
 # Django settings for vpr project.
 import os
 
+from django.conf.global_settings import TEMPLATE_CONTEXT_PROCESSORS as TCP
+
+
 SETTING_DIR = os.path.dirname(__file__)
 PROJECT_DIR = os.path.join(SETTING_DIR, '../..')
 
@@ -89,6 +92,11 @@ MIDDLEWARE_CLASSES = (
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
+
+
+TEMPLATE_CONTEXT_PROCESSORS = TCP + (
+    'django.core.context_processors.request',
+    )
 
 # overrided by dev and prod
 #ROOT_URLCONF = 'vpr.urls'

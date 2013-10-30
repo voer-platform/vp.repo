@@ -12,19 +12,18 @@ def render_dashboard_nav(context):
 
 def getNavigationItems(request):
     """ """
-    BASE_URL = '/dashboard/'
     dashboard_items = (
-        ('Overview', BASE_URL),
+        ('Overview', adminURL()),
         ('API SERVICE', ''),
         ('Client Management', BASE_URL + 'clients/'),
         ('Active Tokens', BASE_URL + 'tokens/'),
         ('Records', BASE_URL + 'api-records/'),
         ('SYSTEM', ''), 
-        ('Processes', BASE_URL + 'processes/'),
-        ('Resource Usages', BASE_URL + 'resources/'),
-        ('Database', 'database'),
+        ('Processes', adminURL('processes/')),
+        ('Resource Usages', adminURL('resources/')),
+        ('Database', adminURL('database')),
         ('CONTENT', ''), 
-        ('Materials', '-'),
+        ('Materials', adminURL('materials/')),
         ('Other Content', '-'),
         ('Statistics', '-'),
         ('VP COMPONENTS', ''),
@@ -35,3 +34,6 @@ def getNavigationItems(request):
     return dashboard_items
 
 
+def adminURL(path=''):
+    BASE_URL = '/dashboard/'
+    return BASE_URL + path
