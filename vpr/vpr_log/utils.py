@@ -1,4 +1,4 @@
-from pymongo import MongoClient
+from pymongo import MongoClient, DESCENDING 
 from django.conf import settings
 
 
@@ -9,7 +9,6 @@ def getLogDatabase():
 
 
 log_db = getLogDatabase()
-
 
 # Do we really need this one?
 def initLogDatabase():
@@ -34,3 +33,23 @@ def saveLog(collection, record):
         # reconnect to the database and missing current log
         log_db = getLogDatabase()
 
+
+def filterLog(collection, limitation=100, **kwargs):
+    """Extract and returns logs following given conditions"""
+    global log_db
+    col = log_db[collection]
+    query = {}
+
+    if 'start' in kwargs or 'end' in kwargs:
+        query['time'] = {}
+    if kwargs.get('start', None):
+        query['time']['$gte'] = kwargs['start']
+    if kwargs.get('end', None):
+        query['time']['$lt'] = kwargs['end']
+    
+    print query
+
+    res = col.find(query).sort('time', DESCENDING).limit(limitation)
+    logs = [item for item in res]
+
+    return logs
