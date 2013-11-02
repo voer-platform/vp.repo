@@ -348,6 +348,7 @@ class MaterialList(generics.ListCreateAPIView):
 
             # (module/collection) create the zip package and post to vpt
             if not request.DATA.get('export_later', 0):
+                import pdb;pdb.set_trace()
                 requestMaterialPDF(self.object) 
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -522,14 +523,24 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
             serializer = self.get_serializer(data=request.DATA)
             response = None
             if serializer.is_valid():
+
                 # check if valid editor or new material will be created
                 sobj = serializer.object
-                sobj.material_id = kwargs.get('mid')
-                last_version = models.getMaterialLatestVersion(sobj.material_id)
-                try:
-                    sobj.version = last_version + 1
-                except AttributeError:
-                    sobj.version = 1
+                sobj.material_id = material_id = kwargs['mid']
+
+                # special update or checkin?
+                if request.GET.get('magic-update', None):
+                    sobj.version = current_version = int(kwargs['version'])
+                    res = models.deleteMaterial(material_id, current_version)
+                    if not res:
+                        raise   # 404
+                else:
+                    last_version = models.getMaterialLatestVersion(sobj.material_id)
+                    try:
+                        sobj.version = last_version + 1
+                    except AttributeError:
+                        sobj.version = 1
+                        
                 self.pre_save(sobj)
                 self.object = serializer.save()
 
@@ -550,7 +561,6 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
                     mfile.version = material_version
                     file_content = request.FILES.get(key, None)
                     mfile.mfile = file_content 
-                    #mfile.mfile.close()
                     mfile.name = request.FILES[key].name
                     mfile.description = request.DATA.get(key+'_description', '')
                     mfile.mime_type = mimetypes.guess_type(
@@ -569,18 +579,23 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
         except: 
             raise404(request)
 
+
     @api_log
     @api_token_required
     def destroy(self, request, *args, **kwargs):
         """ Delete the material """
         try:
-            self.object = self.get_object(material_id=kwargs.get('mid', ''),
-                                          version=kwargs.get('version', ''))
-            self.object.delete()
-            response = Response(status=status.HTTP_204_NO_CONTENT)
-            return response
+            res = models.deleteMaterial(
+                kwargs.get('mid'), 
+                kwargs.get('version'))
+            if res:
+                ret_code = status.HTTP_200_SUCCESS
+            else:
+                ret_code = status.HTTP_204_NO_CONTENT
         except:
             raise404(request)
+
+        return Response(status=ret_code)
 
 
 class GeneralSearch(generics.ListAPIView):

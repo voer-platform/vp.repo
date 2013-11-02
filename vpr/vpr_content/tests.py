@@ -7,7 +7,7 @@ Replace this with more appropriate tests for your application.
 
 from django.test import TestCase
 from vpr_api.models import APIClient
-from models import Category
+from models import Category, deleteMaterial
 from datetime import datetime
 from django.conf import settings
 
@@ -27,6 +27,7 @@ def normRes(res):
 
 
 class PersonTestCase(TestCase): 
+
     sample_dict = {
         'fullname' : 'Barrack Obama',
         'biography' : 're-elected US president',
@@ -89,7 +90,8 @@ class PersonTestCase(TestCase):
             self.assertEqual(content[role], 0)
 
     def test_list(self):
-        self.client.post('/1/persons/', self.sample_dict)
+        sm1 = self.sample_dict.copy()
+        res = self.client.post('/1/persons/', sm1)
         self.assertEqual(res.status_code, CODE_CREATED)
         res = self.client.get('/1/persons/')
         content = normRes(res)
@@ -110,10 +112,12 @@ class PersonTestCase(TestCase):
     def test_delete(self):
         content = normRes(self.res0)
         pid = str(content['id'])
-        self.client.post('/1/persons/', self.sample_dict)
+        sm1 = self.sample_dict.copy()
+        self.client.post('/1/persons/', sm1)
         res = self.client.delete('/1/persons/%s/' % pid)
         self.assertEqual(res.status_code, CODE_DELETED)
-        content = normRes(self.client.get('/1/persons/'))
+        res = self.client.get('/1/persons/')
+        content = normRes(res)
         self.assertEqual(content['count'], 1)
 
 
@@ -146,7 +150,10 @@ class CategoryTestCase(TestCase):
         pass
 
     def test_list(self):
-        self.client.post('/1/categories/', self.sample_dict)
+        sm1 = self.sample_dict.copy()
+        sm1['name'] = 'Second One'
+        res = self.client.post('/1/categories/', sm1)
+        self.assertEqual(res.status_code, CODE_CREATED)
         res = self.client.get('/1/categories/')
         content = normRes(res)
         self.assertEqual(res.status_code, CODE_SUCCESS)
@@ -174,7 +181,8 @@ class CategoryTestCase(TestCase):
         self.assertEqual(len(content), 1)
 
 
-class MaterialTestCase(TestCase):
+class BaseMaterialTestCase(TestCase):
+    
     sample_material = {
         'material_type' : 1,  
         'text' : 'Lorem ipsum here',
@@ -193,13 +201,15 @@ class MaterialTestCase(TestCase):
         'license_id' : 0,
         'modified' : None,
         'derived_from' : '',
-        'export-later': 1,
+        'export_later': 1,
         }
+
     sample_cat = {
         'name' : 'First Category',
         'parent' : 0,
         'description' : 'This is only the first description',
         }
+
     sample_person = {
         'fullname' : 'Barrack Obama',
         'biography' : 're-elected US president',
@@ -214,15 +224,10 @@ class MaterialTestCase(TestCase):
         'client_id' : 1,
         'user_id' : 'barracko',
         }
-    pid0 = None
-    cid0 = None
-    res0 = None
-    content0 = None
-
 
     def compareRes(self, base, res):
         for k in base:
-            if k == 'export-later':
+            if k == 'export_later':
                 continue
             try:
                 self.assertEqual(base[k], res[k])    
@@ -243,6 +248,14 @@ class MaterialTestCase(TestCase):
         self.sample_material['categories'] = str(self.cid0)
         self.res0 = self.client.post('/1/materials/', self.sample_material)
         self.content0 = normRes(self.res0)
+
+    def get_materials(self):
+        res = self.client.get('/1/materials/')
+        content = normRes(res)
+        return content['count']
+
+
+class CreateMaterialTestCase(BaseMaterialTestCase):
 
     def test_create_success(self):
         self.assertEqual(self.res0.status_code, CODE_CREATED)
@@ -292,38 +305,34 @@ class MaterialTestCase(TestCase):
         self.assertEqual(res.status_code, CODE_BAD_REQUEST)
         self.assertEqual(content['title'], ["This field is required."])
 
-    def test_get_version(self):
-        self.assertEqual(self.res0.status_code, CODE_CREATED)
-        res = self.client.get('/1/materials/%s/' % self.content0['material_id'])
-        self.compareRes(self.sample_material, normRes(res))
-        res = self.client.get('/1/materials/%s/1/' % self.content0['material_id'])
-        self.compareRes(self.sample_material, normRes(res))
 
-    def test_put(self):
-        sm1 = self.sample_material.copy()
-        sm1['text'] = 'This is the new update of this version'
-        res = self.client.put('/1/materials/%s/' % self.content0['material_id'], sm1)
-        content = normRes(res)
-        self.assertEqual(res.status_code, CODE_CREATED)
-        sm1['version'] = 2
-        self.compareRes(sm1, content)
-
-    def test_get_all_vers(self):
-        sm1 = self.sample_material.copy()
-        self.client.put('/1/materials/%s/' % self.content0['material_id'], sm1)
-        # get the latest version
-        res = self.client.get('/1/materials/%s/' % self.content0['material_id'])
-        sm1['version'] = 2
-        self.compareRes(sm1, normRes(res))
-        res = self.client.get('/1/materials/%s/all/' % self.content0['material_id'])
-        self.assertEqual(normRes(res)['count'], 2)
+class ListMaterialTestCase(BaseMaterialTestCase):
 
     def test_list(self):
-        self.client.post('/1/materials/', self.sample_material)
+        res = self.client.post('/1/materials/', self.sample_material)
+        self.assertEqual(res.status_code, CODE_CREATED)
         res = self.client.get('/1/materials/')
         content = normRes(res)
         self.assertEqual(res.status_code, CODE_SUCCESS)
         self.assertEqual(content['count'], 2)
+
+    def test_list_order(self):
+        sm1 = self.sample_material.copy()
+        sm1['modified'] = None
+        time.sleep(2)
+        res = self.client.post('/1/materials/', sm1)
+        self.assertEqual(res.status_code, CODE_CREATED)
+        mid1 = normRes(res)['material_id']
+        res = self.client.get('/1/materials/?sort_on=modified')
+        content = normRes(res)
+        self.assertEqual(
+            content['results'][0]['modified'] < self.content0['modified'],
+            True)
+        res2 = self.client.get('/1/materials/?sort_on=-modified')
+        content2 = normRes(res2)
+        self.assertEqual(
+            content2['results'][1]['modified'] < self.content0['modified'],
+            True)
 
     def test_list_filter_person(self):
         sm1 = self.sample_material.copy()
@@ -357,8 +366,8 @@ class MaterialTestCase(TestCase):
     def test_list_filter_type(self):
         sm1 = self.sample_material.copy()
         sm2 = self.sample_material.copy()
-        sm1['material_type'] = '2'
-        sm2['material_type'] = '1'
+        sm1['material_type'] = 2
+        sm2['material_type'] = 1 
         res = self.client.post('/1/materials/', sm1)
         self.assertEqual(res.status_code, 201)
         res = self.client.post('/1/materials/', sm2)
@@ -368,32 +377,18 @@ class MaterialTestCase(TestCase):
         res = self.client.get('/1/materials/?material_type=2')
         self.assertEqual(normRes(res)['count'], 1)
 
-    def test_list_order(self):
-        sm1 = self.sample_material.copy()
-        sm1['modified'] = None
-        time.sleep(2)
-        res = self.client.post('/1/materials/', sm1)
-        self.assertEqual(res.status_code, CODE_CREATED)
-        mid1 = normRes(res)['material_id']
-        res = self.client.get('/1/materials/?sort_on=modified')
-        content = normRes(res)
-        self.assertEqual(
-            content['results'][0]['material_id'], 
-            self.content0['material_id'])
-        self.assertEqual(
-            content['results'][1]['material_id'], 
-            mid1)
-        res2 = self.client.get('/1/materials/?sort_on=-modified')
-        content2 = normRes(res2)
-        self.assertEqual(
-            content2['results'][1]['material_id'], 
-            self.content0['material_id'])
-        self.assertEqual(
-            content2['results'][0]['material_id'], 
-            mid1)
 
-    def test_delete_success(self):
-        pass
+class GetMaterialTestCase(BaseMaterialTestCase):
+
+    def test_get_all_vers(self):
+        sm1 = self.sample_material.copy()
+        self.client.put('/1/materials/%s/' % self.content0['material_id'], sm1)
+        # get the latest version
+        res = self.client.get('/1/materials/%s/' % self.content0['material_id'])
+        sm1['version'] = 2
+        self.compareRes(sm1, normRes(res))
+        res = self.client.get('/1/materials/%s/all/' % self.content0['material_id'])
+        self.assertEqual(normRes(res)['count'], 2)
 
     def test_get_similar(self):
         sm1 = self.sample_material.copy()
@@ -421,3 +416,66 @@ class MaterialTestCase(TestCase):
             time.sleep(1)    
             res = self.client.get('/1/materials/%s/pdf/' % self.content0['material_id'])
         self.assertEqual(res.status_code, 200)
+
+    def test_get_version(self):
+        self.assertEqual(self.res0.status_code, CODE_CREATED)
+        res = self.client.get('/1/materials/%s/' % self.content0['material_id'])
+        self.compareRes(self.sample_material, normRes(res))
+        res = self.client.get('/1/materials/%s/1/' % self.content0['material_id'])
+        self.compareRes(self.sample_material, normRes(res))
+
+
+class UpdateMaterialTestCase(BaseMaterialTestCase):
+
+    def test_put(self):
+        sm1 = self.sample_material.copy()
+        sm1['text'] = 'This is the new update of this version'
+        res = self.client.put('/1/materials/%s/' % self.content0['material_id'], sm1)
+        content = normRes(res)
+        self.assertEqual(res.status_code, CODE_CREATED)
+        sm1['version'] = 2
+        self.compareRes(sm1, content)
+
+    def test_delete(self):
+        sm1 = self.sample_material.copy()
+        sm1['title'] = 'Title of the second material'
+        sm1['text'] = 'This is the new update of this version'
+        res = self.client.post('/1/materials/', sm1)
+        content = normRes(res)
+        self.assertEqual(res.status_code, CODE_CREATED)
+        self.compareRes(sm1, content)
+
+        #import pdb;pdb.set_trace()
+
+        # delete the first time
+        res = deleteMaterial(
+            self.content0['material_id'], 
+            self.content0['version'])
+        self.assertEqual(res, True)
+
+        # delete the 2nd time
+        res = deleteMaterial(
+            self.content0['material_id'], 
+            self.content0['version'])
+        self.assertEqual(res, True)
+
+        # verify the rest material
+        res = self.client.get('/1/materials/')
+        content = normRes(res)
+        self.assertEqual(res.status_code, CODE_SUCCESS)
+        self.assertEqual(content['count'], 1)
+        self.assertEqual(content['results'][0]['title'], sm1['title'])
+
+    def test_update(self):
+        sm1 = self.sample_material.copy()
+        sm1['text'] = 'This is the new update of this version'
+        sm1['material_id'] = self.content0['material_id']
+        sm1['version'] = self.content0['version']
+        update_url = '/1/materials/%s/%d/?magic-update=1' % (
+            self.content0['material_id'],
+            self.content0['version'])
+        res = self.client.put(update_url, sm1)
+        content = normRes(res)
+        self.assertEqual(res.status_code, CODE_CREATED)
+        self.compareRes(sm1, content)
+

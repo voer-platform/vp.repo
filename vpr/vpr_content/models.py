@@ -306,6 +306,21 @@ def countPersonMaterial(person_id, roles=()):
     return result
 
 
+def deleteMaterial(material_id, version):
+    """Try to delete material with given ID and version"""
+    try:
+        obj = Material.objects.get(
+            material_id=material_id,
+            version=version)
+        obj.delete()
+        result = True
+    except Material.DoesNotExist:
+        result = True
+    except:
+        result = False 
+    return result
+
+
 @receiver(post_delete, sender=Material)
 def finishDeleteMaterial(sender, **kwargs):
     """Delete all related data right after deleting the material"""
