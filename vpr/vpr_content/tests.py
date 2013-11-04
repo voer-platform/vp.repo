@@ -445,8 +445,6 @@ class UpdateMaterialTestCase(BaseMaterialTestCase):
         self.assertEqual(res.status_code, CODE_CREATED)
         self.compareRes(sm1, content)
 
-        #import pdb;pdb.set_trace()
-
         # delete the first time
         res = deleteMaterial(
             self.content0['material_id'], 
