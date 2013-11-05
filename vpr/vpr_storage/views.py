@@ -324,9 +324,8 @@ def getMaterialPDF(request, *args, **kwargs):
             return HttpResponse(data, 
                                 mimetype = 'application/pdf', 
                                 status = HTTP_CODE_SUCCESS) 
-            
     else:
-        return HttpResponse('CONTENT NOT READY', status=HTTP_CODE_PROCESSING) 
+        return HttpResponse(status=HTTP_CODE_PROCESSING) 
 
 
 def getMaterialFile(request, *args, **kwargs):
