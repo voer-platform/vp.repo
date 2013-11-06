@@ -232,7 +232,7 @@ def migrateModule(module_path):
             'title': metadata['title'],
             'text': html,
             'version': 1, 
-            'description': metadata['abstract'] or '-',
+            'description': metadata['abstract'],
             'language': metadata.get('language', 'na'),
             'author': author_ids,
             'editor': author_id,
