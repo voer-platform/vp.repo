@@ -41,7 +41,7 @@ def postMaterialZip(material):
                 'output': EXPORT_TYPE}
         files = {'file': (mzip.name.split('/')[-1], mzip.read())}
         res = requests.post(EXPORT_URL, files=files, data={})
-        os.remove(mzip.name)
+        #os.remove(mzip.name)
     return res
 
 

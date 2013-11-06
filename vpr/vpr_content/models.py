@@ -112,6 +112,25 @@ class MaterialPerson(models.Model):
 
 # ----------------
 
+
+def getMaterial(material_id='', version=None, raw_id=None):
+    """ Short call for getting material using its ID and version. If
+        raw ID is provided, function will use it and bypass other params.
+    """
+    material = None
+    if not raw_id:
+        if not version:
+            material = getLatestMaterial(material_id) 
+        else:
+            material = Material.objects.get(
+                material_id=material_id, 
+                version = version)
+    else:
+        material = Material.objects.get(pk=raw_id)
+
+    return material 
+
+
 def getLatestMaterial(material_id):
     """ Returns the latest version of the material with given ID """
     material = Material.objects.filter(material_id=material_id)\

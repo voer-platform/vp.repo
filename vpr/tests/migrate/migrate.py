@@ -97,24 +97,33 @@ def getAuthorInfo(cnxml):
 
 def getMetadata(cnxml):
     """Extract metadata from the cnxml content"""
+    cnxml = cnxml.replace('\n', '')
     metadata = {}
     info_needed = ('title', 'version', 'created', 'keyword', 
                    'subject', 'abstract', 'language', 
                    'repository')
+
     for info in info_needed:
         metadata[info] = getTagContent('md:'+info, cnxml)
+    # refine content of abstract with list
+    if metadata['abstract']:
+        abstract = metadata['abstract']
+        if isinstance(abstract, list):
+            abstract = abstract[0]
+        abstract = abstract.replace('<list', '<ul')
+        abstract = abstract.replace('</list', '</ul')
+        abstract = abstract.replace('<item', '<li')
+        abstract = abstract.replace('</item', '</li')
+        metadata['abstract'] = abstract
 
     # ensure having no empty fields
-
     if not metadata['abstract'] or metadata['abstract'][0] == '':
-        metadata['abstract'] = '-'
-    
+        metadata['abstract'] = ''
     if not metadata['title']:
         metadata['title'] = getTagContent('title', cnxml, ['Untitled'])
     metadata['title'] = metadata['title'][0]
-
     if not metadata['language']:
-        metadata['language'] = ['-']
+        metadata['language'] = ['en']
 
     return metadata
 
@@ -131,7 +140,6 @@ def prepareCategory(categories):
         if vpr_categories.has_key(norm_cat):
             cat_id = vpr_categories[norm_cat]['id']
         else:
-            import pdb;pdb.set_trace()
             # create new category
             out('Create new category: ' + cat.strip())
             data = {'name': cat.strip(),
@@ -350,11 +358,14 @@ def shell_getAllPersons():
     """shell version of getAllPersons inside migrate.py module"""
     from vpr_content import models
 
+    out('Downloading all person data...')
+
     db_persons = models.Person.objects.all().values()
     persons = {}
     for p in db_persons:
         persons[p['user_id']] = p
         
+    out('Person data downloaded')
     return persons
 
 

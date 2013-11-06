@@ -791,7 +791,7 @@ def getSimilarByHaystack(material_id, version):
     return result
 
 
-#@api_log
+@api_log
 @api_view(['GET'])
 @api_token_required
 def getSimilarMaterials(request, *args, **kwargs):

@@ -206,3 +206,17 @@ def materialsView(request):
 
     return render(request, 'materials.html', dictionary=page_data)
 
+
+@login_required
+def renderMaterialView(request, *args, **kwargs):
+    """ Render a given material with simple UI. 
+        http://.../dashboard/render/<material_id>/<version>
+    """
+    material = models.getMaterial(kwargs['mid'], kwargs.get('version', None))
+    data = {
+        'material': material,
+        }
+    return render(request, 'render.html', dictionary=data) 
+
+
+
