@@ -53,7 +53,10 @@ def api_log(func):
         """ """
         res = func(*args, **kwargs)  
         try:
-            request = args[1]._request
+            if len(args) > 1:
+                request = args[1]._request
+            else:
+                request = args[0]
             client_id = request.COOKIES.get(COOKIE_CLIENT)
             if not client_id:
                 client_id = request.GET.get(COOKIE_CLIENT, CLIENT_ID_UNKNOWN)

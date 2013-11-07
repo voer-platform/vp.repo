@@ -292,12 +292,27 @@ def extractMaterialInfo(node):
     return found
         
 
+def getMaterialZip(request, *args, **kwargs):
+    """ Return compressed files (Zip) of a material
+    """
+    material = models.getMaterial(kwargs['mid'], kwargs.get('version', None))
+    zip_path = zipMaterial(material)
+    try:
+        with open(zip_path, 'rb') as zf:
+            zip_name = '%s-%d.zip' % (material.material_id, material.version)
+            response = HttpResponse(zf.read(), 
+                                    mimetype = 'application/zip')
+            response['content-disposition'] = 'attachment; filename='+zip_name
+            return response
+    except:
+       raise http404 
+
+
 def getMaterialPDF(request, *args, **kwargs):
-    """Check and return the PDF file of given material if exist"""
+    """ Check and return the PDF file of given material if exist
+    """
     mid = kwargs.get('mid', None)
-    version = kwargs.get('version', None)
-    if not version: 
-        version = getMaterialLatestVersion(mid) 
+    version = kwargs.get('version', None) or getMaterialLatestVersion(mid) 
     material = Material.objects.get(material_id=mid, version=version)
     get_it = False
     try: 
@@ -320,16 +335,19 @@ def getMaterialPDF(request, *args, **kwargs):
         export_obj = MaterialExport.objects.get(pk=export_obj.id)
         # return the PDF content, this should be served be the web server
         with open(export_obj.path, 'rb') as pdf: 
+            pdf_name = '%s-%d.pdf' % (mid, version)
             data = pdf.read() 
-            return HttpResponse(data, 
-                                mimetype = 'application/pdf', 
-                                status = HTTP_CODE_SUCCESS) 
+            response = HttpResponse(data, 
+                                    mimetype = 'application/pdf')
+            response['content-disposition'] = 'attachment; filename='+pdf_name
+            return response
     else:
         return HttpResponse(status=HTTP_CODE_PROCESSING) 
 
 
 def getMaterialFile(request, *args, **kwargs):
-    """Return request for downloading material file"""
+    """ Return request for downloading material file
+    """
     mfid = kwargs.get('mfid', None)
 
     try:
@@ -343,7 +361,8 @@ def getMaterialFile(request, *args, **kwargs):
 
 
 def handlePersonAvatar(request, *args, **kwargs):
-    """Returns the avatar image of specific person"""
+    """ Returns the avatar image of specific person
+    """
     pid = kwargs.get('pk', None)
     delete = request.GET.get('delete', None) 
     try:

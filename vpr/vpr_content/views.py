@@ -3,7 +3,7 @@
 # from rest_framework import generics
 # from rest_framework.decorators import api_view
 # from rest_framework.reverse import reverse
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from rest_framework import status
 from rest_framework import generics
 from rest_framework.response import Response
@@ -810,4 +810,20 @@ def getSimilarMaterials(request, *args, **kwargs):
     return Response(result)
 
 
+@api_log
+@api_token_required
+def getMaterialImage(request, *args, **kwargs):
+    """ Return image data of material cover 
+    """
+    mid = kwargs['mid']
+    material = models.getMaterial(kwargs['mid'], kwargs.get('version', None))
+    if material.image:
+        response = HttpResponse(
+            content = material.image.read(),
+            mimetype = 'image/jpg')
+        # not for file downloading
+        #response['content-disposition'] 
+        return response
+
+    raise Http404
 
