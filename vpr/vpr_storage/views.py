@@ -1,9 +1,11 @@
 # Create your views here.
-from os.path import realpath
 import requests
 import os
 import json
 
+from os.path import realpath
+from shutil import rmtree
+from subprocess import Popen 
 from zipfile import ZipFile, ZIP_DEFLATED
 from django.http import Http404, HttpResponse
 
@@ -11,6 +13,7 @@ from vpr_content.models import Material, MaterialFile, MaterialExport
 from vpr_content.models import listMaterialFiles, MaterialExport
 from vpr_content.models import getLatestMaterial, getMaterialLatestVersion
 from vpr_content import models
+from vpr_api.decorators import api_log
 
 from django.conf import settings
 
@@ -258,6 +261,162 @@ def zipMaterial(material):
     return realpath(zf.filename)
 
 
+def writeFileToDir(dir_path, file_name, content):
+    """ Write a file with given file name and content into specific directory
+    """
+    file_path = os.path.join(dir_path, file_name)
+    with open(file_path, 'wb') as wf:
+        wf.write(content)
+
+
+def buildZipPath(path):
+    """ Return the path of material zip file
+    """
+    if path[-1] == '/':
+        path = path[:-1]
+    return path + '.zip'
+
+
+def buildZipCommand(path):
+    """ Build the external command for zipping material files 
+    """
+    #return 'zip -5 %s %s/*' % (buildZipPath(path), path)
+    return 'zip -5 %s ./*' % buildZipPath(path)
+
+
+def createDirectory(dir_path):
+    """ Create new directory, and ensure it's empty
+    """
+    try:
+        os.mkdir(dir_path)
+    except OSError:
+        rmtree(dir_path)
+        os.mkdir(dir_path)
+
+
+def createMaterialDirectory(dir_path, material):
+    """ Create directory for material which includes all material files,
+        HTML content, and manifest file
+    """
+    mid = material.material_id
+    version = material.version
+
+    createDirectory(dir_path)
+
+    # add material text content
+    raw_content = material.text
+    try:
+        raw_content = raw_content.encode('utf-8')
+    except:
+        raw_content = raw_content.decode('utf-8').encode('utf-8')
+    writeFileToDir(dir_path, ZIP_HTML_FILE, raw_content)
+
+    # read all material files, and put into the zip package
+    mfids = listMaterialFiles(mid, version)
+    for mfid in mfids:
+        try:
+            mf = MaterialFile.objects.get(id=mfid)
+            writeFileToDir(dir_path, mf.name, mf.mfile.read())
+            mf.mfile.close()
+        except:
+            print "Error when getting material file %s" % mf.name
+
+    # generate material json
+    persons = models.getMaterialPersons(material.id)
+    try: 
+        author_ids = persons['author'].split(',')
+    except:
+        author_ids = []
+    author_names = models.getPersonName(author_ids)
+    index_content = {
+        'title': material.title,
+        'url': MATERIAL_SOURCE_URL % (
+            material.material_id,
+            material.version),
+        'authors': author_names,
+        'version': material.version,
+        }
+    index_content = json.dumps(index_content)
+    writeFileToDir(dir_path, ZIP_INDEX_MODULE, index_content)
+
+
+def zipMaterialExternal(material):
+    """ Collects all material info and put into a folder, then call
+        external zip command to do its job.
+        Full path of the zip file will be returned to the caller.
+    """
+    mid = material.material_id
+    version = material.version
+    mtype = material.material_type
+    
+    # create material directory
+    dir_path = os.path.join(settings.TEMP_DIR, '%s-%d' % (mid, version))
+
+    # check if module or collection
+    if mtype == MTYPE_MODULE:
+        createMaterialDirectory(dir_path, material)
+
+    elif mtype == MTYPE_COLLECTION:
+        createDirectory(dir_path)
+
+        # get list of all contained materials    
+        all_materials = getNestedMaterials(material)
+
+        # load materials into ZIP
+        for cid in range(len(all_materials)):
+            m_id = all_materials[cid][0]
+            m_version = all_materials[cid][1] or \
+                models.getMaterialLatestVersion(m_id)
+            m_object = models.getMaterial(m_id, m_version)
+            m_path = os.path.join(dir_path, "%s-%d" % (m_id, m_version))
+            createMaterialDirectory(m_path, m_object)
+
+        # prepare some fields
+        editor_ids = models.getMaterialPersons(material.id)['editor']
+        editor_ids = editor_ids.split(',')
+        editors = models.getPersonName(editor_ids)
+        if isinstance(editors, str): editors = [editors,]
+        material_url = MATERIAL_SOURCE_URL % (
+            material.material_id,
+            material.version)
+
+        # generate collection.json
+        try:
+            index_content = json.loads(material.text)
+            index_content['id'] = material.material_id
+            index_content['title'] = material.title
+            index_content['version'] = str(material.version)
+            index_content['license'] = MATERIAL_LICENSE
+            index_content['url'] = material_url
+            index_content['editors'] = editors 
+            index_content = json.dumps(index_content)
+        except:
+            # another way
+            index_content = '{"id":"%s",' % material.material_id
+            index_content += '"title":"%s",' %  material.title
+            index_content += '"version":"%s",' % str(material.version)
+            index_content += '"license":"%s",' % MATERIAL_LICENSE
+            index_content += '"url":"%s",' % material_url
+            index_content += '"editors":"%s",' % editors 
+            index_content += material.text[material.text.index('{')+1:]
+
+        with open(os.path.join(dir_path, ZIP_INDEX_COLLECTION), 'w') as mnf:
+            mnf.write(index_content)
+        
+    # zip the material files
+    cmd = 'zip -r5 %s ./*' % buildZipPath(dir_path)
+    process = Popen(cmd, shell=True, cwd=dir_path)
+    try:
+        process.wait()
+    except TimeoutExpired:
+        print 'Timed-out when creating material ZIP file'
+    finally:
+        rmtree(dir_path)
+
+    if process.poll() == 0:
+        return buildZipPath(dir_path)
+
+
 def getNestedMaterials(material):
     """Returns list of material IDs of children inside collection material"""
     materials = []
@@ -292,11 +451,14 @@ def extractMaterialInfo(node):
     return found
         
 
+@api_log
 def getMaterialZip(request, *args, **kwargs):
     """ Return compressed files (Zip) of a material
     """
     material = models.getMaterial(kwargs['mid'], kwargs.get('version', None))
-    zip_path = zipMaterial(material)
+    #zip_path = zipMaterial(material)
+    zip_path = zipMaterialExternal(material)
+
     try:
         with open(zip_path, 'rb') as zf:
             zip_name = '%s-%d.zip' % (material.material_id, material.version)
@@ -305,9 +467,10 @@ def getMaterialZip(request, *args, **kwargs):
             response['content-disposition'] = 'attachment; filename='+zip_name
             return response
     except:
-       raise http404 
+       raise Http404 
 
 
+@api_log
 def getMaterialPDF(request, *args, **kwargs):
     """ Check and return the PDF file of given material if exist
     """
@@ -345,6 +508,7 @@ def getMaterialPDF(request, *args, **kwargs):
         return HttpResponse(status=HTTP_CODE_PROCESSING) 
 
 
+@api_log
 def getMaterialFile(request, *args, **kwargs):
     """ Return request for downloading material file
     """
