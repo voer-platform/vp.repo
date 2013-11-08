@@ -717,6 +717,7 @@ class MaterialFiles(generics.ListCreateAPIView):
         return response
 
 
+@api_log
 @api_view(['GET'])
 def listMaterialFiles(request, *args, **kwargs):
     """Lists all files attached to the specific material, except the material image

@@ -35,7 +35,8 @@ def saveLog(collection, record):
 
 
 def filterLog(collection, limitation=100, **kwargs):
-    """Extract and returns logs following given conditions"""
+    """ Extract and returns logs following given conditions
+    """
     global log_db
     col = log_db[collection]
     query = {}
@@ -53,3 +54,9 @@ def filterLog(collection, limitation=100, **kwargs):
     logs = [item for item in res]
 
     return logs
+
+
+def cleanLog(collection, day_limit=30):
+    """ Clean all the log records inside collection older than day_limit
+    """
+    pass  

@@ -8,7 +8,7 @@
 
           <div>
             <form id="material-search" action="{{ request.path }}" method="GET">
-                <input type="text" name="kw" value="{{ request.GET.kw }}" style="margin-bottom:0px">
+                <input class="input-xlarge" type="text" name="kw" value="{{ request.GET.kw }}" style="margin-bottom:0px">
                 <a id="button-search" onClick="submit();" class="btn btn-primary">Search</a>
             </form>
           </div>
@@ -30,7 +30,7 @@
                 {% if current_page > 1 %}
                 <a href="{{ request.path }}?page={{ current_page|add:-1 }}">Previous</a>
                 {% endif %}
-                <span> &lt; {{ current_page }}/{{ page_total }} &gt; </span>
+                <span> - {{ current_page }}/{{ page_total }} - </span>
                 {% if current_page < page_total %}
                 <a href="{{ request.path }}?page={{ current_page|add:+1 }}">Next</a>
                 {% endif %}
@@ -45,6 +45,7 @@
             <tr>
               <th>Title</td>
               <th>Material ID</td>
+              <th>Type</td>
               <th>Modified</td>
               <th>Summary</td>
               <th>Select</td>
@@ -53,7 +54,8 @@
                 {% for material in materials %}
                 <tr style="font-size:0.85em">
                 <td><a href="http://{{ web_url }}/m/{{ material.material_id }}">{{ material.title }}</a></td>
-                <td>{{ material.material_id }}</td>
+                <td><a href="/1/materials/{{ material.material_id }}">{{ material.material_id }}</a></td>
+                <td>{{ material.material_type }}</td>
                 <td>{{ material.modified|date:"y-m-d h:i" }}</td>
                 <td>{{ material.description|truncatewords:4 }}</td>
                 <td style="text-align:center;"><input type="checkbox" name="check-delete" value="{{ material.material_id }}"></td>
@@ -75,7 +77,7 @@
             {% endif %}
             </div>
             <div class="span2 offset7" style="text-align:right">
-                <a class="btn btn-small btn-danger" onClick="submit();">&nbsp;Delete&nbsp;</a>
+                <input type="submit" value="Delete" name="submit">
             </div>
           </div>
 
