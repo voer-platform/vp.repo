@@ -616,8 +616,12 @@ class GeneralSearch(generics.ListAPIView):
                 self.serializer_class = serializers.IndexPersonSerializer
                 allow_models = [models.Person,]                                
             else: 
-                self.serializer_class = serializers.IndexMaterialSerializer
-                allow_models = [models.Material]
+                if limit.lower() == 'm':
+                    allow_models = [models.Material]
+                else:
+                    allow_models = [models.Material, models.Person]
+                    
+                self.serializer_class = serializers.IndexCommonSerializer
                 try:
                     material_type = int(material_type)
                     query['material_type'] = material_type

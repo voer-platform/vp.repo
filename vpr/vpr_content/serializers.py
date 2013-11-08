@@ -99,8 +99,7 @@ class IndexPersonSerializer(serializers.ModelSerializer):
     """docstring for PersonSerializer"""
     class Meta:
         model = models.Person
-        fields = ('id', 'fullname', 'first_name', 'last_name', 'title',
-                  'user_id', 'email')
+        fields = ('id', 'fullname', 'title', 'user_id', 'email')
 
     def convert_object(self, obj):
         ret = self._dict_class()
@@ -123,13 +122,12 @@ class MaterialFileSerializer(serializers.ModelSerializer):
     """ File attached to material """
     class Meta:
         model = models.MaterialFile
-        fields = ('id', 'material_id', 'version', 
-                  'name', 'description', 
+        fields = ('id', 'material_id', 'version', 'name', 'description', 
                   'mfile', 'mime_type')
 
 # SERIALIZERS FOR SEARCHING
 
-class IndexMaterialSerializer(serializers.Serializer):
+class IndexCommonSerializer(serializers.Serializer):
     
     material_id = serializers.Field()
     title = serializers.Field()
@@ -137,11 +135,15 @@ class IndexMaterialSerializer(serializers.Serializer):
     version = serializers.Field()
     modified = serializers.Field()
     categories = serializers.Field()
+    # person fields
+    id = serializers.Field()
+    user_id = serializers.Field()
+    fullname = serializers.Field()
+    email = serializers.Field()
 
     def convert_object(self, obj):
-        """
-        Core of serialization.
-        Convert an object into a dictionary of serialized field values.
+        """ Core of serialization.
+            Convert an object into a dictionary of serialized field values.
         """
         ret = self._dict_class()
         ret.fields = {}

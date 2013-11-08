@@ -28,6 +28,7 @@ class PersonIndex(SearchIndex, Indexable):
     # "text" combines normal body, title, description and keywords
     text = CharField(document=True, use_template=True)
     user_id = CharField(model_attr='user_id')
+    fullname = CharField(model_attr='fullname')
     email = CharField(model_attr='email')
 
     def get_model(self):

@@ -26,7 +26,7 @@ class Category(models.Model):
 
 class Person(models.Model):
     user_id = CharField(max_length=64)
-    fullname = CharField(max_length=256, blank=True, null=True)
+    fullname = CharField(max_length=256)
     first_name = CharField(max_length=64, blank=True, null=True)
     last_name = CharField(max_length=64, blank=True, null=True)
     email = CharField(max_length=64, blank=True, null=True)
@@ -412,6 +412,15 @@ def migratePersonRoles():
             role = role_editor)
         assign_person.save()
     
+
+def migratePersonFullname():
+    """ Auto use user id as fullname if blank 
+    """
+    res = Person.objects.filter().values('id', 'user_id', 'fullname')
+    persons = [item for item in res if not item['fullname']]
+    for p in persons:
+        Person.objects.filter(pk=p['id']).update(fullname=p['user_id'])
+
 
 if __name__ == '__main__':
     import doctest
