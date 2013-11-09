@@ -155,14 +155,18 @@ class IndexCommonSerializer(serializers.Serializer):
             ret[key] = value
             ret.fields[key] = field
 
-        # vpr: custom settings for categories field
-        cids = models.restoreAssignedCategory(ret.get('categories', ''))
-        cids = [str(cid) for cid in cids]
-        ret['categories'] = ','.join(cids)
+        if ret['user_id']:
+            ret['id'] = obj.pk
+        else:
+            ret['id'] = None 
+            # vpr: custom settings for categories field
+            cids = models.restoreAssignedCategory(ret.get('categories', ''))
+            cids = [str(cid) for cid in cids]
+            ret['categories'] = ','.join(cids)
 
-        # vpr: custom process for material author, editor
-        material_roles = models.getMaterialPersons(obj.pk)
-        for person_role in material_roles:
-            ret[person_role] = material_roles[person_role] 
+            # vpr: custom process for material author, editor
+            material_roles = models.getMaterialPersons(obj.pk)
+            for person_role in material_roles:
+                ret[person_role] = material_roles[person_role] 
 
         return ret

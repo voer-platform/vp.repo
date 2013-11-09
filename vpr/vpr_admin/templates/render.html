@@ -1,0 +1,18 @@
+{% extends "base_home.html" %}
+
+    {% block home-content %}
+
+        <div>
+            
+          <div>[ title ]</div>
+          <h3>{{ material.title }}</h3>
+          
+          <div>[ description ]</div>
+          <div>{{ material.description|safe }}</div>
+
+          <div>[ text ]</div>
+          <div>{{ material.text|safe }}</div>
+
+        </div>
+
+   {% endblock %}
