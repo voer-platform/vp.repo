@@ -5,6 +5,8 @@ import re
 import os
 import requests as rq
 
+from vpr_content import models
+
 
 #VPR_URL = 'http://vpr.net/1'
 VPR_URL = 'http://localhost:2013/1'
@@ -189,6 +191,7 @@ def migrateModule(module_path):
 
         # remove some tags
         html = removeStrangeTag(html)
+        html = models.refineMaterialContent(html)
 
         # load all the files
         module_files = listdir(module_path)

@@ -422,6 +422,34 @@ def migratePersonFullname():
         Person.objects.filter(pk=p['id']).update(fullname=p['user_id'])
 
 
+def refineAllMaterialContent():
+    """ Run refineMaterialContent() on all existing records 
+    """
+    all_ids = Material.objects.filter(material_type=1).values('id')
+    all_ids = [_['id'] for _ in all_ids]
+    for rid in all_ids:
+        text = Material.objects.filter(pk=rid).values('text')[0]['text']
+        text = refineMaterialContent(text)
+        Material.objects.filter(pk=rid).update(text=text)
+        print rid
+
+
+def refineMaterialContent(text):
+    """ Refine the body of material, remove some danger tags,...
+            <em class="emphasis" effect="italics"/>
+            <strong class="emphasis" effect="bold"/>
+        This also should remove Js and styling content.
+    """
+    kill_list = (
+        '<em class="emphasis" effect="italics"/>',
+        '<strong class="emphasis" effect="bold"/>',
+        )
+    for piece in kill_list:
+        text = text.replace(piece, '')
+        
+    return text
+
+
 if __name__ == '__main__':
     import doctest
     doctest.testmod()

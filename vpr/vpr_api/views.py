@@ -1,5 +1,4 @@
 # Create your views here.
-
 from django.contrib.auth.models import User, Group
 from django.http import HttpResponse, HttpResponseNotAllowed
 from django.core import urlresolvers
@@ -19,10 +18,10 @@ from vpr_api.models import APIClient as Client
 from vpr_api.models import APIToken as Token
 from vpr_api.models import generateClientKey, generateClientID
 
-
 TOKEN_LIFETIME = 30 # minutes
 
 
+#@api_log
 @api_view(['GET'])
 def api_root(request, format=None):
     """The entry endpoint of our API.
@@ -36,6 +35,7 @@ def api_root(request, format=None):
     })
 
 
+#@api_log
 @api_view(['GET', 'POST'])
 def authenticate(request, cid):
     """
