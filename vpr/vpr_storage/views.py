@@ -26,7 +26,7 @@ MTYPE_MODULE = 1
 MTYPE_COLLECTION = 2
 
 MATERIAL_LICENSE = "http://creativecommons.org/licenses/by/3.0/"
-MATERIAL_SOURCE_URL = 'http://voer.edu.vn/m/%s/%d'
+MATERIAL_SOURCE_URL = 'http://voer.edu.vn/m/%s'
 
 HTTP_CODE_PROCESSING = 102
 HTTP_CODE_SUCCESS = 200 
@@ -40,8 +40,8 @@ def postMaterialZip(material):
     res = None
     with open(zipMaterial(material), 'rb') as mzip:
         payload = {'token': '', 
-                'cid': '',
-                'output': EXPORT_TYPE}
+                   'cid': '',
+                   'output': EXPORT_TYPE}
         files = {'file': (mzip.name.split('/')[-1], mzip.read())}
         res = requests.post(EXPORT_URL, files=files, data={})
         #os.remove(mzip.name)
@@ -195,9 +195,7 @@ def zipMaterial(material):
         author_names = models.getPersonName(author_ids)
         index_content = {
             'title': material.title,
-            'url': MATERIAL_SOURCE_URL % (
-                material.material_id,
-                material.version),
+            'url': MATERIAL_SOURCE_URL % material.material_id,
             'authors': author_names,
             'version': material.version,
             }
@@ -330,9 +328,7 @@ def createMaterialDirectory(dir_path, material):
     author_names = models.getPersonName(author_ids)
     index_content = {
         'title': material.title,
-        'url': MATERIAL_SOURCE_URL % (
-            material.material_id,
-            material.version),
+        'url': MATERIAL_SOURCE_URL % material.material_id,
         'authors': author_names,
         'version': material.version,
         }
@@ -368,7 +364,7 @@ def zipMaterialExternal(material):
             m_version = all_materials[cid][1] or \
                 models.getMaterialLatestVersion(m_id)
             m_object = models.getMaterial(m_id, m_version)
-            m_path = os.path.join(dir_path, "%s-%d" % (m_id, m_version))
+            m_path = os.path.join(dir_path, m_id)
             createMaterialDirectory(m_path, m_object)
 
         # prepare some fields
@@ -376,9 +372,7 @@ def zipMaterialExternal(material):
         editor_ids = editor_ids.split(',')
         editors = models.getPersonName(editor_ids)
         if isinstance(editors, str): editors = [editors,]
-        material_url = MATERIAL_SOURCE_URL % (
-            material.material_id,
-            material.version)
+        material_url = MATERIAL_SOURCE_URL % material.material_id
 
         # generate collection.json
         try:

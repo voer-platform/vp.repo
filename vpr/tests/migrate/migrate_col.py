@@ -346,6 +346,10 @@ def parseContentNode(node):
         node_title = node.getElementsByTagName('md:title')[0]
         res['title'] = node_title.childNodes[0].nodeValue
         res['version'] = 1
+
+        # will take care of this later
+        #res['url'] = 'http://www.voer.edu.vn/m/' + res['id']
+        #res['license'] = "http://creativecommons.org/licenses/by/3.0/"
       except:
         import pdb;pdb.set_trace()
 

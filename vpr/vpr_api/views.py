@@ -18,8 +18,9 @@ from vpr_api.models import APIClient as Client
 from vpr_api.models import APIToken as Token
 from vpr_api.models import generateClientKey, generateClientID
 
-TOKEN_LIFETIME = 30 # minutes
 
+TOKEN_LIFETIME = 30 # minutes
+REGISTER_DELAY = 0
 
 #@api_log
 @api_view(['GET'])
@@ -69,7 +70,7 @@ def authenticate(request, cid):
     return Response(res)
 
 
-def createToken(client, ip='1.1.1.1'):
+def createToken(client, ip='0.0.0.0'):
     """Create the token and save into DB with given client object"""
     token = Token(client=client,
                   client_ip=ip,
@@ -173,8 +174,6 @@ def getTokenView(request, cid):
     return HttpResponse(cid + '<br>' + token.token)
 
 
-REGISTER_DELAY = 0
-
 @api_view(['GET', 'POST'])
 def registerClient(request):
     """This is for the installation process of VPW. Email is mandatory and used
@@ -205,3 +204,19 @@ def registerClient(request):
         return response
     except:
         raise
+
+
+# ---------------------
+# DEVELOPMENT FUNCTIONS
+
+
+def registerDevClient():
+    """ Check and register a new dev client named "dev" if not existed
+    """
+    import requests
+
+    client_data = {
+        'name': 'Developer',
+        'email': 'dev@vpr.org',
+    }
+    res = requests.post(urlresolvers.reverse('register-client'), client_data)

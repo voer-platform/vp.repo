@@ -42,6 +42,11 @@ STATICFILES_DIRS = (
 )
 
 
+DEBUG_TOOLBAR_CONFIG = {
+    'INTERCEPT_REDIRECTS': False,
+}
+
+
 VPT_URL = 'http://dev.voer.vn:6543/'
 
-TOKEN_REQUIRED = False 
+TOKEN_REQUIRED = False
