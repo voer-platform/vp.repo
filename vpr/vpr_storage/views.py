@@ -38,7 +38,7 @@ EXPORT_URL = os.path.join(settings.VPT_URL, 'export')
 def postMaterialZip(material):
     """Load and send zip file to exporting service"""
     res = None
-    with open(zipMaterial(material), 'rb') as mzip:
+    with open(zipMaterialExternal(material), 'rb') as mzip:
         payload = {'token': '', 
                    'cid': '',
                    'output': EXPORT_TYPE}
@@ -328,7 +328,7 @@ def createMaterialDirectory(dir_path, material):
     author_names = models.getPersonName(author_ids)
     index_content = {
         'title': material.title,
-        'url': MATERIAL_SOURCE_URL % material.material_id,
+        'url': MATERIAL_SOURCE_URL %  material.material_id,
         'authors': author_names,
         'version': material.version,
         }
