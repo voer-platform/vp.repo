@@ -19,7 +19,7 @@ from vpr_admin import stats
 from vpr_content import serializers, models
 
 
-MATERIAL_LIMIT = 20
+MATERIAL_LIMIT = 10
 
 
 class DashboardView(TemplateView):
@@ -176,7 +176,15 @@ def statsView(request):
 def materialsView(request):
     """View of the material management"""
 
-    query = request.GET.get('kw', '')
+    # build the search query
+    query = {'title': request.GET.get('kw', '')}
+    if not query['title']: del query['title']
+    try:
+        query['material_type'] = int(request.GET['filter_type'])
+    except:
+        pass
+    
+    # get the current page
     try:
         page = int(request.GET.get('page', 1))
     except:
@@ -187,14 +195,12 @@ def materialsView(request):
     # process with request for deletion
     if request.method == "POST":    
         del_list = request.POST.getlist('check-delete')
-        #import pdb;pdb.set_trace()
         models.Material.objects.filter(material_id__in=del_list).delete()
         page_data['removed'] = del_list 
 
     res = SearchQuerySet().models(models.Material)
-    if query:
-        res = res.filter(title=query)
-    else:
+    res = res.filter(**query)
+    if not query.has_key('title'):
         res = res.order_by('-modified')
     res_count = res.count()
     page_start = (page-1)*MATERIAL_LIMIT

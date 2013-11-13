@@ -37,3 +37,19 @@ def getNavigationItems(request):
 def adminURL(path=''):
     BASE_URL = '/dashboard/'
     return BASE_URL + path
+
+
+MTYPE_NAMES = ['', 'Module', 'Collection']
+MTYPE_SHORT_NAMES = ['', 'm', 'c']
+
+@register.filter
+def nameType(mtype, short=False):
+    """ Return type of material as string, full or short name
+    """
+    if short:
+        name = MTYPE_SHORT_NAMES[mtype]
+    else:
+        name = MTYPE_NAMES[mtype]
+    return name
+        
+

@@ -2,14 +2,24 @@
 
     {% block home-content %}
 
+
+        {% load dashboard %}
+
         <div>
 
-          <h3>Material Management</h3>
+          <h3>Material List</h3>
 
           <div>
             <form id="material-search" action="{{ request.path }}" method="GET">
+                <span>Title: </span>
                 <input class="input-xlarge" type="text" name="kw" value="{{ request.GET.kw }}" style="margin-bottom:0px">
-                <a id="button-search" onClick="submit();" class="btn btn-primary">Search</a>
+                <input type="submit" class="btn btn-primary" value="Search">
+                <span style="margin-left: 20px;">Type:</span>
+                <select name="filter_type" class="input-medium" style="margin-bottom: 0px;">
+                    <option value="">All</option>
+                    <option value="1" {% if request.GET.filter_type == '1' %}selected{% endif %}>Module (1)</option>
+                    <option value="2" {% if request.GET.filter_type == '2' %}selected{% endif %}>Collection (2)</option>
+                </select>
             </form>
           </div>
     
@@ -27,13 +37,15 @@
 
           <div>
             {% if page_total > 1 %}
+                {% with rg=request.GET %}
                 {% if current_page > 1 %}
-                <a href="{{ request.path }}?page={{ current_page|add:-1 }}">Previous</a>
+                <a href="{{ request.path }}?page={{ current_page|add:-1 }}&kw={{ rg.kw }}&filter_type={{ rg.filter_type }}">Previous</a>
                 {% endif %}
                 <span> - {{ current_page }}/{{ page_total }} - </span>
                 {% if current_page < page_total %}
-                <a href="{{ request.path }}?page={{ current_page|add:+1 }}">Next</a>
+                <a href="{{ request.path }}?page={{ current_page|add:+1 }}&kw={{ rg.kw }}&filter_type={{ rg.filter_type }}">Next</a>
                 {% endif %}
+                {% endwith %}
             {% endif %}
           </div>
 
@@ -43,24 +55,29 @@
           <table class="table table-striped table-bordered" 
                  style="margin-bottom:5px">
             <tr>
-              <th>Title</td>
-              <th>Material ID</td>
-              <th>Type</td>
-              <th>Modified</td>
-              <th>Summary</td>
-              <th>Select</td>
+              <th>Title</th>
+              <th>Material ID</th>
+              <th>Modified</th>
+              <th>Summary</th>
+              <th>Select</th>
             </tr> 
             
-                {% for material in materials %}
-                <tr style="font-size:0.85em">
-                <td><a href="http://{{ web_url }}/m/{{ material.material_id }}">{{ material.title }}</a></td>
+            {% for material in materials %}
+            <tr style="font-size:0.85em">
+                <td>
+                    {% if material.material_type == 1 %}
+                        <span class="label">
+                    {% else %}
+                        <span class="label label-warning">
+                    {% endif %}
+                    {{ material.material_type }}</span>
+                    &nbsp;<a href="http://{{ web_url }}/m/{{ material.material_id }}">{{ material.title }}</a></td>
                 <td><a href="/1/materials/{{ material.material_id }}">{{ material.material_id }}</a></td>
-                <td>{{ material.material_type }}</td>
                 <td>{{ material.modified|date:"y-m-d h:i" }}</td>
-                <td>{{ material.description|truncatewords:4 }}</td>
+                <td><a href="/dashboard/render/{{ material.material_id }}">{{ material.description|truncatewords:4 }}</a></td>
                 <td style="text-align:center;"><input type="checkbox" name="check-delete" value="{{ material.material_id }}"></td>
-                </tr> 
-                {% endfor %}
+            </tr> 
+            {% endfor %}
 
           </table>
         
