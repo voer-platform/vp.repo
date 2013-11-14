@@ -37,6 +37,38 @@ def createMaterial(title='Sample Module Title'):
     return res
 
 
+def createMaterial01(title='Sample Module Title'):
+    i0 = 'tests/test.png'
+    image = open(i0, 'r')
+    f01 = open(i0, 'r')
+    f02 = open(i0, 'r')
+    mdata = {}
+    mdata['material_type'] = 1
+    mdata['title'] = title
+    mdata['text'] = 'Nothing in this body'
+    mdata['version'] = 1
+    mdata['description'] = 'Just a quick intro of this material'
+    mdata['categories'] = [1]
+    mdata['author'] = '1, 2'
+    mdata['editor'] = 1
+    mdata['translator'] = 1
+    mdata['contributor'] = 1
+    mdata['licensor'] = 1
+    mdata['license_id'] = 1
+    mdata['language'] = 1
+    #mdata['image'] = image 
+    #mdata['mf01'] = f01
+    #mdata['mf02'] = f02
+    #mdata['mf01_name'] = 'Hello this is the first file'
+    #mdata['mf02_name'] = 'And this is the second file'
+    mdata['export-now'] = 1 
+    res = requests.post('http://localhost:8000/0.1/materials/', mdata)
+    res.status_code
+    image.close()
+    f01.close()
+    f02.close()
+    return res
+
 COLLECTION_ITEM = """{"attr":{"id":"%s","version": %d,"rel" : "default"},
                       "data" : "%s",
                       "state" : ""

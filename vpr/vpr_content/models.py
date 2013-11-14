@@ -78,6 +78,10 @@ class Material(models.Model, MaterialBase):
     derived_from = CharField(max_length=64, blank=True, null=True)
     image = ImageField(upload_to="./mimgs", blank=True, null=True) 
 
+    def __unicode__(self):
+        type_name = settings.MATERIAL_TYPES[self.material_type][:3]
+        return '%s - %s (%s)' % (type_name, self.title, self.material_id)
+
 
 class OriginalID(models.Model):
     material_id = CharField(max_length=64, primary_key=True)

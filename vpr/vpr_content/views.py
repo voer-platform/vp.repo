@@ -348,7 +348,7 @@ class MaterialList(generics.ListCreateAPIView):
 
             # (module/collection) create the zip package and post to vpt
             if not request.DATA.get('export_later', 0):
-                import pdb;pdb.set_trace()
+                #import pdb;pdb.set_trace()
                 requestMaterialPDF(self.object) 
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)

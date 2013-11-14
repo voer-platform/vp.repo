@@ -227,6 +227,8 @@ TEMP_DIR = os.path.join(PROJECT_DIR, 'tmp')
 
 VPR_MATERIAL_ROLES = ('author', 'editor', 'licensor', 'maintainer', 'translator', 'contributor')
 
+MATERIAL_TYPES = ('undefined', 'module', 'collection')
+
 
 # VPR LOG 
 
