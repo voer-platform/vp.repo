@@ -81,7 +81,17 @@ class PersonTestCase(TestCase):
         for k in self.sample_dict:
             self.assertEqual(self.sample_dict[k], normRes(res)[k])
 
-    def test_get_count(self):
+    def test_get_detail_count_empty(self):
+        pid = normRes(self.res0)['id']
+        res = self.client.get('/1/persons/%d?count=1' % pid)
+        self.assertEqual(res.status_code, CODE_SUCCESS)
+        res = normRes(res)
+        for k in self.sample_dict:
+            self.assertEqual(self.sample_dict[k], res[k])
+        for role in settings.VPR_MATERIAL_ROLES:
+            self.assertEqual(res[role], 0)
+
+    def test_get_detail_count(self):
         pid = normRes(self.res0)['id']
         res = self.client.get('/1/persons/%d/?count=1' % pid)
         self.assertEqual(res.status_code, CODE_SUCCESS)
@@ -384,7 +394,8 @@ class GetMaterialTestCase(BaseMaterialTestCase):
         sm1 = self.sample_material.copy()
         self.client.put('/1/materials/%s/' % self.content0['material_id'], sm1)
         # get the latest version
-        res = self.client.get('/1/materials/%s/' % self.content0['material_id'])
+        res = self.client.get('/1/materials/%s' % self.content0['material_id'])
+        #import pdb;pdb.set_trace()
         sm1['version'] = 2
         self.compareRes(sm1, normRes(res))
         res = self.client.get('/1/materials/%s/all/' % self.content0['material_id'])
