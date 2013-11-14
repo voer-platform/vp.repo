@@ -245,7 +245,7 @@ def countAssignedMaterial(category_id):
     res = None
     try:
         enclosed_id = SINGLE_ASSIGNED_CATEGORY % str(category_id)
-        cmd = "SELECT COUNT(id) FROM vpr_content_material WHERE categories LIKE '%%%s%%';" % enclosed_id 
+        cmd = "SELECT COUNT(id) FROM vpr_content_material WHERE categories LIKE '%%%%%s%%%%';" % enclosed_id 
         cur = connection.cursor()
         cur.execute(cmd)
         res = cur.fetchone()[0]

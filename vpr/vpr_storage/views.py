@@ -44,7 +44,7 @@ def postMaterialZip(material):
                    'output': EXPORT_TYPE}
         files = {'file': (mzip.name.split('/')[-1], mzip.read())}
         res = requests.post(EXPORT_URL, files=files, data={})
-        #os.remove(mzip.name)
+        os.remove(mzip.name)
     return res
 
 
@@ -230,9 +230,7 @@ def zipMaterial(material):
         editor_ids = editor_ids.split(',')
         editors = models.getPersonName(editor_ids)
         if isinstance(editors, str): editors = [editors,]
-        material_url = MATERIAL_SOURCE_URL % (
-            material.material_id,
-            material.version)
+        material_url = MATERIAL_SOURCE_URL % material.material_id
 
         # generate collection.json
         try:
@@ -379,7 +377,7 @@ def zipMaterialExternal(material):
             index_content = json.loads(material.text)
             index_content['id'] = material.material_id
             index_content['title'] = material.title
-            index_content['version'] = str(material.version)
+            index_content['version'] = material.version
             index_content['license'] = MATERIAL_LICENSE
             index_content['url'] = material_url
             index_content['editors'] = editors 
@@ -469,8 +467,15 @@ def getMaterialPDF(request, *args, **kwargs):
     """ Check and return the PDF file of given material if exist
     """
     mid = kwargs.get('mid', None)
-    version = kwargs.get('version', None) or getMaterialLatestVersion(mid) 
+    version = kwargs.get('version', None)
+    if version:
+        version = int(version)
+    else:
+        # only catch the case of missing version ~ getting latest
+        # error will be raised in other cases
+        version = getMaterialLatestVersion(mid) 
     material = Material.objects.get(material_id=mid, version=version)
+
     get_it = False
     try: 
         export_obj = MaterialExport.objects.get(material_id=mid, version=version)
