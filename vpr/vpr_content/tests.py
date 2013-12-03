@@ -81,6 +81,9 @@ class PersonTestCase(TestCase):
         for k in self.sample_dict:
             self.assertEqual(self.sample_dict[k], normRes(res)[k])
 
+    def test_get_avatar(self):
+        self.assertEqual(0, 1)
+
     def test_get_detail_count_empty(self):
         pid = normRes(self.res0)['id']
         res = self.client.get('/1/persons/%d?count=1' % pid)
@@ -92,12 +95,7 @@ class PersonTestCase(TestCase):
             self.assertEqual(res[role], 0)
 
     def test_get_detail_count(self):
-        pid = normRes(self.res0)['id']
-        res = self.client.get('/1/persons/%d/?count=1' % pid)
-        self.assertEqual(res.status_code, CODE_SUCCESS)
-        content = normRes(res)
-        for role in settings.VPR_MATERIAL_ROLES:
-            self.assertEqual(content[role], 0)
+        self.assertEqual(0, 1)
 
     def test_list(self):
         sm1 = self.sample_dict.copy()
@@ -157,7 +155,7 @@ class CategoryTestCase(TestCase):
 
     def test_get_count(self):
         # tested in the MaterialTestCase
-        pass
+        self.assertEqual(0, 1)
 
     def test_list(self):
         sm1 = self.sample_dict.copy()

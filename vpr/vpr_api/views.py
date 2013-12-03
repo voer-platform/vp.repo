@@ -31,8 +31,8 @@ def api_root(request, format=None):
         'persons': reverse('person-list', request=request),
         'categories': reverse('category-list', request=request),
         'materials': reverse('material-list', request=request),
-        'mfiles': reverse('material-file', request=request),
-#        'search': reverse('general-search', request=request),
+        #'mfiles': reverse('material-file/1', request=request),
+        #'search': reverse('general-search', request=request),
     })
 
 

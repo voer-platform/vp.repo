@@ -69,7 +69,8 @@ class CategoryList(generics.ListCreateAPIView):
 
     def list(self, request, *args, **kwargs):
         """Original list function with caching implemented"""
-        cache_key = 'list-categories:'
+        query_st = request.GET.urlencode() or 'all'
+        cache_key = 'list-categories:%s' % query_st
         result = cache.get(cache_key)
         if result:
             sr_data = eval(result)
@@ -203,7 +204,8 @@ class PersonList(generics.ListCreateAPIView):
 
     def list(self, request, *args, **kwargs):
         """Original list function with caching implemented"""
-        cache_key = 'list-persons:'
+        query_st = request.GET.urlencode() or 'all'
+        cache_key = 'list-persons:%s' % query_st 
         result = cache.get(cache_key)
         if result:
             sr_data = eval(result)
