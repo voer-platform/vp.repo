@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models import CharField, TextField, FileField
 from django.db.models import IntegerField, CommaSeparatedIntegerField
-from django.db.models import DateTimeField, ImageField 
+from django.db.models import DateTimeField, ImageField, ForeignKey
 from django.conf import settings
 from django.dispatch import receiver
 from django.db.models.signals import post_delete
@@ -114,6 +114,37 @@ class MaterialPerson(models.Model):
     role = IntegerField()   # see the settings.VPR_MATERIAL_ROLES
 
 
+class MaterialComment(models.Model):
+    """ Comments of materials
+    """
+    material = ForeignKey('Material')
+    person = ForeignKey('Person')
+    comment = TextField()
+    modified = DateTimeField(default=datetime.utcnow)
+
+
+class MaterialRating(models.Model):
+    """ Store extra information of material, like: favorite, rated
+    """
+    material = ForeignKey('Material')
+    person = ForeignKey('Person')
+    rate = IntegerField()
+
+
+class MaterialFavorite(models.Model):
+    """ Store extra information of material, like: favorite, rated
+    """
+    material = ForeignKey('Material')
+    person = ForeignKey('Person')
+
+
+class MaterialViewCount(models.Model):
+    """ View count of material
+    """
+    material = ForeignKey('Material')
+    count = IntegerField()
+
+
 # ----------------
 
 
@@ -165,7 +196,8 @@ def listMaterialFiles(material_id, version):
 
 
 def getMaterialRawID(material_id, version=None):
-    """Returns the raw ID of specific material"""
+    """ Returns the raw ID of specific material
+    """
     try:
         if not version:
             version = getMaterialLatestVersion(material_id)

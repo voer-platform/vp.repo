@@ -87,6 +87,35 @@ class PersonSerializer(serializers.ModelSerializer):
                   'affiliation_url', 'national', 'biography', 'avatar')
 
 
+class MaterialCommentSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.MaterialComment
+    
+    def convert_object(self, obj):
+        """ Convert comment object to dictionary
+        """
+        ret = self._dict_class()
+        ret.fields = {}
+
+        fields = self.get_fields(nested=bool(self.opts.depth))
+        for field_name, field in fields.items():
+            key = self.get_field_key(field_name)
+            value = field.field_to_native(obj, field_name)
+            ret[key] = value
+            ret.fields[key] = field
+
+        # vpr: custom settings for material field
+        cids = models.restoreAssignedCategory(ret.get('categories', ''))
+        cids = [str(cid) for cid in cids]
+        ret['categories'] = ','.join(cids)
+
+        # vpr: custom process for material author, editor
+        material_roles = models.getMaterialPersons(obj.id)
+        for person_role in material_roles:
+            ret[person_role] = material_roles[person_role] 
+
+
 class MiniPersonSerializer(serializers.ModelSerializer):
     """docstring for PersonSerializer"""
     class Meta:

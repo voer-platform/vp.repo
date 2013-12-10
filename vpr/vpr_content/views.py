@@ -15,16 +15,15 @@ from rest_framework import mixins
 from haystack.query import SearchQuerySet 
 from django.conf import settings
 from django.core.cache import cache
-
-import os
-import mimetypes
-
 from vpr_api.models import APIRecord
 from vpr_api.decorators import api_token_required
 from vpr_api.utils import APILogger
 from vpr_api.decorators import api_token_required, api_log
 from vpr_storage.views import zipMaterial, requestMaterialPDF
+from material_views import *
 
+import os
+import mimetypes
 import models
 import serializers
 
