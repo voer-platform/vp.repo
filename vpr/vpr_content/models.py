@@ -141,8 +141,9 @@ class MaterialFavorite(models.Model):
 class MaterialViewCount(models.Model):
     """ View count of material
     """
-    material = ForeignKey('Material')
+    material = ForeignKey('Material', primary_key=True)
     count = IntegerField()
+    last_visit = DateTimeField(default=datetime.utcnow)
 
 
 # ----------------
@@ -207,6 +208,18 @@ def getMaterialRawID(material_id, version=None):
     except:
         mrid = None
     return mrid
+
+
+def convertMaterialRawID(material_rid):
+    """ Return correspondent material_id and version of given raw ID
+    """
+    try:
+        data = Material.objects.filter(id=material_rid).values('material_id', 'version')[0]
+        return data['material_id'], data['version']
+    except IndexError:
+        pass 
+    except ValueError:
+        pass
 
 
 def getMaterialPersons(material_rid):

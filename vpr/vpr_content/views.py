@@ -20,7 +20,7 @@ from vpr_api.decorators import api_token_required
 from vpr_api.utils import APILogger
 from vpr_api.decorators import api_token_required, api_log
 from vpr_storage.views import zipMaterial, requestMaterialPDF
-from material_views import *
+from material_views import MaterialComments, materialCounterView
 
 import os
 import mimetypes

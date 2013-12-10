@@ -1,0 +1,97 @@
+from datetime import datetime
+from rest_framework import status
+from rest_framework.decorators import api_view 
+from rest_framework.response import Response
+from rest_framework.generics import ListCreateAPIView, CreateAPIView, SingleObjectAPIView
+from vpr_api.decorators import api_token_required, api_log
+from models import MaterialComment, getMaterialRawID, MaterialViewCount
+from serializers import MaterialCommentSerializer
+
+
+class MaterialComments(ListCreateAPIView):
+    """
+    """
+    model  = MaterialComment
+    serializer_class = MaterialCommentSerializer
+
+    def create(self, request, *args, **kwargs):
+        # change material_id & version to material raw ID
+        data = request.DATA.dict()
+        rid = getMaterialRawID(kwargs['mid'], kwargs.get('version', None))
+        data['material'] = rid
+
+        serializer = self.get_serializer(data=data)
+        if serializer.is_valid():
+            self.pre_save(serializer.object)
+            self.object = serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @api_log
+    @api_token_required
+    def post(self, request, *args, **kwargs):
+        """Old post method with decorator"""
+        response = self.create(request, *args, **kwargs)
+        return response 
+
+    @api_log
+    @api_token_required
+    def get(self, request, *args, **kwargs):
+        """Old post method with decorator"""
+        response = self.list(request, *args, **kwargs)        
+        return response
+
+    def list(self, request, *args, **kwargs):
+        """ Original list function with caching implemented
+        """
+        rid = getMaterialRawID(kwargs['mid'], kwargs.get('version', None))
+        self.object_list = MaterialComment.objects.filter( material=rid)
+        self.object_list = self.object_list.order_by('modified')
+
+        # Default is to allow empty querysets.  This can be altered by setting
+        # `.allow_empty = False`, to raise 404 errors on empty querysets.
+        allow_empty = self.get_allow_empty()
+        if not allow_empty and len(self.object_list) == 0:
+            error_args = {'class_name': self.__class__.__name__}
+            raise Http404(self.empty_error % error_args)
+
+        # Pagination size is set by the `.paginate_by` attribute,
+        # which may be `None` to disable pagination.
+        page_size = self.get_paginate_by(self.object_list)
+        if page_size:
+            packed = self.paginate_queryset(self.object_list, page_size)
+            paginator, page, queryset, is_paginated = packed
+            serializer = self.get_pagination_serializer(page)
+        else:
+            serializer = self.get_serializer(self.object_list)
+        sr_data = serializer.data
+        return Response(sr_data)
+
+
+@api_view(['GET', 'PUT'])
+def materialCounterView(request, *args, **kwargs):
+    """ View for update and get material view number
+    """
+    rid = getMaterialRawID(kwargs['mid'], kwargs.get('version', None))
+    try:
+        counter = MaterialViewCount.objects.get(material=rid)
+    except MaterialViewCount.DoesNotExist:
+        counter = MaterialViewCount(material_id=rid, count=0)
+        counter.save()
+    
+    data = {}
+    if request.method == 'GET':
+        pass
+    elif request.method == 'PUT':
+        try:    
+            counter.count += int(request.DATA.get('increment', 1))
+        except ValueError:
+            pass
+        counter.last_visit = datetime.utcnow()
+        counter.save() 
+    data['view'] = counter.count
+    data['last_visit'] = counter.last_visit
+    
+    return Response(data)
+    
+
