@@ -12,9 +12,11 @@ class MaterialIndex(SearchIndex, Indexable):
     description = CharField(model_attr='description', boost=1.125)
     keywords = CharField(model_attr='description', boost=1.25)
     modified = DateTimeField(model_attr='modified')
-    material_type = IntegerField(model_attr='material_type')
+    material_type = IntegerField(model_attr='material_type', faceted=True)
     version = IntegerField(model_attr='version')
-    categories = CharField(model_attr='categories', null=True)
+    categories = CharField(model_attr='categories', faceted=True, null=True)
+    language = CharField(model_attr='language', faceted=True, null=True)
+
 
     def get_model(self):
         return Material

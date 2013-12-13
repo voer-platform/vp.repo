@@ -443,7 +443,7 @@ def extractMaterialInfo(node):
     return found
         
 
-@api_log
+#@api_log
 def getMaterialZip(request, *args, **kwargs):
     """ Return compressed files (Zip) of a material
     """

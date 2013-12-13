@@ -69,6 +69,8 @@ def api_log(func):
     
     def wrappee(*args, **kwargs):
         """ """
+        return func(*args, **kwargs)
+
         res = func(*args, **kwargs)  
         try:
             request = getRequest(*args)

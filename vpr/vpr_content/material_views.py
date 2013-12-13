@@ -1,3 +1,5 @@
+from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Avg
 from datetime import datetime
 from rest_framework import status
 from rest_framework.decorators import api_view 
@@ -5,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.generics import ListCreateAPIView, CreateAPIView, SingleObjectAPIView
 from vpr_api.decorators import api_token_required, api_log
 from models import MaterialComment, getMaterialRawID, MaterialViewCount
-from models import MaterialRating
+from models import MaterialRating, MaterialFavorite
 from serializers import MaterialCommentSerializer
 
 
@@ -69,6 +71,7 @@ class MaterialComments(ListCreateAPIView):
         return Response(sr_data)
 
 
+@csrf_exempt
 @api_log
 @api_token_required
 @api_view(['GET', 'PUT', 'DELETE'])
@@ -104,22 +107,71 @@ def materialCounterView(request, *args, **kwargs):
     data['last_visit'] = counter.last_visit
     return Response(data)
     
+
+@csrf_exempt
 @api_log
+@api_token_required
 @api_view(['GET', 'POST', 'DELETE'])
 def materialRatesView(request, *args, **kwargs):
     """ View for update and get material view number
     """
     rid = getMaterialRawID(kwargs['mid'], kwargs.get('version', None))
-    pid = request.DATA['person']
-    rate = request.DATA['rate']
-    
+    data = {} 
     if request.method == 'POST':
+        pid = request.DATA['person']
+        rate = request.DATA['rate'] 
         if not MaterialRating.objects.filter(material=rid, person=pid).exists():
-            rate_obj = MaterialRating(
-                material = rid,
-                person = pid,
-                rate = rate)
+            rate_obj = MaterialRating(material_id=rid, person_id=pid, rate=rate)
             rate_obj.save() 
-    return Response(None)
+    elif request.method == 'GET':
+        pass
+    elif request.method == 'DELETE':
+        pid = request.GET.get('person', None)
+        if pid:
+            MaterialRating.objects.filter(material=rid, person=pid).delete()
+        else:
+            # hey, be careful
+            MaterialRating.objects.filter(material=rid).delete()
 
+    # all cases return final rates
+    avg_rate, count = getMaterialAvgRate(rid)
+    data = {'rate': avg_rate, 'count': count}
+    return Response(data)
+
+
+def getMaterialAvgRate(mrid):
+    """ Queries, calculates then returns final material rate
+    """
+    query = MaterialRating.objects.filter(material=mrid)
+    count = query.count()
+    res = query.aggregate(Avg('rate'))
+    avg_rate = res[res.keys()[0]]
+    return avg_rate, count
+
+
+@csrf_exempt
+@api_log
+@api_token_required
+@api_view(['GET', 'POST', 'DELETE'])
+def materialFavoriteView(request, *args, **kwargs):
+    """ View for update and get material view number
+    """
+    rid = getMaterialRawID(kwargs['mid'], kwargs.get('version', None))
+    data = {} 
+    if request.method == 'POST':
+        pid = request.DATA['person']
+        if not MaterialFavorite.objects.filter(material=rid, person=pid).exists():
+            fav_obj = MaterialFavorite(material_id=rid, person_id=pid)
+            fav_obj.save() 
+    elif request.method == 'GET':
+        pass
+    elif request.method == 'DELETE':
+        pid = request.GET.get('person', None)
+        if pid:
+            MaterialFavorite.objects.filter(material=rid, person=pid).delete()
+
+    # all cases return final rates
+    count = MaterialFavorite.objects.filter(material=rid).count()
+    data = {'favorite': count}
+    return Response(data)
 
