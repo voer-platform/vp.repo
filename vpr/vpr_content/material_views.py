@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.generics import ListCreateAPIView, CreateAPIView, SingleObjectAPIView
 from vpr_api.decorators import api_token_required, api_log
 from models import MaterialComment, getMaterialRawID, MaterialViewCount
+from models import MaterialRating
 from serializers import MaterialCommentSerializer
 
 
@@ -68,7 +69,9 @@ class MaterialComments(ListCreateAPIView):
         return Response(sr_data)
 
 
-@api_view(['GET', 'PUT'])
+@api_log
+@api_token_required
+@api_view(['GET', 'PUT', 'DELETE'])
 def materialCounterView(request, *args, **kwargs):
     """ View for update and get material view number
     """
@@ -84,14 +87,39 @@ def materialCounterView(request, *args, **kwargs):
         pass
     elif request.method == 'PUT':
         try:    
-            counter.count += int(request.DATA.get('increment', 1))
+            if not request.DATA:
+                incr = 1
+            else:
+                incr = int(request.DATA.get('increment', 1))
+            counter.count += incr 
         except ValueError:
             pass
         counter.last_visit = datetime.utcnow()
         counter.save() 
+    elif request.method == 'DELETE':
+        counter.count = 0
+        counter.save()
+
     data['view'] = counter.count
     data['last_visit'] = counter.last_visit
-    
     return Response(data)
     
+@api_log
+@api_view(['GET', 'POST', 'DELETE'])
+def materialRatesView(request, *args, **kwargs):
+    """ View for update and get material view number
+    """
+    rid = getMaterialRawID(kwargs['mid'], kwargs.get('version', None))
+    pid = request.DATA['person']
+    rate = request.DATA['rate']
+    
+    if request.method == 'POST':
+        if not MaterialRating.objects.filter(material=rid, person=pid).exists():
+            rate_obj = MaterialRating(
+                material = rid,
+                person = pid,
+                rate = rate)
+            rate_obj.save() 
+    return Response(None)
+
 

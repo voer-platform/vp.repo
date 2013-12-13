@@ -1,6 +1,7 @@
 from rest_framework.response import Response
 from django.conf import settings
 from django.utils.log import getLogger
+from django.http import HttpRequest
 from datetime import datetime
 
 from vpr_api.views import validateToken
@@ -15,20 +16,37 @@ CLIENT_ID_UNKNOWN = -1
 LOG_CHECK_TOKEN = 'Check API token (%s): %s'
 LOG_RECORD_FAILED = 'Recording API log failed'
 
+
+def isRequest(obj):
+    """ Check if the obj is true HttpRequest or not
+    """
+    return isinstance(obj, HttpRequest)
+
+
+def getRequest(*args):
+    """ Find and return true request object from arguments
+    """
+    request = None
+    if len(args) > 1:
+        if hasattr(args[1], '_request'):
+            request = args[1]._request
+    elif isRequest(args[0]):
+        request = args[0]
+    elif hasattr(args[0], '_request'):
+        request = args[0]._request
+    return request
+    
+
 def api_token_required(func):
     """docstring for TokenValidator"""
         
     def wrappee(*args, **kwargs):
         """Check if the token is valid or not, in order to process the request"""
-
+        request = getRequest(*args)
         if settings.TOKEN_REQUIRED == False:
             logger.info('API authentication bypassed')
             return func(*args, **kwargs)
 
-        if len(args) > 1:
-            request = args[1]._request
-        else:
-            request = args[0]._request
         token = request.COOKIES.get(COOKIE_TOKEN, None)
         client_id = request.COOKIES.get(COOKIE_CLIENT, None)
 
@@ -53,10 +71,7 @@ def api_log(func):
         """ """
         res = func(*args, **kwargs)  
         try:
-            if len(args) > 1:
-                request = args[1]._request
-            else:
-                request = args[0]
+            request = getRequest(*args)
             client_id = request.COOKIES.get(COOKIE_CLIENT)
             if not client_id:
                 client_id = request.GET.get(COOKIE_CLIENT, CLIENT_ID_UNKNOWN)
@@ -65,7 +80,6 @@ def api_log(func):
             query = '&'.join([k+'='+request.GET.get(k,'') for k in qr_keys])
             after_apicall.send(sender=None, request=request, result=res.status_code)
         except:
-            raise
             logger.error(LOG_RECORD_FAILED)
         return res     
 

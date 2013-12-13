@@ -21,6 +21,7 @@ from vpr_api.utils import APILogger
 from vpr_api.decorators import api_token_required, api_log
 from vpr_storage.views import zipMaterial, requestMaterialPDF
 from material_views import MaterialComments, materialCounterView
+from material_views import materialRatesView
 
 import os
 import mimetypes
