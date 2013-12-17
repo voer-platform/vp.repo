@@ -131,13 +131,20 @@ def facetSearchView(request, *args, **kwargs):
     counts = sqs.facet_counts()
     # refine the category IDs
     cats = counts['fields']['categories']
+    cat_dict = {}
     for cid in range(len(cats)):
         raw_id = models.restoreAssignedCategory(cats[cid][0])
         if raw_id: 
-            raw_id = raw_id[0]
+            raw_id = str(raw_id[0])
         else:
-            raw_id = None
-        cats[cid] = [raw_id, cats[cid][1]]
+            raw_id = '0'
+        if cat_dict.has_key(raw_id):
+            cat_dict[raw_id] += cats[cid][1]
+        else:
+            cat_dict[raw_id] = cats[cid][1]
+    cats = []
+    for key in cat_dict:
+        cats.append([int(key), cat_dict[key]])
     counts['fields']['categories'] = cats
 
     return Response(counts)
