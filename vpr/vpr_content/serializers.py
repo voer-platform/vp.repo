@@ -49,7 +49,7 @@ class MaterialSerializer(serializers.ModelSerializer):
         self.m2m_data = {}
 
         # vpr: standardize the entered category
-        attrs['categories'] = models.refineAssignedCategory(
+        attrs['categories'] = models.wrapAssignedCategory(
             attrs.get('categories', ''))
 
         if instance:

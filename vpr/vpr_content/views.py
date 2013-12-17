@@ -22,7 +22,7 @@ from vpr_api.decorators import api_token_required, api_log
 from vpr_storage.views import zipMaterial, requestMaterialPDF
 from material_views import MaterialComments, materialCounterView
 from material_views import materialRatesView, materialFavoriteView
-from search_views import GeneralSearch, raise404
+from search_views import GeneralSearch, facetSearchView, raise404
 
 import os
 import mimetypes
@@ -403,7 +403,7 @@ class MaterialList(generics.ListCreateAPIView):
                     if request.GET.get('categories', ''):
                         sel_cats = request.GET.get('categories', '').split(',')
                         for cat in sel_cats:
-                            org_cat = models.refineAssignedCategory(cat)
+                            org_cat = models.wrapAssignedCategory(cat)
                             self.object_list = self.object_list.filter(
                                 categories__contains=org_cat)
 

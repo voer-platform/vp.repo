@@ -6,10 +6,10 @@ from django.conf import settings
 from rest_framework import status
 from rest_framework.decorators import api_view 
 from rest_framework.response import Response
-from rest_framework.generics import ListAPIView, CreateAPIView, SingleObjectAPIView
+from rest_framework.generics import ListAPIView
 from haystack.query import SearchQuerySet 
-
 from vpr_api.decorators import api_token_required, api_log
+
 import models
 import serializers
 
@@ -105,3 +105,39 @@ def buildPageURLs(request):
     url_prev = request.build_absolute_uri(prev_location)
     return url_prev, url_next
 
+
+@api_log
+@api_token_required
+@api_view(['GET'])
+def facetSearchView(request, *args, **kwargs):
+    """ Return the faceted data corresponding to the given query 
+    """
+    facet_fields = ('material_type', 'categories', 'language')
+    query = {}
+    # support both 'type' & 'material_type'
+    if request.GET.get('type', None):
+        query['material_type'] = request.GET['type']
+    allow_model = models.Material
+    sqs = SearchQuerySet().models(allow_model).filter(**query)    
+    # add custom fileting with categories 
+    category = request.GET.get('categories', '')
+    if category: 
+        category = category.split(',')[0]
+        category = models.wrapAssignedCategory(category)
+        sqs = sqs.filter(categories__contains=category)
+    # implement facet
+    for field in facet_fields:
+        sqs = sqs.facet(field)
+    counts = sqs.facet_counts()
+    # refine the category IDs
+    cats = counts['fields']['categories']
+    for cid in range(len(cats)):
+        raw_id = models.restoreAssignedCategory(cats[cid][0])
+        if raw_id: 
+            raw_id = raw_id[0]
+        else:
+            raw_id = None
+        cats[cid] = [raw_id, cats[cid][1]]
+    counts['fields']['categories'] = cats
+
+    return Response(counts)

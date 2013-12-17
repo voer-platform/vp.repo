@@ -299,7 +299,7 @@ def countAssignedMaterial(category_id):
         # fires some log here
     return res
 
-def refineAssignedCategory(category_id):
+def wrapAssignedCategory(category_id):
     """Returns the standardized value of categories, which will be saved
     into DB"""
     cat_list = category_id.split(',')
@@ -416,7 +416,7 @@ def changeMaterialCatValues():
         print '[%d/%d]' % (m_count, m_total)
         try:       
             if material.categories[0] != w0:
-                material.categories = refineAssignedCategory(material.categories) 
+                material.categories = wrapAssignedCategory(material.categories) 
                 material.save()
         except:
             pass
