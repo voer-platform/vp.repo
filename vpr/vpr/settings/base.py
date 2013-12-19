@@ -167,7 +167,7 @@ LOGGING = {
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.AllowAny',),
-    'PAGINATE_BY': 10
+    'PAGINATE_BY': 12
 }
 
 INTERNAL_IPS = ('127.0.0.1',)
