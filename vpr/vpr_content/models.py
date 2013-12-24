@@ -241,6 +241,15 @@ def getMaterialPersons(material_rid):
     return material_roles
 
 
+def getCategoryName(cat_id):
+    result = Category.objects.filter(pk=int(cat_id)).values('name')
+    if result:
+        result = result[0]['name']
+    else:
+        result = None
+    return result
+
+
 def getPersonName(person_id):
     """Returns name of given person IDs. Accept input as string or 
     list & tuple"""

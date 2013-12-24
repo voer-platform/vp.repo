@@ -435,7 +435,24 @@ class MaterialList(generics.ListCreateAPIView):
             # silly steps: remove heavy data from response
             try:
                 for res in range(len(serializer.data['results'])):
-                    serializer.data['results'][res]['text'] = ''
+                    material = serializer.data['results'][res]
+                    material['text'] = ''
+                    if request.GET.get('names', None):
+                        # add the category names
+                        cats = []
+                        for mc in material['categories']:
+                            cats.append([mc, models.getCategoryName(mc)])
+                        material['categories'] = cats
+                        # .. and the person names
+                        for role in settings.VPR_MATERIAL_ROLES:
+                            if material.has_key(role):
+                                persons = []
+                                pids = [int(pid) for pid in material[role].split(',')]
+                                for pc in pids:
+                                    persons.append([pid, models.getPersonName(pid)])
+                                material[role] = persons
+                    serializer.data['results'][res] = material
+
             except:
                 # should we shout anything?
                 pass
