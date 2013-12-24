@@ -197,7 +197,6 @@ class BaseMaterialTestCase(TestCase):
         'version' : 1,
         'title' : 'This is sample material',
         'description' : 'Sample description',
-        'categories' : '1',
         'author': '1',
         'editor': '1',
         'contributor': '1',
@@ -253,7 +252,7 @@ class BaseMaterialTestCase(TestCase):
         self.pid0 = normRes(res)['id']
         res = self.client.post('/1/categories/', self.sample_cat)
         self.cid0 = normRes(res)['id']
-        self.sample_material['categories'] = str(self.cid0)
+        self.sample_material['categories'] = [int(self.cid0)]
         self.res0 = self.client.post('/1/materials/', self.sample_material)
         self.content0 = normRes(self.res0)
 
@@ -267,6 +266,7 @@ class CreateMaterialTestCase(BaseMaterialTestCase):
 
     def test_create_success(self):
         self.assertEqual(self.res0.status_code, CODE_CREATED)
+        import pdb;pdb.set_trace()
         self.compareRes(self.sample_material, self.content0)
 
     def test_create_with_image(self):
@@ -295,12 +295,15 @@ class CreateMaterialTestCase(BaseMaterialTestCase):
         self.compareRes(new_material, content)
 
     def test_create_multi_cats(self):
+        res = self.client.post('/1/categories/', self.sample_cat.copy())
+        cid1 = normRes(res)['id']
         new_material = self.sample_material.copy()
-        new_material['categories'] = '%s,99' % str(self.cid0)
+        new_material['categories'] = [self.cid0, cid1]
         res = self.client.post('/1/materials/', new_material)
         self.assertEqual(res.status_code, CODE_CREATED) 
         content = normRes(res)
         self.compareRes(new_material, content)
+        import pdb;pdb.set_trace()
         res = self.client.get('/1/categories/%s/?count=1' % self.cid0)
         content = normRes(res)
         self.assertEqual(content['material'], 2)

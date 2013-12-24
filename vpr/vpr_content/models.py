@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models import CharField, TextField, FileField
 from django.db.models import IntegerField, CommaSeparatedIntegerField
 from django.db.models import DateTimeField, ImageField, ForeignKey
+from django.db.models import ManyToManyField
 from django.conf import settings
 from django.dispatch import receiver
 from django.db.models.signals import post_delete
@@ -70,7 +71,7 @@ class Material(models.Model, MaterialBase):
     version = IntegerField(default=1)
     title = CharField(max_length=255)
     description = TextField(blank=True, null=True)
-    categories = CharField(max_length=256, blank=True, null=True)
+    categories = ManyToManyField('Category', blank=True, null=True)
     keywords = TextField(blank=True, null=True)
     language = CharField(max_length=2, blank=True)
     license_id = IntegerField(null=True)
@@ -403,24 +404,6 @@ def finishDeleteMaterial(sender, **kwargs):
 
 
 # MIGRATING FUNCTIONS
-
-
-def changeMaterialCatValues():
-    """Changes all assigned categories from format:
-    '1, 2' to '(1)(2)'"""
-    all_materials = Material.objects.all()  # OMG
-    m_count = 1
-    m_total = len(all_materials)
-    w0 = SINGLE_ASSIGNED_CATEGORY[0]
-    for material in all_materials:
-        print '[%d/%d]' % (m_count, m_total)
-        try:       
-            if material.categories[0] != w0:
-                material.categories = wrapAssignedCategory(material.categories) 
-                material.save()
-        except:
-            pass
-        m_count += 1
 
 
 def resetPersonRoles():

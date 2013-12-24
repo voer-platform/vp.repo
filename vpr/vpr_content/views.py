@@ -399,20 +399,26 @@ class MaterialList(generics.ListCreateAPIView):
                         browse_on['pk__in'] = allow_materials
                     self.object_list = self.object_list.filter(**browse_on)
 
+                    from django.db.models import Q
+
                     # custom fileting with categories 
                     if request.GET.get('categories', ''):
                         sel_cats = request.GET.get('categories', '').split(',')
+                        #import pdb;pdb.set_trace();
+                        final_q = None
                         for cat in sel_cats:
-                            org_cat = models.wrapAssignedCategory(cat)
-                            self.object_list = self.object_list.filter(
-                                categories__contains=org_cat)
+                            if final_q:
+                                final_q = final_q | Q(categories__pk__contains=cat)
+                            else:
+                                final_q = Q(categories__pk__contains=cat)
+                        self.object_list = self.object_list.filter(final_q)
 
                     # continue with sorting
                     sort_fields = request.GET.get('sort_on', '')
                     if sort_fields:
-                        #import pdb;pdb.set_trace()
                         self.object_list = self.object_list.order_by(sort_fields)
             except:
+                raise
                 raise404(request) 
 
             # Default is to allow empty querysets.  This can be altered by setting
@@ -745,3 +751,9 @@ def getMaterialImage(request, *args, **kwargs):
 
     raise Http404
 
+
+from django.db.models import Q
+@api_view(['GET'])
+def testCount(request):
+    total = models.Material.objects.filter(Q(categories__pk__contains=1)|Q(categories__pk__contains=5)).count()
+    return Response(total)

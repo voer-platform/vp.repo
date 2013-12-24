@@ -21,3 +21,12 @@ urlpatterns += patterns('',
 urlpatterns += patterns('',
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))
     )
+
+
+# for DEBUG
+from vpr_content import views as content_views
+urlpatterns += patterns('',
+    url(r'^test-count/', content_views.testCount)
+    )
+
+

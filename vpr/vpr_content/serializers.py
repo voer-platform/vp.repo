@@ -10,9 +10,10 @@ class MaterialSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Material
         fields = ('material_id', 'material_type', 'title', 'text', 
-                  'version', 'description', 'categories', 'keywords', 
+                  'version', 'description', 'keywords', 
                   'image', 'language', 'license_id', 'modified', 
-                  'derived_from',)
+                  'derived_from', 'categories')
+        categories = serializers.RelatedField(source='categories')
 
     def convert_object(self, obj):
         """
@@ -29,11 +30,6 @@ class MaterialSerializer(serializers.ModelSerializer):
             ret[key] = value
             ret.fields[key] = field
 
-        # vpr: custom settings for categories field
-        cids = models.restoreAssignedCategory(ret.get('categories', ''))
-        cids = [str(cid) for cid in cids]
-        ret['categories'] = ','.join(cids)
-
         # vpr: custom process for material author, editor
         material_roles = models.getMaterialPersons(obj.id)
         for person_role in material_roles:
@@ -49,8 +45,8 @@ class MaterialSerializer(serializers.ModelSerializer):
         self.m2m_data = {}
 
         # vpr: standardize the entered category
-        attrs['categories'] = models.wrapAssignedCategory(
-            attrs.get('categories', ''))
+        #attrs['categories'] = models.wrapAssignedCategory(
+        #    attrs.get('categories', ''))
 
         if instance:
             for key, val in attrs.items():
