@@ -3,6 +3,7 @@ import requests
 import os
 import json
 
+from datetime import datetime
 from os.path import realpath
 from shutil import rmtree
 from subprocess import Popen 
@@ -33,6 +34,9 @@ HTTP_CODE_SUCCESS = 200
 
 EXPORT_TYPE = 'pdf'
 EXPORT_URL = os.path.join(settings.VPT_URL, 'export')
+TASK_ID_PREFIX = '...'
+EXPORT_TIME_FORMAT = "%Y/%m/%d %H:%M"
+EXPORT_TIME_LIMIT = 300    # seconds
 
 
 def postMaterialZip(material):
@@ -80,6 +84,7 @@ def storeMaterialExport(url, exp_obj):
         if downloadFile(url, export_path):
             exp_obj.path = export_path
             exp_obj.file_type = EXPORT_TYPE
+            exp_obj.name = ''
             exp_obj.save()
             break
         elif attemp == 1:
@@ -88,8 +93,6 @@ def storeMaterialExport(url, exp_obj):
         attempt -= 1
 
 
-TASK_ID_PREFIX = '...'
-
 
 def isExportProcessing(export_obj):
     """Check if the export file is under converting or not"""
@@ -97,9 +100,8 @@ def isExportProcessing(export_obj):
 
 
 def requestMaterialPDF(material):
-    """ Create the zip package and post it to vpt in order to 
-        receive the PDF genereated.
-        After receiving the file exported, an entry of export
+    """ Create the zip package and post it to vpt in order to receive the PDF 
+        genereated. After receiving the file exported, an entry of export
         material will be created (as MaterialExport). This returns:
             True: Export file is ready to get.
             False: Export file is not ready. Try again later.
@@ -118,19 +120,24 @@ def requestMaterialPDF(material):
     # in case of nothing have been saved
     if export_obj.count() == 0:
         res = postMaterialZip(material)
-        values = json.loads(res.content)
-        new_export = MaterialExport(
-            material_id = material.material_id,
-            version = material.version)
-        if values['status'] == res_pending:
-            new_export.path = TASK_ID_PREFIX + values['task_id']
-            new_export.save()
-        elif values['status'] == res_success:
-            storeMaterialExport(values['url'], export_obj)
-            ready = True
-        else:
-            # failure, delete the export object
-            export_obj.delete()
+        try:
+            values = json.loads(res.content)
+            new_export = MaterialExport(
+                material_id = material.material_id,
+                version = material.version)
+            if values['status'] == res_pending:
+                new_export.path = TASK_ID_PREFIX + values['task_id']
+                new_export.name = datetime.now().strftime(EXPORT_TIME_FORMAT)
+                new_export.save()
+            elif values['status'] == res_success:
+                storeMaterialExport(values['url'], export_obj)
+                ready = True
+            else:
+                # failure, delete the export object
+                export_obj.delete()
+        except ValueError:
+            pass
+            
     else:
         # check for the status if existed
         export_obj = export_obj[0]
@@ -138,18 +145,39 @@ def requestMaterialPDF(material):
             # conversion not completed, ask again
             task_id = export_obj.path[3:]
             res = requests.get(EXPORT_URL+'?task_id='+task_id)
-            values = json.loads(res.content)
-            # download the PDF if done
-            if values['status'] == res_success:
-                storeMaterialExport(values['url'], export_obj)
-                ready = True
-            elif values['status'] != res_pending:
-                # failure, delete the export object
+            try:
+                values = json.loads(res.content)
+                # download the PDF if done
+                if values['status'] == res_success:
+                    storeMaterialExport(values['url'], export_obj)
+                    ready = True
+                elif values['status'] == res_pending:
+                    # clear the object, prepare for retrying download
+                    if isExportExpired(export_obj.name): 
+                        export_obj.delete()
+                elif values['status'] != res_pending:
+                    # failure, delete the export object
+                    export_obj.delete()
+            except ValueError:
+                # non-json content returned
                 export_obj.delete()
+                
         elif export_obj.path:
             ready = True
     return ready
 
+
+def isExportExpired(request_time):
+    """ Check if the export has exceeded limit time or not.
+        If yes: delete the export object.
+    """
+    if isinstance(request_time, str):
+        rq_time = datetime.strptime(request_time, EXPORT_TIME_FORMAT)
+    else:
+        rq_time = request_time
+    delta = datetime.now() - rq_time
+    return delta.total_seconds() > EXPORT_TIME_LIMIT
+        
 
 def zipMaterial(material):
     """ Collects all material info and put it into a ZIP file.
@@ -443,7 +471,7 @@ def extractMaterialInfo(node):
     return found
         
 
-#@api_log
+@api_log
 def getMaterialZip(request, *args, **kwargs):
     """ Return compressed files (Zip) of a material
     """
