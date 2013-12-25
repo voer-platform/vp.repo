@@ -42,7 +42,8 @@ EXPORT_TIME_LIMIT = 300    # seconds
 def postMaterialZip(material):
     """Load and send zip file to exporting service"""
     res = None
-    with open(zipMaterialExternal(material), 'rb') as mzip:
+    zip_path = zipMaterial(material)
+    with open(zip_path, 'rb') as mzip:
         payload = {'token': '', 
                    'cid': '',
                    'output': EXPORT_TYPE}
@@ -50,6 +51,19 @@ def postMaterialZip(material):
         res = requests.post(EXPORT_URL, files=files, data={})
         os.remove(mzip.name)
     return res
+
+
+def zipMaterial(material):
+    """ Compresses the material and returns zip path
+    """
+    zip_path = None
+    try:
+        zip_path = zipMaterialExternal(material)
+    except:
+        # I'm not sure we should maintenance this anymore.
+        #zip_path = zipMaterialInternal(material)
+        pass
+    return zip_path
 
 
 def downloadFile(url, path):
@@ -179,7 +193,7 @@ def isExportExpired(request_time):
     return delta.total_seconds() > EXPORT_TIME_LIMIT
         
 
-def zipMaterial(material):
+def zipMaterialInternal(material):
     """ Collects all material info and put it into a ZIP file.
         Full path of the zip file will be returned to the caller.
     """
@@ -476,9 +490,7 @@ def getMaterialZip(request, *args, **kwargs):
     """ Return compressed files (Zip) of a material
     """
     material = models.getMaterial(kwargs['mid'], kwargs.get('version', None))
-    #zip_path = zipMaterial(material)
-    zip_path = zipMaterialExternal(material)
-
+    zip_path = zipMaterial(material)
     try:
         with open(zip_path, 'rb') as zf:
             zip_name = '%s-%d.zip' % (material.material_id, material.version)
