@@ -4,6 +4,7 @@
 # from rest_framework.decorators import api_view
 # from rest_framework.reverse import reverse
 from django.http import Http404, HttpResponse
+from django.db.models import Q
 from rest_framework import status
 from rest_framework import generics
 from rest_framework.response import Response
@@ -371,9 +372,15 @@ class MaterialList(generics.ListCreateAPIView):
             try: 
                 # show all versions of specific material
                 if kwargs.get('mid', None):
-                    self.object_list = self.model.objects.filter(material_id=kwargs['mid'])
-                # list materials
+                    self.object_list = self.model.objects.filter(
+                        material_id=kwargs['mid']
+                        )
                 else:
+                    # get the or criterias
+                    or_crits = request.GET.get('or', '')
+                    if or_crits:
+                        or_crits = [cr.lower().strip() for cr in or_crits.split(',')]
+
                     self.object_list = self.model.objects
                     # filter by person roles
                     mp_objs = models.MaterialPerson.objects
@@ -400,12 +407,21 @@ class MaterialList(generics.ListCreateAPIView):
                     self.object_list = self.object_list.filter(**browse_on)
 
                     # custom fileting with categories 
-                    if request.GET.get('categories', ''):
-                        sel_cats = request.GET.get('categories', '').split(',')
-                        for cat in sel_cats:
-                            org_cat = models.wrapAssignedCategory(cat)
-                            self.object_list = self.object_list.filter(
-                                categories__contains=org_cat)
+                    CAT_NAME = 'categories'
+                    if request.GET.has_key(CAT_NAME):
+                        sel_cats = request.GET.get(CAT_NAME, '').split(',')
+                        # search with OR or AND option
+                        if CAT_NAME in or_crits:
+                            q = Q()
+                            for cat in sel_cats:
+                                org_cat = models.wrapAssignedCategory(cat)
+                                q = q | Q(categories__contains=org_cat)
+                            self.object_list = self.object_list.filter(q) 
+                        else:
+                            for cat in sel_cats:
+                                org_cat = models.wrapAssignedCategory(cat)
+                                self.object_list = self.object_list.filter(
+                                    categories__contains=org_cat)
 
                     # continue with sorting
                     sort_fields = request.GET.get('sort_on', '')
