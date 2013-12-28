@@ -603,17 +603,19 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
     @api_token_required
     def destroy(self, request, *args, **kwargs):
         """ Delete the material """
-        try:
-            res = models.deleteMaterial(
-                kwargs.get('mid'), 
-                kwargs.get('version'))
-            if res:
-                ret_code = status.HTTP_200_SUCCESS
-            else:
-                ret_code = status.HTTP_204_NO_CONTENT
-        except:
-            raise404(request)
-
+        if request.META.get('HTTP_VOER', None) != '1':
+            ret_code = 400
+        else:  
+            try:
+                res = models.deleteMaterial(
+                    kwargs.get('mid'), 
+                    kwargs.get('version'))
+                if res:
+                    ret_code = status.HTTP_200_SUCCESS
+                else:
+                    ret_code = status.HTTP_204_NO_CONTENT
+            except:
+                raise404(request)
         return Response(status=ret_code)
 
 
