@@ -34,5 +34,5 @@ urlpatterns = patterns('',
 # search & browse urls
 urlpatterns += patterns('',
     url(r'^(search|s)/?$', content_views.GeneralSearch.as_view(), name='general-search'),
-    url(r'^(facet)/?$', content_views.facetSearchView, name='facet-search'),
+    url(r'^facet/?$', content_views.facetSearchView, name='facet-search'),
     )

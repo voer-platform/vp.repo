@@ -7,7 +7,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view 
 from rest_framework.response import Response
 from rest_framework.generics import ListAPIView
-from haystack.query import SearchQuerySet 
+from haystack.query import SearchQuerySet, SQ
 from vpr_api.decorators import api_token_required, api_log
 
 import models
@@ -106,6 +106,38 @@ def buildPageURLs(request):
     return url_prev, url_next
 
 
+def getOrFields(request):
+    """ Get the fields for OR conditions from request
+    """
+    # get the OR criterias
+    or_fields = request.GET.get('or', [])
+    if or_fields:
+        or_fields = [cr.lower().strip() for cr in or_fields.split(',')]
+    return or_fields
+
+
+def queryCategory(request, sqset, use_or =True):
+    """ Use the given SearchQuerySet (qset) and continue query on category
+    """
+    CAT_NAME = 'categories'
+    if request.GET.has_key(CAT_NAME):
+        sel_cats = request.GET.get(CAT_NAME, '').split(',')
+        # search with OR or AND option
+        if use_or:
+            if sel_cats:
+                first_cat = models.wrapAssignedCategory(sel_cats[0])
+                sq = SQ(categories__contains=first_cat)
+            for cat in sel_cats[1:]:
+                org_cat = models.wrapAssignedCategory(cat)
+                sq = sq | SQ(categories__contains=org_cat)
+            sqset = sqset.filter(sq) 
+        else:
+            for cat in sel_cats:
+                org_cat = models.wrapAssignedCategory(cat)
+                sqset = sqset.filter(categories__contains=org_cat)
+    return sqset
+
+
 @api_log
 @api_token_required
 @api_view(['GET'])
@@ -114,17 +146,14 @@ def facetSearchView(request, *args, **kwargs):
     """
     facet_fields = ('material_type', 'categories', 'language')
     query = {}
+    or_fields = getOrFields(request)
     # support both 'type' & 'material_type'
     if request.GET.get('type', None):
         query['material_type'] = request.GET['type']
     allow_model = models.Material
     sqs = SearchQuerySet().models(allow_model).filter(**query)    
     # add custom fileting with categories 
-    category = request.GET.get('categories', '')
-    if category: 
-        category = category.split(',')[0]
-        category = models.wrapAssignedCategory(category)
-        sqs = sqs.filter(categories__contains=category)
+    sqs = queryCategory(request, sqs, 'categories' in or_fields)  
     # implement facet
     for field in facet_fields:
         sqs = sqs.facet(field)

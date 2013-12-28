@@ -377,9 +377,7 @@ class MaterialList(generics.ListCreateAPIView):
                         )
                 else:
                     # get the or criterias
-                    or_crits = request.GET.get('or', '')
-                    if or_crits:
-                        or_crits = [cr.lower().strip() for cr in or_crits.split(',')]
+                    or_crits = getOrFields(request)
 
                     self.object_list = self.model.objects
                     # filter by person roles
@@ -407,21 +405,11 @@ class MaterialList(generics.ListCreateAPIView):
                     self.object_list = self.object_list.filter(**browse_on)
 
                     # custom fileting with categories 
-                    CAT_NAME = 'categories'
-                    if request.GET.has_key(CAT_NAME):
-                        sel_cats = request.GET.get(CAT_NAME, '').split(',')
-                        # search with OR or AND option
-                        if CAT_NAME in or_crits:
-                            q = Q()
-                            for cat in sel_cats:
-                                org_cat = models.wrapAssignedCategory(cat)
-                                q = q | Q(categories__contains=org_cat)
-                            self.object_list = self.object_list.filter(q) 
-                        else:
-                            for cat in sel_cats:
-                                org_cat = models.wrapAssignedCategory(cat)
-                                self.object_list = self.object_list.filter(
-                                    categories__contains=org_cat)
+                    self.object_list = queryCategory(
+                        request,
+                        self.object_list,
+                        'categories' in or_crits
+                        )
 
                     # continue with sorting
                     sort_fields = request.GET.get('sort_on', '')
@@ -778,3 +766,34 @@ def getMaterialImage(request, *args, **kwargs):
 
     raise Http404
 
+
+def getOrFields(request):
+    """ Get the fields for OR conditions from request
+    """
+    # get the OR criterias
+    or_fields = request.GET.get('or', [])
+    if or_fields:
+        or_fields = [cr.lower().strip() for cr in or_fields.split(',')]
+    return or_fields
+
+
+def queryCategory(request, qset, use_or =True):
+    """ Use the given QuerySet (qset) and continue query on category
+    """
+    CAT_NAME = 'categories'
+    if request.GET.has_key(CAT_NAME):
+        sel_cats = request.GET.get(CAT_NAME, '').split(',')
+        # search with OR or AND option
+        if use_or:
+            if sel_cats:
+                first_cat = models.wrapAssignedCategory(sel_cats[0])
+                q = Q(categories__contains=first_cat)
+            for cat in sel_cats[1:]:
+                org_cat = models.wrapAssignedCategory(cat)
+                q = q | Q(categories__contains=org_cat)
+            qset = qset.filter(q) 
+        else:
+            for cat in sel_cats:
+                org_cat = models.wrapAssignedCategory(cat)
+                qset = qset.filter(categories__contains=org_cat)
+    return qset
