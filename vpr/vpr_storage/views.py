@@ -172,7 +172,7 @@ def requestMaterialPDF(material):
                 elif values['status'] != res_pending:
                     # failure, delete the export object
                     export_obj.delete()
-            except ValueError:
+            except:
                 # non-json content returned
                 export_obj.delete()
                 
