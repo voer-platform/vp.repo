@@ -780,7 +780,8 @@ def getOrFields(request):
 
 
 def queryCategory(request, qset, use_or =True):
-    """ Use the given QuerySet (qset) and continue query on category
+    """ Use the given QuerySet (qset) and continue querying on category
+        using conditions provided from request
     """
     CAT_NAME = 'categories'
     if request.GET.has_key(CAT_NAME):
@@ -799,3 +800,53 @@ def queryCategory(request, qset, use_or =True):
                 org_cat = models.wrapAssignedCategory(cat)
                 qset = qset.filter(categories__contains=org_cat)
     return qset
+
+
+@api_log
+@api_view(['GET'])
+@api_token_required
+def queryMaterialByViewCount(request, *args, **kwargs):
+    """ Returns QuerySet of all material sorted by view count
+    """
+    sql = """SELECT m.id, m.material_id, m.version, m.material_type, 
+                    m.title, m.categories, m.description, m.modified,
+                    mv.count
+             FROM vpr_content_material as m
+             INNER JOIN vpr_content_materialviewcount as mv
+             ON (m.id=mv.material_id) 
+             ORDER BY mv.count DESC LIMIT 10; 
+             """
+    materials = []
+    for m in models.Material.objects.raw(sql):
+
+        # getting categories
+        cids = models.restoreAssignedCategory(m.categories)
+        categories = []
+        for ci in range(len(cids)):
+            categories.append((cids[ci], models.getCategoryName(cids[ci]))) 
+
+        # getting authors
+        pids = models.getMaterialPersons(m.id)['author'].split(',')
+        pnames = models.getPersonName(pids)
+        if not isinstance(pnames, list):
+            pnames = [pnames,] 
+        authors = []
+        for pi in range(len(pids)):
+            authors.append((pids[pi], pnames[pi])) 
+
+        s_material = {
+            'material_id': m.material_id,
+            'version': m.version,
+            'material_type': m.material_type,
+            'title': m.title,
+            'categories': categories, 
+            'count': m.count,
+            'author': authors,
+            'modified': m.modified,
+            }
+        materials.append(s_material)
+
+    return Response(materials)
+
+
+

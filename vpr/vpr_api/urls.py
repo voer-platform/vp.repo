@@ -9,6 +9,16 @@ import views
 urlpatterns = patterns('',
     url(r'^auth/(?P<cid>\w+)/?$', views.authenticate, name='authenticate'),
     url(r'^token/(?P<token>\w+)/?$', views.testTokenView, name='validate-token'),
+    url(r'^mfiles/(?P<mfid>\d+)/?$', content_views.MaterialFiles.as_view(), name='material-file'), 
+    url(r'^mfiles/(?P<mfid>\d+)/get/?$', storage_views.getMaterialFile, name='get-material-file'), 
+    url(r'^categories/?$', content_views.CategoryList.as_view(), name='category-list'),
+    url(r'^categories/(?P<pk>[0-9]+)/?$', content_views.CategoryDetail.as_view(), name='category-detail'),
+    url(r'^persons/?$', content_views.PersonList.as_view(), name='person-list'),
+    url(r'^persons/(?P<pk>[0-9]+)/?$', content_views.PersonDetail.as_view(), name='person-detail'),
+    url(r'^persons/(?P<pk>[0-9]+)/avatar/?$', storage_views.handlePersonAvatar, name='person-avatar'),
+    )
+
+urlpatterns += patterns('',
     url(r'^materials/?$', content_views.MaterialList.as_view(), name='material-list'),
     url(r'^materials/(?P<mid>[0-9a-z]+)/all/?$', content_views.MaterialList.as_view(), name='material-version-list'),
     url(r'^materials/(?P<mid>[0-9a-z]+)(/(?P<version>\d+))?/?$', content_views.MaterialDetail.as_view(), name='material-detail'), 
@@ -21,15 +31,11 @@ urlpatterns = patterns('',
     url(r'^materials/(?P<mid>[0-9a-z]+)(/(?P<version>\d+))?/comments/?$', content_views.MaterialComments.as_view(), name='material-comments'),
     url(r'^materials/(?P<mid>[0-9a-z]+)(/(?P<version>\d+))?/rates/?$', content_views.materialRatesView, name='material-rates'),
     url(r'^materials/(?P<mid>[0-9a-z]+)(/(?P<version>\d+))?/favorites/?$', content_views.materialFavoriteView, name='material-favorite'),
-    url(r'^mfiles/(?P<mfid>\d+)/?$', content_views.MaterialFiles.as_view(), name='material-file'), 
-    url(r'^mfiles/(?P<mfid>\d+)/get/?$', storage_views.getMaterialFile, name='get-material-file'), 
-    url(r'^categories/?$', content_views.CategoryList.as_view(), name='category-list'),
-    url(r'^categories/(?P<pk>[0-9]+)/?$', content_views.CategoryDetail.as_view(), name='category-detail'),
-    url(r'^persons/?$', content_views.PersonList.as_view(), name='person-list'),
-    url(r'^persons/(?P<pk>[0-9]+)/?$', content_views.PersonDetail.as_view(), name='person-detail'),
-    url(r'^persons/(?P<pk>[0-9]+)/avatar/?$', storage_views.handlePersonAvatar, name='person-avatar'),
     )
 
+urlpatterns += patterns('',
+    url(r'^stats/materials/counter/?$', content_views.queryMaterialByViewCount, name='stats-most-viewed'),
+    )
 
 # search & browse urls
 urlpatterns += patterns('',
