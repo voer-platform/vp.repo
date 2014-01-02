@@ -229,16 +229,23 @@ VPR_MATERIAL_ROLES = ('author', 'editor', 'licensor', 'maintainer', 'translator'
 
 MATERIAL_TYPES = ('undefined', 'module', 'collection')
 
+VPR_COOKIE_TOKEN = 'vpr_token'
+VPR_COOKIE_CLIENT = 'vpr_client'
 
 # VPR LOG 
 
-LOG_DATABASE = {
-    'host': 'localhost',
-    'port': 27017,
-    'name': 'vpr',
+VPR_LOG_HANDLER = 'vpr_log.mongodb_handler.MongoDBHandler'
+
+VPR_LOG_DATABASES = {
+    'mongodb': {
+        'host': 'localhost',
+        'port': 27017,
+        'name': 'vpr',
+        },
     }
 
-LOG_COLLECTION = {
+VPR_LOG_SETS = {
+    'default': 'default',
     'api': 'api',
     'dashboard': 'dashboard',
     }

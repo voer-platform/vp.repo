@@ -2,7 +2,7 @@ from datetime import datetime
 from django.dispatch import receiver
 from django.utils.log import getLogger
 from django.conf import settings 
-
+from django.conf.settings import VPR_COOKIE_TOKEN, VPR_COOKIE_CLIENT
 
 from vpr_log.utils import saveLog
 from models import APIRecord 
@@ -17,8 +17,6 @@ LOG_ERROR_RECORDING = 'Unknown error occurs when recording API request'
 
 # Constants
 
-COOKIE_TOKEN = 'vpr_token'
-COOKIE_CLIENT = 'vpr_client'
 CLIENT_ID_UNKNOWN = -1
 
 logger = getLogger('vpr.api.requests')
@@ -40,9 +38,9 @@ class APILogger():
                 code - returned code of the API call 
         """
         try:
-            client_id = request.COOKIES.get(COOKIE_CLIENT)
+            client_id = request.COOKIES.get(VPR_COOKIE_CLIENT)
             if not client_id:
-                client_id = request.GET.get(COOKIE_CLIENT, CLIENT_ID_UNKNOWN)
+                client_id = request.GET.get(VPR_COOKIE_CLIENT, CLIENT_ID_UNKNOWN)
             qr_keys = request.GET.keys()
             query = '&'.join([k+'='+request.GET.get(k,'') for k in qr_keys])
             rec = APIRecord(
@@ -66,9 +64,9 @@ def handle_apicall(sender, **kwargs):
         2. Store a log record into DB
     """
     request = kwargs['request']
-    client_id = request.COOKIES.get(COOKIE_CLIENT)
+    client_id = request.COOKIES.get(VPR_COOKIE_CLIENT)
     if not client_id:
-        client_id = request.GET.get(COOKIE_CLIENT, CLIENT_ID_UNKNOWN)
+        client_id = request.GET.get(VPR_COOKIE_CLIENT, CLIENT_ID_UNKNOWN)
     qr_keys = request.GET.keys()
     query = '&'.join([k+'='+request.GET.get(k,'') for k in qr_keys])
     rec = { 

@@ -69,10 +69,12 @@ def api_log(func):
     
     def wrappee(*args, **kwargs):
         """ """
-        return func(*args, **kwargs)
-
-        res = func(*args, **kwargs)  
         try:
+            try:
+                res = func(*args, **kwargs)  
+                s_code = res.status_code
+            except:
+                s_code = 500 
             request = getRequest(*args)
             client_id = request.COOKIES.get(COOKIE_CLIENT)
             if not client_id:
@@ -80,7 +82,7 @@ def api_log(func):
             qr_keys = request.GET.keys()
             path = '/'.join(request.path.split('/')[2:])
             query = '&'.join([k+'='+request.GET.get(k,'') for k in qr_keys])
-            after_apicall.send(sender=None, request=request, result=res.status_code)
+            after_apicall.send(sender=None, request=request, result=s_code)
         except:
             logger.error(LOG_RECORD_FAILED)
         return res     
