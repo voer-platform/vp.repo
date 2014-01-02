@@ -15,11 +15,12 @@ class MongoDBHandler(BaseLogHandler):
     def store(self, record):
         try:
             collection = self.log_db[record.logset]
-            collection.insert(record.__dict__)
+            log_dict = record.__dict__
+            del log_dict['logset']
+            collection.insert(log_dict)
         except:
             # reconnect to the database and drop current log
             self.log_db = getMongoDB()
-            import pdb;pdb.set_trace()
 
     def clean(self, collection, day_limit=30):
         """ Clean all the log records inside collection older than day_limit

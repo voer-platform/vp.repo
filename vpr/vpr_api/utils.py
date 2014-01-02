@@ -1,61 +1,16 @@
 from datetime import datetime
 from django.dispatch import receiver
-from django.utils.log import getLogger
 from django.conf import settings 
-from django.conf.settings import VPR_COOKIE_TOKEN, VPR_COOKIE_CLIENT
 
-from vpr_log.utils import saveLog
-from models import APIRecord 
+from vpr_log.logger import Logger
 from signals import after_apicall
 
 
-logger = getLogger('vpr.api.request')
-
-# Logs, records
+logger = Logger() 
 
 LOG_ERROR_RECORDING = 'Unknown error occurs when recording API request'
-
-# Constants
-
 CLIENT_ID_UNKNOWN = -1
 
-logger = getLogger('vpr.api.requests')
-
-class APILogger():
-    """Provides methods for recording API activities"""
-
-    def cleanExpired(self):
-        """docstring for cleanExpired"""
-        pass
-
-    def export(self):
-        """docstring for exportLog"""
-        pass
-
-    def record(self, request, code=0):
-        """Collects info from API action and saves into DB
-                request - HttpRequest
-                code - returned code of the API call 
-        """
-        try:
-            client_id = request.COOKIES.get(VPR_COOKIE_CLIENT)
-            if not client_id:
-                client_id = request.GET.get(VPR_COOKIE_CLIENT, CLIENT_ID_UNKNOWN)
-            qr_keys = request.GET.keys()
-            query = '&'.join([k+'='+request.GET.get(k,'') for k in qr_keys])
-            rec = APIRecord(
-                client_id = client_id,
-                method = request.method,
-                path = request.path,
-                time = datetime.now(),
-                result = code,
-                query = query,
-                )
-            #rec.ip = request.META.get('REMOTE_ADDR', ''),
-            rec.save()
-        except:
-            logger.error(LOG_ERROR_RECORDING)
-            
 
 @receiver(after_apicall)
 def handle_apicall(sender, **kwargs):
@@ -64,19 +19,5 @@ def handle_apicall(sender, **kwargs):
         2. Store a log record into DB
     """
     request = kwargs['request']
-    client_id = request.COOKIES.get(VPR_COOKIE_CLIENT)
-    if not client_id:
-        client_id = request.GET.get(VPR_COOKIE_CLIENT, CLIENT_ID_UNKNOWN)
-    qr_keys = request.GET.keys()
-    query = '&'.join([k+'='+request.GET.get(k,'') for k in qr_keys])
-    rec = { 
-        'client_id': client_id,
-        'method': request.method,
-        'path': request.path,
-        'time': datetime.now(),
-        'result': kwargs.get('result', None),
-        'query': query,
-        'ip': request.META.get('REMOTE_ADDR', ''),
-        }
-    saveLog(settings.LOG_COLLECTION['api'], rec) 
+    logger.apilog(kwargs.get('result', None), request)
 

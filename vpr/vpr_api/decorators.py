@@ -5,7 +5,6 @@ from django.http import HttpRequest
 from datetime import datetime
 
 from vpr_api.views import validateToken
-from vpr_api.utils import COOKIE_CLIENT, COOKIE_TOKEN
 from vpr_api.models import APIRecord
 from vpr_api.signals import after_apicall
 
@@ -47,13 +46,13 @@ def api_token_required(func):
             logger.info('API authentication bypassed')
             return func(*args, **kwargs)
 
-        token = request.COOKIES.get(COOKIE_TOKEN, None)
-        client_id = request.COOKIES.get(COOKIE_CLIENT, None)
+        token = request.COOKIES.get(settings.VPR_COOKIE_TOKEN, None)
+        client_id = request.COOKIES.get(settings.VPR_COOKIE_CLIENT, None)
 
         # 2nd option, extracting from GET query
         if not token or not client_id:
-            token = request.GET.get(COOKIE_TOKEN, None)
-            client_id = request.GET.get(COOKIE_CLIENT, None)
+            token = request.GET.get(settings.VPR_COOKIE_TOKEN, None)
+            client_id = request.GET.get(settings.VPR_COOKIE_CLIENT, None)
         if validateToken(client_id, token):
             logger.info(LOG_CHECK_TOKEN % (client_id, 'OK'))
             return func(*args, **kwargs)
@@ -76,12 +75,6 @@ def api_log(func):
             except:
                 s_code = 500 
             request = getRequest(*args)
-            client_id = request.COOKIES.get(COOKIE_CLIENT)
-            if not client_id:
-                client_id = request.GET.get(COOKIE_CLIENT, CLIENT_ID_UNKNOWN)
-            qr_keys = request.GET.keys()
-            path = '/'.join(request.path.split('/')[2:])
-            query = '&'.join([k+'='+request.GET.get(k,'') for k in qr_keys])
             after_apicall.send(sender=None, request=request, result=s_code)
         except:
             logger.error(LOG_RECORD_FAILED)

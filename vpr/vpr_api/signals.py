@@ -1,3 +1,4 @@
-from django.core.signals import Signal
+#from django.core.signals import Signal
+import django.dispatch
 
-after_apicall = Signal()
+after_apicall = django.dispatch.Signal(providing_args=['request'])

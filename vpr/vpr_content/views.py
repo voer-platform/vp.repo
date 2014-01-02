@@ -17,8 +17,6 @@ from haystack.query import SearchQuerySet
 from django.conf import settings
 from django.core.cache import cache
 from vpr_api.models import APIRecord
-from vpr_api.decorators import api_token_required
-from vpr_api.utils import APILogger
 from vpr_api.decorators import api_token_required, api_log
 from vpr_storage.views import zipMaterial, requestMaterialPDF
 from material_views import MaterialComments, materialCounterView
@@ -33,7 +31,6 @@ import serializers
 
 #from vpr_log.logger import get_logger
 #logger = get_logger('api')
-#apilog = APILogger() 
 
 mimetypes.init()
 
