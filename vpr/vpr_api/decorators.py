@@ -1,7 +1,7 @@
 from rest_framework.response import Response
 from django.conf import settings
 from django.utils.log import getLogger
-from django.http import HttpRequest
+from django.http import HttpRequest, Http404
 from datetime import datetime
 
 from vpr_api.views import validateToken
@@ -69,15 +69,17 @@ def api_log(func):
     def wrappee(*args, **kwargs):
         """ """
         try:
-            try:
-                res = func(*args, **kwargs)  
-                s_code = res.status_code
-            except:
-                s_code = 500 
-            request = getRequest(*args)
-            after_apicall.send(sender=None, request=request, result=s_code)
-        except:
-            logger.error(LOG_RECORD_FAILED)
-        return res     
+            res = func(*args, **kwargs)  
+            s_code = res.status_code
+        except Http404:
+            s_code = 404 
+
+        # 404, still fire the signal
+        request = getRequest(*args)
+        after_apicall.send(sender=None, request=request, result=s_code)
+
+        if s_code == 404:
+            raise Http404
+        return res
 
     return wrappee

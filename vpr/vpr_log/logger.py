@@ -69,7 +69,6 @@ class Logger():
     def apilog(self, code, request):
         """ Save log from API call and result
         """
-        import pdb;pdb.set_trace()
         client_id = request.COOKIES.get(settings.VPR_COOKIE_CLIENT)
         if not client_id:
             client_id = request.GET.get(
@@ -81,7 +80,7 @@ class Logger():
             'client_id': client_id,
             'method': request.method,
             'path': request.path,
-            'result': code,
+            'code': code,
             'query': query,
             'ip': request.META.get('REMOTE_ADDR', ''),
             }
