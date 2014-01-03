@@ -81,9 +81,6 @@ class PersonTestCase(TestCase):
         for k in self.sample_dict:
             self.assertEqual(self.sample_dict[k], normRes(res)[k])
 
-    def test_get_avatar(self):
-        self.assertEqual(0, 1)
-
     def test_get_detail_count_empty(self):
         pid = normRes(self.res0)['id']
         res = self.client.get('/1/persons/%d?count=1' % pid)
@@ -152,10 +149,6 @@ class CategoryTestCase(TestCase):
         content = normRes(res)
         self.assertEqual(res.status_code, CODE_BAD_REQUEST)
         self.assertEqual(content['name'], ["This field is required."])
-
-    def test_get_count(self):
-        # tested in the MaterialTestCase
-        self.assertEqual(0, 1)
 
     def test_list(self):
         sm1 = self.sample_dict.copy()

@@ -162,6 +162,11 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': True,
         },
+        'vpr.general': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
    }
 }
 
