@@ -28,6 +28,7 @@ class APILog(LogBase):
     method = None
     query = None
     ip = None
+    data = None
 
 
 class NormalLog(LogBase):
@@ -84,6 +85,8 @@ class Logger():
             'query': query,
             'ip': request.META.get('REMOTE_ADDR', ''),
             }
+        if request.method == 'POST' and code >= 400:
+            values['data'] = request.POST.dict() 
         record = APILog(**values)
         record.logset = settings.VPR_LOG_SETS['api']
         self.handler.store(record)

@@ -19,5 +19,6 @@ def handle_apicall(sender, **kwargs):
         2. Store a log record into DB
     """
     request = kwargs['request']
-    logger.apilog(kwargs.get('result', None), request)
+    code = kwargs.get('code', None)
+    logger.apilog(code, request)
 

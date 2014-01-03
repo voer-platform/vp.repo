@@ -76,10 +76,10 @@ def api_log(func):
 
         # 404, still fire the signal
         request = getRequest(*args)
-        after_apicall.send(sender=None, request=request, result=s_code)
-
+        after_apicall.send(sender=None, request=request, code=s_code)
         if s_code == 404:
             raise Http404
+
         return res
 
     return wrappee
