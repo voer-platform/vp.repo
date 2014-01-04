@@ -42,7 +42,11 @@ class Logger():
     """
     def __init__(self):
         LogHandler = get_class(settings.VPR_LOG_HANDLER)
-        self.handler = LogHandler()
+        try:
+            self.handler = LogHandler()
+        except:
+            # OK, let it be
+            pass
        
     def error(self, message, path=''):   
         code = VPR_ERROR 
@@ -65,7 +69,7 @@ class Logger():
         """
         record = NormalLog(code=code, message=message, path=path)
         record.logset = settings.VPR_LOG_SETS['default']
-        self.handler.store(record) 
+        self.push(record)
 
     def apilog(self, code, request):
         """ Save log from API call and result
@@ -89,8 +93,16 @@ class Logger():
             values['data'] = request.POST.dict() 
         record = APILog(**values)
         record.logset = settings.VPR_LOG_SETS['api']
-        self.handler.store(record)
+        self.push(record)
     
+    def push(self, record):
+        """ Really push the log record into DB
+        """
+        try:
+            self.handler.store(record)
+        except:
+            # should be something here
+            pass 
 
 def get_class(path):
     """ Returns the class specified in path 
