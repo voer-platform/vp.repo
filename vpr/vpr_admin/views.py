@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 
 import json
 import pymongo
+import math
 
 from forms import ClientRegForm
 from vpr_api.models import APIClient, generateClientKey, APIToken
@@ -195,7 +196,7 @@ def materialsView(request):
     # process with request for deletion
     if request.method == "POST":    
         del_list = request.POST.getlist('check-delete')
-        models.Material.objects.filter(material_id__in=del_list).delete()
+        models.Material.objects.filter(id=del_list).delete()
         page_data['removed'] = del_list 
 
     res = SearchQuerySet().models(models.Material)
@@ -207,7 +208,7 @@ def materialsView(request):
 
     # variables to templates
     page_data['materials'] = res[page_start:page_start+MATERIAL_LIMIT]
-    page_data['page_total'] = res_count / MATERIAL_LIMIT
+    page_data['page_total'] = int(math.ceil(1.0*res_count/MATERIAL_LIMIT))
     page_data['web_url'] = request.get_host().split(':')[0]
 
     return render(request, 'materials.html', dictionary=page_data)
@@ -226,23 +227,46 @@ def renderMaterialView(request, *args, **kwargs):
 
 
 from vpr_content import utils
-condition_map = {
-    'description': ''
-    }
+filter_conds = (
+    'description',
+    'categories',
+    'keywords',
+    'language',
+    'author',
+    'content',
+    'image',
+    )
+
+
 @csrf_protect
 @login_required
 def oasis_view(request):
     """View of the material filetering"""
-     
-    condition = request.GET.get('cond', '')
-    page = request.GET.get('page', 1)
-    ms = utils.MaterialScanner()
-    res = utils.get_page(page, ms.filter(condition))
-
-    # variables to templates
     page_data = {} 
+    per_page = 30
+
+    if request.method == "POST":    
+        del_list = request.POST.getlist('check-delete')
+        res = models.Material.objects.filter(id__in=del_list).\
+            values_list('material_id', 'version')
+        page_data['removed'] = [idv for idv in res]
+        models.Material.objects.filter(id__in=del_list).delete()
+
+    # filtering
+    condition = request.GET.get('cond', '').strip().lower()
+    page = int(request.GET.get('page', 1))
+    ms = utils.MaterialScanner()
+    if condition:
+        res, pnum = utils.get_page(page, ms.filter(condition), per_page)
+    else:
+        res = []
+        pnum = 0
+
+    # send variables to templates
     page_data['materials'] = res
-    page_data['page_total'] = 0 
+    page_data['conditions'] = filter_conds 
+    page_data['page_total'] = pnum
+    page_data['page'] = page 
     page_data['web_url'] = request.get_host().split(':')[0]
 
     return render(request, 'oasis.html', dictionary=page_data)

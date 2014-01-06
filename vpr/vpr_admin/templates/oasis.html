@@ -1,0 +1,101 @@
+{% extends "base_home.html" %}
+
+    {% block home-content %}
+
+
+        {% load dashboard %}
+
+        <div>
+
+          <h3>Material Massaging Tool</h3>
+
+          <div style="margin-bottom:20px;">
+            <p>Please select condition for filtering materials. All resulted materials have missing or malformed data in selected field.</p>
+            {% for cond in conditions %}
+            <a href="?cond={{ cond }}"><button type="button" class="btn {% if request.GET.cond == cond %}btn-warning{% endif %}">{{ cond|title }}</button></a>
+            {% endfor %}
+          </div>
+    
+          {% if removed %}
+          <div id="notifications" class="alert">
+            <h5>Material(s) deleted:</h5>
+            <ul>
+                {% for item in removed %}
+                <li>{{ item.0 }}~{{ item.1 }}</li>
+                {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+
+
+          <div>
+            {% if page_total > 1 %}
+                {% with rg=request.GET %}
+                {% if page > 1 %}
+                <a href="{{ request.path }}?page={{ page|add:-1 }}&cond={{ rg.cond }}&filter_type={{ rg.filter_type }}">Previous</a> - 
+                {% endif %}
+                <span>{{ page }}/{{ page_total }}</span>
+                {% if page < page_total %}
+                - <a href="{{ request.path }}?page={{ page|add:+1 }}&cond={{ rg.cond }}&filter_type={{ rg.filter_type }}">Next</a>
+                {% endif %}
+                {% endwith %}
+            {% endif %}
+          </div>
+
+          <form name="material-list" action="{{ request.get_full_path }}" method="POST">
+            {% csrf_token %}
+
+          <table class="table table-striped table-bordered" 
+                 style="margin-bottom:5px">
+            <tr>
+              <th>Title</th>
+              <th>ID : Version</th>
+              <th>Modified</th>
+              <th>Edit</th>
+              <th>Delete</th>
+            </tr> 
+            
+            {% for material in materials %}
+            <tr style="font-size:0.85em">
+                <td>
+                    {% if material.material_type == 1 %}
+                        <span class="label">{{ material.material_type }}</span>
+                        &nbsp;<a href="http://{{ web_url }}/m/{{ material.material_id }}/{{ material.version }}">{{ material.title }}</a>
+                    {% else %}
+                        <span class="label label-warning">{{ material.material_type }}</span>
+                        &nbsp;<a href="http://{{ web_url }}/c/{{ material.material_id }}/{{ material.version }}">{{ material.title }}</a>
+                    {% endif %}
+                </td>
+                <td><a href="/1/materials/{{ material.material_id }}/{{ material.version }}">{{ material.material_id }}</a><span style="color:gray;">~{{ material.version }}<span></td>
+                <td>{{ material.modified|date:"y-m-d h:i" }}</td>
+                <td><a href="/admin/vpr_content/material/{{ material.id }}">edit</a></td>
+                <td style="text-align:center;"><input type="checkbox" name="check-delete" value="{{ material.id }}"></td>
+            </tr> 
+            {% endfor %}
+
+          </table>
+        
+          <div class="row-fluid">
+            <div class="span3" style="margin-top:5px;">
+                {% if page_total > 1 %}
+                    {% with rg=request.GET %}
+                    {% if page > 1 %}
+                    <a href="{{ request.path }}?page={{ page|add:-1 }}&cond={{ rg.cond }}&filter_type={{ rg.filter_type }}">Previous</a> - 
+                    {% endif %}
+                    <span>{{ page }}/{{ page_total }}</span>
+                    {% if page < page_total %}
+                    - <a href="{{ request.path }}?page={{ page|add:+1 }}&cond={{ rg.cond }}&filter_type={{ rg.filter_type }}">Next</a>
+                    {% endif %}
+                    {% endwith %}
+                {% endif %}
+            </div>
+            <div class="span2 offset7" style="text-align:right">
+                <input class="btn btn-danger" type="submit" value="Delete" name="submit">
+            </div>
+          </div>
+
+          </form>
+
+        </div>
+
+   {% endblock %}

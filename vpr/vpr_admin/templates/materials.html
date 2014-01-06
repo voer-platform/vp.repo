@@ -75,7 +75,7 @@
                 <td><a href="/1/materials/{{ material.material_id }}">{{ material.material_id }}</a></td>
                 <td>{{ material.modified|date:"y-m-d h:i" }}</td>
                 <td><a href="/dashboard/render/{{ material.material_id }}">{{ material.description|truncatewords:4 }}</a></td>
-                <td style="text-align:center;"><input type="checkbox" name="check-delete" value="{{ material.material_id }}"></td>
+                <td style="text-align:center;"><input type="checkbox" name="check-delete" value="{{ material.id }}"></td>
             </tr> 
             {% endfor %}
 

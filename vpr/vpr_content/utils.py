@@ -1,6 +1,6 @@
 from django.db.models import Q
-
 from models import Material, Person
+import math
 
 
 def get_page(pid, qset, per_page=20):
@@ -8,8 +8,14 @@ def get_page(pid, qset, per_page=20):
             pid: ID of page, start from 1
     """
     start_on = (pid-1)*per_page
+    count = 0
+    if hasattr(qset, 'count'):
+        count = qset.count()
+    elif hasattr(qset, '__sizeof__'):
+        count = qset.__sizeof__()
+    page_total = int(math.ceil(1.0*count/per_page))
     res = qset[start_on:start_on+per_page]
-    return res
+    return res, page_total
 
 
 class MaterialScanner(object):
@@ -23,8 +29,11 @@ class MaterialScanner(object):
         self.per_page = 20
     
     def filter(self, condition):
-        func = getattr(self, 'filter_'+condition)    
-        return func()
+        func = getattr(self, 'filter_'+condition, None)    
+        if func:
+            return func()
+        else:
+            return []
 
     def filter_description(self):
         """ Return list of material having blank or no-blank description
@@ -60,6 +69,6 @@ class MaterialScanner(object):
         res = self.m.raw(sql1)
         return res 
 
-    def filter_text(self, text_limit=500):
+    def filter_content(self, text_limit=500):
         res = self.m.extra(where=['CHAR_LENGTH(text)<'+str(text_limit)]).values(*self.extract_fields)
         return res 
