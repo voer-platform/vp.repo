@@ -22,36 +22,36 @@ class MaterialScanner(object):
         self.m = Material.objects
         self.per_page = 20
     
-    def filter_description(self, null=True):
+    def filter(self, condition):
+        func = getattr(self, 'filter_'+condition)    
+        return func()
+
+    def filter_description(self):
         """ Return list of material having blank or no-blank description
         """
-        q = Q(description__isnull=null)
-        if null:
-            q = q | Q(description__regex='^(\s|-)*$')
+        q = Q(description__isnull=True)
+        q = q | Q(description__regex='^(\s|-)*$')
         return self.m.filter(q).values(*self.extract_fields)
 
-    def filter_image(self, null=True):
+    def filter_image(self):
         """ Return list of material having blank or no-blank description
         """
-        q = Q(image__isnull=null)
+        q = Q(image__isnull=True) | Q(image='')
         return self.m.filter(q).values(*self.extract_fields)
 
-    def filter_keywords(self, null=True):
-        q = Q(keywords__isnull=null)
-        if null:
-            q = q | Q(keywords__regex='^\s*$')
+    def filter_keywords(self):
+        q = Q(keywords__isnull=True)
+        q = q | Q(keywords__regex='^\s*$')
         return self.m.filter(q).values(*self.extract_fields)
 
-    def filter_language(self, null=True):
-        q = Q(keywords__isnull=null)
-        if null:
-            q = q | Q(language__regex='^\s*$')
+    def filter_language(self):
+        q = Q(keywords__isnull=True)
+        q = q | Q(language__regex='^\s*$')
         return self.m.filter(q).values(*self.extract_fields)
 
-    def filter_categories(self, null=True):
-        q = Q(categories__isnull=null)
-        if null:
-            q = q | Q(categories__regex='^\s*$')
+    def filter_categories(self):
+        q = Q(categories__isnull=True)
+        q = q | Q(categories__regex='^\s*$')
         return self.m.filter(q).values(*self.extract_fields)
 
     def filter_author(self):
@@ -61,6 +61,5 @@ class MaterialScanner(object):
         return res 
 
     def filter_text(self, text_limit=500):
-        sql1 = 'SELECT %s FROM vpr_content_material WHERE CHAR_LENGTH(text)<%d' % (','.join(self.extract_fields), text_limit)
-        res = self.m.extra(where=['CHAR_LENGTH(text)<500']).values(*self.extract_fields)
+        res = self.m.extra(where=['CHAR_LENGTH(text)<'+str(text_limit)]).values(*self.extract_fields)
         return res 

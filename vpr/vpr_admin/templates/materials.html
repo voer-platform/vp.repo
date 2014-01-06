@@ -85,11 +85,11 @@
             <div class="span3" style="margin-top:5px;">
             {% if page_total > 1 %}
                 {% if current_page > 1 %}
-                <a href="{{ request.path }}?page={{ current_page|add:-1 }}">Previous</a>
+                <a href="{{ request.path }}?page={{ current_page|add:-1 }}&kw={{ rg.kw }}&filter_type={{ rg.filter_type }}">Previous</a>
                 {% endif %}
                 <span> &lt; {{ current_page }}/{{ page_total }} &gt; </span>
                 {% if current_page < page_total %}
-                <a href="{{ request.path }}?page={{ current_page|add:+1 }}">Next</a>
+                <a href="{{ request.path }}?page={{ current_page|add:+1 }}&kw={{ rg.kw }}&filter_type={{ rg.filter_type }}">Next</a>
                 {% endif %}
             {% endif %}
             </div>

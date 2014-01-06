@@ -14,5 +14,6 @@ urlpatterns = patterns('',
     url(r'^api-records/$', views.apiRecordsView, name='dashboard-api-records'),
     url(r'^stats/$', views.statsView, name='dashboard-stats'),
     url(r'^materials/$', views.materialsView, name='dashboard-materials'),
+    url(r'^oasis/$', views.oasis_view, name='dashboard-oasis'),
     url(r'^render/(?P<mid>[0-9a-z]+)(/(?P<version>\d+))?/?$', views.renderMaterialView, name='render-materials'),
 )

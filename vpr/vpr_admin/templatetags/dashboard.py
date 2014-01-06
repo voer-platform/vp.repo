@@ -24,6 +24,7 @@ def getNavigationItems(request):
         ('Database', adminURL('database')),
         ('CONTENT', ''), 
         ('Materials', adminURL('materials/')),
+        ('OASIS', adminURL('oasis/')),
         ('Other Content', '-'),
         ('Statistics', '-'),
         ('VP COMPONENTS', ''),

@@ -225,4 +225,26 @@ def renderMaterialView(request, *args, **kwargs):
     return render(request, 'render.html', dictionary=data) 
 
 
+from vpr_content import utils
+condition_map = {
+    'description': ''
+    }
+@csrf_protect
+@login_required
+def oasis_view(request):
+    """View of the material filetering"""
+     
+    condition = request.GET.get('cond', '')
+    page = request.GET.get('page', 1)
+    ms = utils.MaterialScanner()
+    res = utils.get_page(page, ms.filter(condition))
+
+    # variables to templates
+    page_data = {} 
+    page_data['materials'] = res
+    page_data['page_total'] = 0 
+    page_data['web_url'] = request.get_host().split(':')[0]
+
+    return render(request, 'oasis.html', dictionary=page_data)
+
 

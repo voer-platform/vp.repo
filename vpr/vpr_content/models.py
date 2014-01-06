@@ -48,7 +48,7 @@ def generateMaterialId():
         #temp_id = md5(str(datetime.now()) + sugar).hexdigest()
         temp_id = md5(str(time.time()) + sugar).hexdigest()
         temp_id = temp_id[:MATERIAL_ID_SIZE]
-        if Material.objects.filter(material_id=temp_id).count() > 0:
+        if Material.objects.filter(material_id=temp_id).exists():
             sugar += '1'
         else:
             break
@@ -147,6 +147,12 @@ class MaterialViewCount(models.Model):
 
 
 # ----------------
+
+from vpr_log.logger import Logger
+from django.db import connection
+
+
+vpr_log = Logger()
 
 
 def getMaterial(material_id='', version=None, raw_id=None):
@@ -289,8 +295,6 @@ def setMaterialPersons(material_rid, request):
 
     
 
-from django.db import connection
-
 SINGLE_ASSIGNED_CATEGORY = '(%s)'
 
 def countAssignedMaterial(category_id):
@@ -394,6 +398,8 @@ def deleteMaterial(material_id, version):
     except Material.DoesNotExist:
         result = True
     except:
+        vpr_log.error('Error when deleting %s - %d' % (material_id, version))    
+        raise
         result = False 
     return result
 
@@ -409,6 +415,10 @@ def finishDeleteMaterial(sender, **kwargs):
     MaterialExport.objects.filter(material_id=material_id).delete()
     MaterialFile.objects.filter(material_id=material_id).delete()
     MaterialPerson.objects.filter(material_rid=mrid).delete()
+    MaterialComment.objects.filter(material_id=mrid).delete()
+    MaterialRating.objects.filter(material_id=mrid).delete()
+    MaterialFavorite.objects.filter(material_id=mrid).delete()
+    MaterialViewCount.objects.filter(material_id=mrid).delete()
 
 
 # MIGRATING FUNCTIONS
