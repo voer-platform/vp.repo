@@ -17,6 +17,22 @@ from repository import MaterialBase
 
 MATERIAL_ID_SIZE = 8
 
+
+def generateMaterialId():
+    """ Ensure generating of unique material ID
+    """
+    sugar = ''
+    while True:
+        #temp_id = md5(str(datetime.now()) + sugar).hexdigest()
+        temp_id = md5(str(time.time()) + sugar).hexdigest()
+        temp_id = temp_id[:MATERIAL_ID_SIZE]
+        if Material.objects.filter(material_id=temp_id).exists():
+            sugar += '1'
+        else:
+            break
+    return temp_id
+
+
 # Create your models here.
 class Category(models.Model):
     name = CharField(max_length=255)
@@ -38,21 +54,6 @@ class Person(models.Model):
     biography = TextField(blank=True, null=True)
     client_id = IntegerField(default=0)
     avatar = ImageField(upload_to="./mimgs/persons", blank=True, null=True) 
-
-
-def generateMaterialId():
-    """ Ensure generating of unique material ID
-    """
-    sugar = ''
-    while True:
-        #temp_id = md5(str(datetime.now()) + sugar).hexdigest()
-        temp_id = md5(str(time.time()) + sugar).hexdigest()
-        temp_id = temp_id[:MATERIAL_ID_SIZE]
-        if Material.objects.filter(material_id=temp_id).exists():
-            sugar += '1'
-        else:
-            break
-    return temp_id
 
 
 def assignSingleCat(material_rid, cat_id):
@@ -370,8 +371,14 @@ def restoreAssignedCategory(value):
 def countPersonMaterial(person_id, roles=()):
     """Counts number of material where person participates into"""
     result = {}
-    query = "SELECT COUNT(id) FROM vpr_content_materialperson"
-    query += " WHERE role=%d AND person_id=%d;"
+
+    sql = """
+        SELECT COUNT(DISTINCT(m0.material_id)) 
+        FROM vpr_content_material as m0 
+        INNER JOIN vpr_content_materialperson as m1 
+        ON m0.id=m1.material_rid 
+        WHERE m0.material_type=%d AND m1.person_id=%d AND m1.role=%d;
+        """
 
     person_id = int(person_id)
     if type(roles) not in (tuple, list):
@@ -379,9 +386,13 @@ def countPersonMaterial(person_id, roles=()):
 
     for role_id in roles:
         try:
+            role_info = {}
             cur = connection.cursor()
-            cur.execute(query % (role_id, person_id))
-            result[settings.VPR_MATERIAL_ROLES[role_id]] = int(cur.fetchone()[0])
+            cur.execute(sql % (1, person_id, role_id))
+            role_info['module'] = int(cur.fetchone()[0])
+            cur.execute(sql % (2, person_id, role_id))
+            role_info['collection'] = int(cur.fetchone()[0])
+            result[settings.VPR_MATERIAL_ROLES[role_id]] = role_info
         except:
             pass
     return result
