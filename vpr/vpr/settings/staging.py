@@ -21,4 +21,6 @@ ROOT_URLCONF = 'vpr.urls.prod'
 
 VPT_URL = 'http://dev.voer.vn:6543/'
 
+ALLOWED_HOSTS = ['voer.edu.vn', 'dev.voer.vn']
+
 TOKEN_REQUIRED = False 

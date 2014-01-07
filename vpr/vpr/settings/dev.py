@@ -19,9 +19,6 @@ DATABASES = {
     }
 }
 
-# Make this unique, and don't share it with anybody.
-#SECRET_KEY = 'kw7#s$8t&amp;6d9*7*$a$(gui0r1ze7f#u%(hua=^a3u66+vyj+9g'
-
 MIDDLEWARE_CLASSES += (
     'debug_toolbar.middleware.DebugToolbarMiddleware',
     )
@@ -33,9 +30,11 @@ INSTALLED_APPS += (
     'debug_toolbar',
     )
 
+#DEBUG_TOOLBAR_PATCH_SETTINGS = False
+
 STATICFILES_DIRS = (
     os.path.join(SETTING_DIR, '../../static'),
-    os.path.join(SETTING_DIR, '../../rest_framework/static'),
+    #os.path.join(SETTING_DIR, '../../rest_framework/static'),
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
@@ -46,7 +45,8 @@ DEBUG_TOOLBAR_CONFIG = {
     'INTERCEPT_REDIRECTS': False,
 }
 
-
 VPT_URL = 'http://dev.voer.vn:6543/'
+
+ALLOWED_HOSTS = ['voer.edu.vn', 'dev.voer.vn', 'localhost']
 
 TOKEN_REQUIRED = False
