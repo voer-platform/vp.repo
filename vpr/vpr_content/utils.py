@@ -82,13 +82,13 @@ def buildPageURLs(request, pg_count=None):
     pre_location = request.path + '?' 
     url_next = url_prev = None
 
-    if (pg_count and page < pg_count) or not pg_count:
+    if (pg_count and page < pg_count) or pg_count is None:
         query['page'] = page + 1
         query_st = '&'.join([k+'='+unicode(query[k]) for k in query])
         next_location = pre_location + query_st 
         url_next = request.build_absolute_uri(next_location)
         
-    if page > 1:
+    if (pg_count and page > 1) or pg_count is None:
         query['page'] = page - 1
         query_st = '&'.join([k+'='+unicode(query[k]) for k in query])
         prev_location = pre_location + query_st 
