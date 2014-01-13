@@ -72,3 +72,27 @@ class MaterialScanner(object):
     def filter_content(self, text_limit=500):
         res = self.m.extra(where=['CHAR_LENGTH(text)<'+str(text_limit)]).values(*self.extract_fields)
         return res 
+
+
+def buildPageURLs(request, pg_count=None):
+    """ Return the URLs of next and previous page from current one
+    """
+    page = int(request.GET.get('page', 1))
+    query = request.GET.dict()
+    pre_location = request.path + '?' 
+    url_next = url_prev = None
+
+    if (pg_count and page < pg_count) or not pg_count:
+        query['page'] = page + 1
+        query_st = '&'.join([k+'='+unicode(query[k]) for k in query])
+        next_location = pre_location + query_st 
+        url_next = request.build_absolute_uri(next_location)
+        
+    if page > 1:
+        query['page'] = page - 1
+        query_st = '&'.join([k+'='+unicode(query[k]) for k in query])
+        prev_location = pre_location + query_st 
+        url_prev = request.build_absolute_uri(prev_location)
+
+    return url_prev, url_next
+

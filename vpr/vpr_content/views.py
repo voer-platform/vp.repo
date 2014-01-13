@@ -22,11 +22,13 @@ from vpr_storage.views import zipMaterial, requestMaterialPDF
 from material_views import MaterialComments, materialCounterView
 from material_views import materialRatesView, materialFavoriteView
 from search_views import GeneralSearch, facetSearchView, raise404
+from utils import buildPageURLs
 
 import os
 import mimetypes
 import models
 import serializers
+import math
 
 
 #from vpr_log.logger import get_logger
@@ -368,9 +370,9 @@ class MaterialList(generics.ListCreateAPIView):
         else:
             try: 
                 # show all versions of specific material
-                if kwargs.get('mid', None):
+                if material_id: 
                     self.object_list = self.model.objects.filter(
-                        material_id=kwargs['mid']
+                        material_id=material_id
                         )
                 else:
                     # get the or criterias
@@ -845,4 +847,49 @@ def queryMaterialByViewCount(request, *args, **kwargs):
     return Response(materials)
 
 
+MAT_BASIC_FIELDS = ('id', 'material_id', 'version', 'title', \
+    'categories', 'material_type')
+
+
+@api_log
+@api_view(['GET'])
+@api_token_required
+def get_person_favs(request, *args, **kwargs):
+    """ Returns list of materials which are selected as favorite of person
+    """
+    pid = kwargs.get('pk', None)
+    # get paging infomation
+    per_page = settings.REST_FRAMEWORK['PAGINATE_BY']
+    page = int(request.GET.get('page', 1))
+    start_on = (page-1)*per_page
+
+    # get the favs
+    qset = models.MaterialFavorite.objects.filter(person_id=pid).order_by('id')
+    fav_count = qset.count()
+    qset = qset[start_on:start_on+per_page].values_list('material_id')
+    res = [item[0] for item in qset]
+   
+    # now extract material info in list
+    mats = models.Material.objects.filter(id__in=res).values(*MAT_BASIC_FIELDS)
+    for material in mats:
+        material['categories'] = models.restoreAssignedCategory(
+            material['categories']) 
+        # get related persons
+        mroles = models.getMaterialPersons(material['id'])
+        material['author'] = mroles.get('author', None)
+        del material['id']
+
+    # build the result page 
+    page_total = math.ceil(fav_count*1.0/per_page)
+    page_prev, page_next = buildPageURLs(request, page_total) 
+    # alter serialization data
+    page_result = {
+        'next': page_next,
+        'previous': page_prev,
+        'results': mats,
+        'count': fav_count,
+        }
+
+    return Response(page_result)
+    
 

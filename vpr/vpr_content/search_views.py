@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.generics import ListAPIView
 from haystack.query import SearchQuerySet, SQ
 from vpr_api.decorators import api_token_required, api_log
+from utils import buildPageURLs
 
 import models
 import serializers
@@ -88,22 +89,6 @@ class GeneralSearch(ListAPIView):
 
         response = Response(serializer.data) 
         return response
-
-
-def buildPageURLs(request):
-    """Return the URLs of next and previous page from current one"""
-    page = int(request.GET.get('page', 1))
-    query = request.GET.dict()
-    pre_location = request.path + '?' 
-    query['page'] = page + 1
-    query_st = '&'.join([k+'='+unicode(query[k]) for k in query])
-    next_location = pre_location + query_st 
-    query['page'] = page - 1
-    query_st = '&'.join([k+'='+unicode(query[k]) for k in query])
-    prev_location= pre_location + query_st 
-    url_next = request.build_absolute_uri(next_location)
-    url_prev = request.build_absolute_uri(prev_location)
-    return url_prev, url_next
 
 
 def getOrFields(request):

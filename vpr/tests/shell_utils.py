@@ -1,28 +1,29 @@
 from vpr_content import models
 from datetime import datetime, timedelta
+import random
 
 
-def timeMe(func):
-    """Get time executing a function"""
-    t0 = datetime.now()
-    res = func()
-    delta = datetime.now() - t0
-    print '[ ', delta.total_seconds(), ' ]'
-    return res
+def generate_fav_sample():
+    """Add sample favorite data into database
+    """
+    random.seed(str(datetime.utcnow()))
+    pids = {random.randint(1,100) for _ in range(10)}
 
-def qp0():
-    from haystack.query import SearchQuerySet as SQS;
-    res = SQS().models(models.Person).filter(content='minh')
-    [item for item in res]
-    return res
+    while pids:
+        pid = pids.pop()
+        lknum = random.randint(1, 40)
+        liked = []
+        for lk in range(lknum):
+            mid = random.randint(1, 10000)
+            while mid in liked:
+                mid = random.randint(1, 10000)
+            try:
+                new_like = models.MaterialFavorite(material_id=mid, person_id=pid)
+                new_like.save()
+                liked.append(mid)
+            except:
+                print 'Error adding: %d - %d' % (mid, pid)
 
-
-def qm0():
-    from haystack.query import SearchQuerySet as SQS;
-    res = SQS().models(models.Material).filter(content='minh')
-    print res.count()
-    [item for item in res[:10]]
-    return res
 
 def testSimilar():
     from vpr_content.models import Material
