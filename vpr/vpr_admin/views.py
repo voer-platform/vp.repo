@@ -231,7 +231,6 @@ filter_conds = (
     'description',
     'categories',
     'keywords',
-    'language',
     'author',
     'content',
     'image',
@@ -257,7 +256,7 @@ def oasis_view(request):
     page = int(request.GET.get('page', 1))
     ms = utils.MaterialScanner()
     if condition:
-        res, pnum = utils.get_page(page, ms.filter(condition), per_page)
+        res, pnum = utils.get_page(page, ms.filter(condition, request.GET.dict()), per_page)
     else:
         res = []
         pnum = 0

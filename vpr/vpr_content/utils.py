@@ -27,9 +27,11 @@ class MaterialScanner(object):
         super(MaterialScanner, self).__init__()
         self.m = Material.objects
         self.per_page = 20
+        self.params = {}
     
-    def filter(self, condition):
+    def filter(self, condition, params):
         func = getattr(self, 'filter_'+condition, None)    
+        self.params = params
         if func:
             return func()
         else:
@@ -54,9 +56,15 @@ class MaterialScanner(object):
         return self.m.filter(q).values(*self.extract_fields)
 
     def filter_language(self):
-        q = Q(keywords__isnull=True)
-        q = q | Q(language__regex='^\s*$')
-        return self.m.filter(q).values(*self.extract_fields)
+        targets = ['vi', 'en']
+        value = self.params['value']
+        if value in targets: 
+            res = self.m.filter(language=value).values(*self.extract_fields)
+        else:
+            q = Q(keywords__isnull=True)
+            q = q | Q(language__regex='^\s*$')
+            res = self.m.filter(q).values(*self.extract_fields)
+        return res
 
     def filter_categories(self):
         q = Q(categories__isnull=True)
