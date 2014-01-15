@@ -806,14 +806,15 @@ def queryCategory(request, qset, use_or =True):
 def queryMaterialByViewCount(request, *args, **kwargs):
     """ Returns QuerySet of all material sorted by view count
     """
+    per_page = settings.REST_FRAMEWORK['PAGINATE_BY']
     sql = """SELECT m.id, m.material_id, m.version, m.material_type, 
                     m.title, m.categories, m.description, m.modified,
                     mv.count
              FROM vpr_content_material as m
              INNER JOIN vpr_content_materialviewcount as mv
              ON (m.id=mv.material_id) 
-             ORDER BY mv.count DESC LIMIT 10; 
-             """
+             ORDER BY mv.count DESC LIMIT %d; 
+             """ % (per_page)
     materials = []
     for m in models.Material.objects.raw(sql):
 
