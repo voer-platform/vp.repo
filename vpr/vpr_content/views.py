@@ -894,3 +894,57 @@ def get_person_favs(request, *args, **kwargs):
     return Response(page_result)
     
 
+from django.db import connection
+
+@api_log
+@api_view(['GET'])
+@api_token_required
+def get_most_faved(request, *args, **kwargs):
+    """ Returns QuerySet of all material sorted by view count
+    """
+    per_page = settings.REST_FRAMEWORK['PAGINATE_BY']
+    sql = """
+        SELECT m.id, m.material_id, m.title, m.version, m.categories, 
+               m.material_type, m.modified, count(f.person_id) AS fc
+        FROM vpr_content_material AS m
+        INNER JOIN vpr_content_materialfavorite AS f
+        ON m.id = f.material_id
+        GROUP BY m.id
+        ORDER BY fc DESC
+        LIMIT %d;
+        """ % per_page
+    cur = connection.cursor()
+    res = cur.execute(sql)
+
+    materials = []
+    for m in cur:
+
+        # getting categories
+        cids = models.restoreAssignedCategory(m[4])
+        categories = []
+        for ci in range(len(cids)):
+            categories.append((cids[ci], models.getCategoryName(cids[ci]))) 
+
+        # getting authors
+        pids = models.getMaterialPersons(m[0])['author'].split(',')
+        pnames = models.getPersonName(pids)
+        if not isinstance(pnames, list):
+            pnames = [pnames,] 
+        authors = []
+        for pi in range(len(pids)):
+            authors.append((pids[pi], pnames[pi])) 
+
+        s_material = {
+            'material_id': m[1],
+            'version': m[3],
+            'material_type': m[5],
+            'title': m[2],
+            'categories': categories, 
+            'favorites': m[7],
+            'author': authors,
+            'modified': m[6],
+            }
+        materials.append(s_material)
+
+    return Response(materials)
+
