@@ -8,6 +8,7 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
+    url(r'^grappelli/', include('grappelli.urls')),
     url(r'^dashboard/', include('vpr_admin.urls')),
     url(r'^$', 'vpr_api.views.api_root'),
     url(r'^setup/register/$', registerClient, name='register-client'),
