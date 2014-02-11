@@ -74,7 +74,7 @@ class Material(models.Model, MaterialBase):
     categories = CharField(max_length=256, blank=True, null=True)
     keywords = TextField(blank=True, null=True)
     language = CharField(max_length=2, blank=True)
-    license_id = IntegerField(null=True)
+    license_id = IntegerField(null=True, default=0)
     modified = DateTimeField(default=datetime.utcnow)
     derived_from = CharField(max_length=64, blank=True, null=True)
     image = ImageField(upload_to="./mimgs", blank=True, null=True) 

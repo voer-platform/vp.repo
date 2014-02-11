@@ -43,11 +43,11 @@
             {% if page_total > 1 %}
                 {% with rg=request.GET %}
                 {% if page > 1 %}
-                <a href="{{ request.path }}?page={{ page|add:-1 }}&cond={{ rg.cond }}&filter_type={{ rg.filter_type }}">Previous</a> - 
+                <a href="{{ request.path }}?page={{ page|add:-1 }}&cond={{ rg.cond }}&filter_type={{ rg.filter_type }}&value={{ rg.value }}">Previous</a> - 
                 {% endif %}
                 <span>{{ page }}/{{ page_total }}</span>
                 {% if page < page_total %}
-                - <a href="{{ request.path }}?page={{ page|add:+1 }}&cond={{ rg.cond }}&filter_type={{ rg.filter_type }}">Next</a>
+                - <a href="{{ request.path }}?page={{ page|add:+1 }}&cond={{ rg.cond }}&filter_type={{ rg.filter_type }}&value={{ rg.value }}">Next</a>
                 {% endif %}
                 {% endwith %}
             {% endif %}
@@ -71,15 +71,15 @@
                 <td>
                     {% if material.material_type == 1 %}
                         <span class="label">{{ material.material_type }}</span>
-                        &nbsp;<a href="http://{{ web_url }}/m/{{ material.material_id }}/{{ material.version }}">{{ material.title }}</a>
+                        &nbsp;<a href="http://{{ web_url }}/m/{{ material.material_id }}/{{ material.version }}" target="blank">{{ material.title }}</a>
                     {% else %}
                         <span class="label label-warning">{{ material.material_type }}</span>
-                        &nbsp;<a href="http://{{ web_url }}/c/{{ material.material_id }}/{{ material.version }}">{{ material.title }}</a>
+                        &nbsp;<a href="http://{{ web_url }}/c/{{ material.material_id }}/{{ material.version }}" target="blank">{{ material.title }}</a>
                     {% endif %}
                 </td>
-                <td><a href="/1/materials/{{ material.material_id }}/{{ material.version }}">{{ material.material_id }}</a><span style="color:gray;">~{{ material.version }}<span></td>
+                <td><a href="/1/materials/{{ material.material_id }}/{{ material.version }}" target="blank">{{ material.material_id }}</a><span style="color:gray;">~{{ material.version }}<span></td>
                 <td>{{ material.modified|date:"y-m-d h:i" }}</td>
-                <td><a href="/admin/vpr_content/material/{{ material.id }}">edit</a></td>
+                <td><a href="/admin/vpr_content/material/{{ material.id }}" target="blank">edit</a></td>
                 <td style="text-align:center;"><input type="checkbox" name="check-delete" value="{{ material.id }}"></td>
             </tr> 
             {% endfor %}
@@ -91,11 +91,11 @@
                 {% if page_total > 1 %}
                     {% with rg=request.GET %}
                     {% if page > 1 %}
-                    <a href="{{ request.path }}?page={{ page|add:-1 }}&cond={{ rg.cond }}&filter_type={{ rg.filter_type }}">Previous</a> - 
+                    <a href="{{ request.path }}?page={{ page|add:-1 }}&cond={{ rg.cond }}&filter_type={{ rg.filter_type }}&value={{ rg.value }}">Previous</a> - 
                     {% endif %}
                     <span>{{ page }}/{{ page_total }}</span>
                     {% if page < page_total %}
-                    - <a href="{{ request.path }}?page={{ page|add:+1 }}&cond={{ rg.cond }}&filter_type={{ rg.filter_type }}">Next</a>
+                    - <a href="{{ request.path }}?page={{ page|add:+1 }}&cond={{ rg.cond }}&filter_type={{ rg.filter_type }}&value={{ rg.value }}">Next</a>
                     {% endif %}
                     {% endwith %}
                 {% endif %}
