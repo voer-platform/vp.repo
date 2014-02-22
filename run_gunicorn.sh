@@ -1,3 +1,4 @@
 #!/usr/bin/sh
-cd ./vpr
-sh ./gunicorn.sh
+set -e
+source ../bin/activate
+exec ./vpr/gunicorn.sh
