@@ -83,12 +83,6 @@ class Material(models.Model, MaterialBase):
         type_name = settings.MATERIAL_TYPES[self.material_type][:3]
         return '%s - %s (%s)' % (type_name, self.title, self.material_id)
 
-    class Media:
-        js = [
-            '/s/grappelli/tinymce/jscripts/tiny_mce/tiny_mce.js',
-            '/s/grappelli/tinymce_setup/tinymce_setup.js',
-        ]
-
 
 class OriginalID(models.Model):
     material_id = CharField(max_length=64, primary_key=True)
