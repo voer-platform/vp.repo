@@ -30,7 +30,7 @@ MATERIAL_LICENSE = "http://creativecommons.org/licenses/by/3.0/"
 MATERIAL_SOURCE_URL = 'http://voer.edu.vn/m/%s'
 
 HTTP_CODE_PROCESSING = 102
-HTTP_CODE_SUCCESS = 200 
+HTTP_CODE_SUCCESS = 200
 
 EXPORT_TYPE = 'pdf'
 EXPORT_URL = os.path.join(settings.VPT_URL, 'export')
@@ -39,18 +39,21 @@ EXPORT_TIME_FORMAT = "%Y/%m/%d %H:%M"
 EXPORT_TIME_LIMIT = 300    # seconds
 
 
-def postMaterialZip(material):
-    """Load and send zip file to exporting service"""
+def postZipFromPath(zip_path):
+    """
+    """
     res = None
-    zip_path = zipMaterial(material)
     with open(zip_path, 'rb') as mzip:
-        payload = {'token': '', 
-                   'cid': '',
-                   'output': EXPORT_TYPE}
         files = {'file': (mzip.name.split('/')[-1], mzip.read())}
         res = requests.post(EXPORT_URL, files=files, data={})
         os.remove(mzip.name)
     return res
+
+
+def postMaterialZip(material):
+    """Load and send zip file to exporting service"""
+    zip_path = zipMaterial(material)
+    return postZipFromPath(zip_path)
 
 
 def zipMaterial(material):

@@ -1,3 +1,4 @@
 {{ object.user_id }}
 {{ object.fullname }}
 {{ object.biography }}
+{{ object.email }}

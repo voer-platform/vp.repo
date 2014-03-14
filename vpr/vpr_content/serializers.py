@@ -157,11 +157,13 @@ class IndexCommonSerializer(serializers.Serializer):
     version = serializers.Field()
     modified = serializers.Field()
     categories = serializers.Field()
+    description = serializers.Field()
     # person fields
     id = serializers.Field()
     user_id = serializers.Field()
     fullname = serializers.Field()
     email = serializers.Field()
+    biography = serializers.Field()
 
     def convert_object(self, obj):
         """ Core of serialization.
