@@ -9,6 +9,7 @@ from shutil import rmtree
 from subprocess import Popen 
 from zipfile import ZipFile, ZIP_DEFLATED
 from django.http import Http404, HttpResponse
+from django.template.defaultfilters import slugify, title
 
 from vpr_content.models import Material, MaterialFile, MaterialExport
 from vpr_content.models import listMaterialFiles, MaterialExport
@@ -534,20 +535,26 @@ def getMaterialPDF(request, *args, **kwargs):
         get_it = requestMaterialPDF(material)
     except:
         raise Http404
-   
+
     # ready for download or not?
     if get_it:
         export_obj = MaterialExport.objects.get(pk=export_obj.id)
         # return the PDF content, this should be served be the web server
         with open(export_obj.path, 'rb') as pdf: 
             pdf_name = '%s-%d.pdf' % (mid, version)
-            data = pdf.read() 
-            response = HttpResponse(data, 
-                                    mimetype = 'application/pdf')
-            response['content-disposition'] = 'attachment; filename='+pdf_name
+            data = pdf.read()
+            response = HttpResponse(data, mimetype='application/pdf')
+            try:
+                friendly_name = '%s.pdf' % material.title.encode('utf-8')
+            except UnicodeEncodeError:
+                friendly_name = '%s.pdf' % slugify(material.title)
+            except:
+                friendly_name = pdf_name
+            response['content-disposition'] = 'attachment; filename=' + \
+                friendly_name
             return response
     else:
-        return HttpResponse(status=HTTP_CODE_PROCESSING) 
+        return HttpResponse(status=HTTP_CODE_PROCESSING)
 
 
 @api_log
@@ -557,7 +564,7 @@ def getMaterialFile(request, *args, **kwargs):
     mfid = kwargs.get('mfid', None)
 
     try:
-        mfile = MaterialFile.objects.get(id=mfid)  
+        mfile = MaterialFile.objects.get(id=mfid)
         data = mfile.mfile.read()
         mime_type = mfile.mime_type
         mfile.mfile.close()
