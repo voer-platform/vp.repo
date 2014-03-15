@@ -9,6 +9,8 @@ Installation
 
     ```
     Python 2.5 to 2.7
+    MySQL Server/Client
+    VirtualEnv (optional)
     ```
 
 * Clone the VPR repository from GitHub, using `git`
@@ -16,7 +18,7 @@ Installation
     ```
     git clone git://github.com/voer-platform/vp.repo.git
     ```
-    
+
 * Go to the `vp.repo/` directory, and run the script `install.sh`
     
     ```
