@@ -8,8 +8,9 @@ from os.path import realpath
 from shutil import rmtree
 from subprocess import Popen 
 from zipfile import ZipFile, ZIP_DEFLATED
+
 from django.http import Http404, HttpResponse
-from django.template.defaultfilters import slugify, title
+from django.template.defaultfilters import slugify
 
 from vpr_content.models import Material, MaterialFile, MaterialExport
 from vpr_content.models import listMaterialFiles, MaterialExport
@@ -550,8 +551,7 @@ def getMaterialPDF(request, *args, **kwargs):
                 friendly_name = '%s.pdf' % slugify(material.title)
             except:
                 friendly_name = pdf_name
-            response['content-disposition'] = 'attachment; filename=' + \
-                friendly_name
+            response['content-disposition'] = 'attachment; filename="%s"' % friendly_name
             return response
     else:
         return HttpResponse(status=HTTP_CODE_PROCESSING)
