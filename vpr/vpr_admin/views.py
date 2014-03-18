@@ -20,7 +20,8 @@ from vpr_admin import stats
 from vpr_content import serializers, models
 
 
-MATERIAL_LIMIT = 10
+MATERIAL_LIMIT = 20
+PERSON_LIMIT = 20
 
 
 class DashboardView(TemplateView):
@@ -270,4 +271,33 @@ def oasis_view(request):
 
     return render(request, 'oasis.html', dictionary=page_data)
 
+
+@csrf_protect
+@login_required
+def persons_view(request):
+    """View of the material management"""
+    # get the current page
+    try:
+        page = int(request.GET.get('page', 1))
+    except:
+        page = 1
+
+    page_data = {'current_page': page}
+
+    #res = SearchQuerySet().models(models.Person)
+    #res = res.filter(**query)
+    #if not query.has_key('title'):
+    #    res = res.order_by('-id')
+    
+    res = models.Person.objects.filter().order_by('-id')
+
+    res_count = res.count()
+    page_start = (page-1)*MATERIAL_LIMIT
+
+    # variables to templates
+    page_data['persons'] = res[page_start:page_start+MATERIAL_LIMIT]
+    page_data['page_total'] = int(math.ceil(1.0*res_count/MATERIAL_LIMIT))
+    page_data['web_url'] = request.get_host().split(':')[0]
+
+    return render(request, 'persons.html', dictionary=page_data)
 
