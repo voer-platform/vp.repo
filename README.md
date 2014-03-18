@@ -32,6 +32,10 @@ Installation
     vp.repo/vpr/vpr/settings/dev.py    # Development instance
     vp.repo/vpr/vpr/settings/prod.py   # Production instance
     ```
+* Create database tables
+    ```
+    python ./manage.py syncdb
+    ```
 
 Running Component
 -----------------
@@ -39,6 +43,6 @@ Running Component
 * Go to the 'vp.repo/vpr/' directory, and run the Python script:
     
     ```
-    python ./manage.py
+    python ./manage.py runserver 0:8080
     ```
     
