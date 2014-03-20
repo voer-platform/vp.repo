@@ -29,7 +29,8 @@ MTYPE_MODULE = 1
 MTYPE_COLLECTION = 2
 
 MATERIAL_LICENSE = "http://creativecommons.org/licenses/by/3.0/"
-MATERIAL_SOURCE_URL = 'http://voer.edu.vn/m/%s'
+MOD_SOURCE_URL = 'http://voer.edu.vn/m/%s'
+COL_SOURCE_URL = 'http://voer.edu.vn/c/%s'
 
 HTTP_CODE_PROCESSING = 102
 HTTP_CODE_SUCCESS = 200
@@ -242,7 +243,7 @@ def zipMaterialInternal(material):
         author_names = models.getPersonName(author_ids)
         index_content = {
             'title': material.title,
-            'url': MATERIAL_SOURCE_URL % material.material_id,
+            'url': MOD_SOURCE_URL % material.material_id,
             'authors': author_names,
             'version': material.version,
             }
@@ -277,7 +278,7 @@ def zipMaterialInternal(material):
         editor_ids = editor_ids.split(',')
         editors = models.getPersonName(editor_ids)
         if isinstance(editors, str): editors = [editors,]
-        material_url = MATERIAL_SOURCE_URL % material.material_id
+        material_url = COL_SOURCE_URL % material.material_id
 
         # generate collection.json
         try:
@@ -373,7 +374,7 @@ def createMaterialDirectory(dir_path, material):
     author_names = models.getPersonName(author_ids)
     index_content = {
         'title': material.title,
-        'url': MATERIAL_SOURCE_URL %  material.material_id,
+        'url': MOD_SOURCE_URL % material.material_id,
         'authors': author_names,
         'version': material.version,
         }
@@ -389,7 +390,7 @@ def zipMaterialExternal(material):
     mid = material.material_id
     version = material.version
     mtype = material.material_type
-    
+
     # create material directory
     dir_path = os.path.join(settings.TEMP_DIR, '%s-%d' % (mid, version))
 
@@ -417,7 +418,7 @@ def zipMaterialExternal(material):
         editor_ids = editor_ids.split(',')
         editors = models.getPersonName(editor_ids)
         if isinstance(editors, str): editors = [editors,]
-        material_url = MATERIAL_SOURCE_URL % material.material_id
+        material_url = COL_SOURCE_URL % material.material_id
 
         # generate collection.json
         try:

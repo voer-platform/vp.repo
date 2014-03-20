@@ -69,7 +69,7 @@
                 <td><a href="http://voer.edu.vn/profile/{{ person.pk }}">{{ person.user_id }}</a></td>
                 <td>{{ person.fullname }}</td>
                 <td>{{ person.email }}</td>
-                <td>{{ person.biography }}</td>
+                <td>{{ person.biography|safe }}</td>
             </tr> 
             {% endfor %}
 
