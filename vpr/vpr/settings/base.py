@@ -231,12 +231,14 @@ IMAGES_DIR = os.path.join(PROJECT_DIR, 'mimgs')
 MATERIAL_FILE_DIR = os.path.join(PROJECT_DIR, 'mfiles')
 TEMP_DIR = os.path.join(PROJECT_DIR, 'tmp')
 
-VPR_MATERIAL_ROLES = ('author', 'editor', 'licensor', 'maintainer', 'translator', 'contributor')
-
 MATERIAL_TYPES = ('undefined', 'module', 'collection')
-
+VPR_MATERIAL_ROLES = ('author', 'editor', 'licensor', 'maintainer', 'translator', 'contributor')
 VPR_COOKIE_TOKEN = 'vpr_token'
 VPR_COOKIE_CLIENT = 'vpr_client'
+VOER_DEFAULT_LICENSE = 'Creative Commons 3.0'
+VOER_DEFAULT_LICENSE_URL = 'http://creativecommons.org/licenses/by/3.0/'
+
+VPW_URL = 'http://voer.edu.vn'
 
 # VPR LOG 
 

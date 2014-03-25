@@ -9,6 +9,7 @@ from django.db.models.signals import post_delete
 from hashlib import md5
 from datetime import datetime
 
+import json
 import time
 
 from vpr_api.models import APIClient
@@ -527,6 +528,51 @@ def refineMaterialContent(text):
         text = text.replace(piece, '')
         
     return text
+
+
+def get_material_info(mid, version):
+    data = {}
+    try:
+        material = getMaterial(mid, version)
+        data['title'] = material.title
+        data['type'] = 'module' if material.material_type == 1 else 'collection'
+        data['url'] = '%s/%s/%s/%d' % (
+            settings.VPW_URL, data['type'][0], mid, version)
+        data['license'] = settings.VOER_DEFAULT_LICENSE_URL
+        data['authors'] = map(
+            getPersonName,
+            getMaterialPersons(material.id)['author'].split(',')
+            )
+    except Material.DoesNotExist:
+        pass
+    return data
+
+
+def rebuildCollectionContent(mid, version, dry=True):
+
+    def rebuild_node(ndict):
+        if ndict['type'] in ['module', 'collection']:
+            info = get_material_info(ndict['id'], ndict['version'])
+            ndict.update(info)
+        if ndict.get('content', None):
+            new_content = []
+            for node in ndict['content']:
+                new_content.append(rebuild_node(node))
+            ndict['content'] = new_content
+        return ndict
+
+    collection = getMaterial(mid, version)
+    cdict = json.loads(collection.text)
+    new_list = []
+    for node in cdict['content']:
+        new_list.append(rebuild_node(node))
+    cdict['content'] = new_list
+
+    if not dry:
+        collection.text = json.dumps(cdict)
+        collection.save()
+    else:
+        print cdict
 
 
 if __name__ == '__main__':
