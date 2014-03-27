@@ -519,24 +519,27 @@ def getMaterialPDF(request, *args, **kwargs):
     else:
         # only catch the case of missing version ~ getting latest
         # error will be raised in other cases
-        version = getMaterialLatestVersion(mid) 
+        version = getMaterialLatestVersion(mid)
     material = Material.objects.get(material_id=mid, version=version)
 
     get_it = False
-    try: 
-        export_obj = MaterialExport.objects.get(material_id=mid, version=version)
-        # check if exported file existing
-        if isExportProcessing(export_obj):
-            get_it = requestMaterialPDF(material)
-        elif not os.path.exists(export_obj.path):
-            export_obj.delete()
-            raise IOError
-        else:
-            get_it = True
-    except (MaterialExport.DoesNotExist, IOError): 
+    if request.GET('refresh', None) == 1:
         get_it = requestMaterialPDF(material)
-    except:
-        raise Http404
+    else:
+        try: 
+            export_obj = MaterialExport.objects.get(material_id=mid, version=version)
+            # check if exported file existing
+            if isExportProcessing(export_obj):
+                get_it = requestMaterialPDF(material)
+            elif not os.path.exists(export_obj.path):
+                export_obj.delete()
+                raise IOError
+            else:
+                get_it = True
+        except (MaterialExport.DoesNotExist, IOError):
+            get_it = requestMaterialPDF(material)
+        except:
+            raise Http404
 
     # ready for download or not?
     if get_it:
