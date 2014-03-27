@@ -523,7 +523,7 @@ def getMaterialPDF(request, *args, **kwargs):
     material = Material.objects.get(material_id=mid, version=version)
 
     get_it = False
-    if request.GET('refresh', None) == 1:
+    if request.GET.get('refresh', None) == 1:
         get_it = requestMaterialPDF(material)
     else:
         try: 
