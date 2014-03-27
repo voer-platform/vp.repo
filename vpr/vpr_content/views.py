@@ -948,3 +948,21 @@ def get_most_faved(request, *args, **kwargs):
 
     return Response(materials)
 
+
+@api_log
+@api_view(['GET'])
+@api_token_required
+def material_links_view(request, *args, **kwargs):
+    mid = kwargs['mid'].lower()
+    # temporarily bypass version for now, not really good
+    #version = kwargs.get('version', None)
+    sqs = SearchQuerySet().models(models.Material)
+    res = sqs.filter(text__exact='"'+mid+'"', material_type=2)
+    materials = []
+    for collection in res:
+        materials.append({
+            'material_id': collection.material_id,
+            'version': collection.version,
+            'title': collection.title,
+            })
+    return Response(materials)

@@ -32,6 +32,7 @@ urlpatterns += patterns('',
     url(r'^materials/(?P<mid>[0-9a-z]+)(/(?P<version>\d+))?/comments/?$', content_views.MaterialComments.as_view(), name='material-comments'),
     url(r'^materials/(?P<mid>[0-9a-z]+)(/(?P<version>\d+))?/rates/?$', content_views.materialRatesView, name='material-rates'),
     url(r'^materials/(?P<mid>[0-9a-z]+)(/(?P<version>\d+))?/favorites/?$', content_views.materialFavoriteView, name='material-favorite'),
+    url(r'^materials/(?P<mid>[0-9a-z]+)(/(?P<version>\d+))?/links?$', content_views.material_links_view, name='material-links'),
     )
 
 urlpatterns += patterns('',
