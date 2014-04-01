@@ -124,7 +124,14 @@ def materialRatesView(request, *args, **kwargs):
             rate_obj = MaterialRating(material_id=rid, person_id=pid, rate=rate)
             rate_obj.save() 
     elif request.method == 'GET':
-        pass
+        pid = request.GET.get('person', None)
+        if pid:
+            try:
+                s_rate = MaterialRating.objects.get(material=rid, person=pid)
+                data = {'rate': s_rate.rate, 'count': 1}
+            except MaterialRating.DoesNotExist:
+                data = {'rate': None, 'count': 0}
+            return Response(data)
     elif request.method == 'DELETE':
         pid = request.GET.get('person', None)
         if pid:
@@ -164,6 +171,15 @@ def materialFavoriteView(request, *args, **kwargs):
             fav_obj = MaterialFavorite(material_id=rid, person_id=pid)
             fav_obj.save() 
     elif request.method == 'GET':
+        pid = request.GET.get('person', None)
+        if pid is not None:
+            try:
+                count = MaterialFavorite.objects.filter(
+                    material=rid, person=pid).exists() and 1 or 0
+                data = {'favorite': count}
+            except MaterialFavorite.DoesNotExist:
+                data = {'favorite': 0}
+            return Response(data)
         pass
     elif request.method == 'DELETE':
         pid = request.GET.get('person', None)
