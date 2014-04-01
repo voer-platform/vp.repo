@@ -196,114 +196,9 @@ def isExportExpired(request_time):
     else:
         rq_time = request_time
     delta = datetime.now() - rq_time
+    print rq_time, datetime.now()
     return delta.total_seconds() > EXPORT_TIME_LIMIT
         
-
-def zipMaterialInternal(material):
-    """ Collects all material info and put it into a ZIP file.
-        Full path of the zip file will be returned to the caller.
-    """
-    mid = material.material_id
-    version = material.version
-    mtype = material.material_type
-    
-    # init the zip package
-    zip_path = os.path.join(
-        settings.TEMP_DIR,
-        ZIP_FILE_NAME % (str(mid), str(version))
-        )
-    zf = ZipFile(zip_path, 'w', ZIP_DEFLATED) 
-
-    # check if module or collection
-    if mtype == MTYPE_MODULE:
-        # read all material files, and put into the zip package
-        mfids = listMaterialFiles(mid, version)
-        for mfid in mfids:
-            try:
-                mf = MaterialFile.objects.get(id=mfid)
-                zf.writestr(mf.name, mf.mfile.read()) 
-                mf.mfile.close()
-            except:
-                print "Error when getting material file %s" % mf.name
-
-        # add material text content
-        raw_content = material.text
-        try:
-            raw_content = raw_content.encode('utf-8')
-        except:
-            raw_content = raw_content.decode('utf-8').encode('utf-8')
-        zf.writestr(ZIP_HTML_FILE, raw_content)
-
-        # generate material json
-        persons = models.getMaterialPersons(material.id)
-        try: 
-            author_ids = persons['author'].split(',')
-        except:
-            author_ids = []
-        author_names = models.getPersonName(author_ids)
-        index_content = {
-            'title': material.title,
-            'url': MOD_SOURCE_URL % material.material_id,
-            'authors': author_names,
-            'version': material.version,
-            }
-        index_content = json.dumps(index_content)
-        zf.writestr(ZIP_INDEX_MODULE, index_content)
-
-    elif mtype == MTYPE_COLLECTION:
-
-        # get list of all contained materials    
-        all_materials = getNestedMaterials(material)
-
-        # load materials into ZIP
-        for cid in range(len(all_materials)):
-            m_id = all_materials[cid][0]
-            m_version = all_materials[cid][1]
-            m_title = all_materials[cid][2]
-            if m_version is None:
-                m_version = getMaterialLatestVersion(m_id)
-            mfids = listMaterialFiles(m_id, m_version)
-            m_object = Material.objects.get(material_id=m_id)
-            for mfid in mfids:
-                try:
-                    mf = MaterialFile.objects.get(id=mfid)
-                    zf.writestr(m_id+'/'+mf.name, mf.mfile.read())
-                    mf.mfile.close()
-                except:
-                    print 'Error when reading material file: ' + mf.name
-            zf.writestr(m_id+'/'+ZIP_HTML_FILE, m_object.text)
-
-        # prepare some fields
-        editor_ids = models.getMaterialPersons(material.id)['editor']
-        editor_ids = editor_ids.split(',')
-        editors = models.getPersonName(editor_ids)
-        if isinstance(editors, str): editors = [editors,]
-        material_url = COL_SOURCE_URL % material.material_id
-
-        # generate collection.json
-        try:
-            index_content = json.loads(material.text)
-            index_content['id'] = material.material_id
-            index_content['title'] = material.title
-            index_content['version'] = str(material.version)
-            index_content['license'] = MATERIAL_LICENSE
-            index_content['url'] = material_url
-            index_content['editors'] = editors 
-            index_content = json.dumps(index_content)
-        except:
-            # another way
-            index_content = '{"id":"%s",' % material.material_id
-            index_content += '"title":"%s",' %  material.title
-            index_content += '"version":"%s",' % str(material.version)
-            index_content += '"license":"%s",' % MATERIAL_LICENSE
-            index_content += '"url":"%s",' % material_url
-            index_content += '"editors":"%s",' % editors 
-            index_content += material.text[material.text.index('{')+1:]
-        zf.writestr(ZIP_INDEX_COLLECTION, index_content)
-        
-    zf.close()
-    return realpath(zf.filename)
-
 
 def writeFileToDir(dir_path, file_name, content):
     """ Write a file with given file name and content into specific directory
@@ -377,6 +272,7 @@ def createMaterialDirectory(dir_path, material):
         'url': MOD_SOURCE_URL % material.material_id,
         'authors': author_names,
         'version': material.version,
+        'language': material.language,
         }
     index_content = json.dumps(index_content)
     writeFileToDir(dir_path, ZIP_INDEX_MODULE, index_content)
@@ -429,6 +325,7 @@ def zipMaterialExternal(material):
             index_content['license'] = MATERIAL_LICENSE
             index_content['url'] = material_url
             index_content['editors'] = editors 
+            index_content['language'] = material.language
             index_content = json.dumps(index_content)
         except:
             # another way
@@ -438,6 +335,7 @@ def zipMaterialExternal(material):
             index_content += '"license":"%s",' % MATERIAL_LICENSE
             index_content += '"url":"%s",' % material_url
             index_content += '"editors":"%s",' % editors 
+            index_content += '"language":"%s",' % material.language
             index_content += material.text[material.text.index('{')+1:]
 
         with open(os.path.join(dir_path, ZIP_INDEX_COLLECTION), 'w') as mnf:
@@ -523,23 +421,26 @@ def getMaterialPDF(request, *args, **kwargs):
     material = Material.objects.get(material_id=mid, version=version)
 
     get_it = False
-    if str(request.GET.get('refresh', None)) == '1':
-        get_it = requestMaterialPDF(material)
-    else:
-        try: 
-            export_obj = MaterialExport.objects.get(material_id=mid, version=version)
-            # check if exported file existing
-            if isExportProcessing(export_obj):
-                get_it = requestMaterialPDF(material)
-            elif not os.path.exists(export_obj.path):
-                export_obj.delete()
-                raise IOError
-            else:
-                get_it = True
-        except (MaterialExport.DoesNotExist, IOError):
+    try: 
+        export_obj = MaterialExport.objects.get(material_id=mid, version=version)
+
+        if str(request.GET.get('refresh', None)) == '1':
+            export_obj.delete()
             get_it = requestMaterialPDF(material)
-        except:
-            raise Http404
+            raise IOError
+
+        # check if exported file existing
+        if isExportProcessing(export_obj):
+            get_it = requestMaterialPDF(material)
+        elif not os.path.exists(export_obj.path):
+            export_obj.delete()
+            raise IOError
+        else:
+            get_it = True
+    except (MaterialExport.DoesNotExist, IOError):
+        get_it = requestMaterialPDF(material)
+    except:
+        raise Http404
 
     # ready for download or not?
     if get_it:
@@ -594,3 +495,111 @@ def handlePersonAvatar(request, *args, **kwargs):
     except:
         raise Http404
 
+
+def zipMaterialInternal(material):
+    """ Collects all material info and put it into a ZIP file.
+        Full path of the zip file will be returned to the caller.
+    """
+    mid = material.material_id
+    version = material.version
+    mtype = material.material_type
+    
+    # init the zip package
+    zip_path = os.path.join(
+        settings.TEMP_DIR,
+        ZIP_FILE_NAME % (str(mid), str(version))
+        )
+    zf = ZipFile(zip_path, 'w', ZIP_DEFLATED) 
+
+    # check if module or collection
+    if mtype == MTYPE_MODULE:
+        # read all material files, and put into the zip package
+        mfids = listMaterialFiles(mid, version)
+        for mfid in mfids:
+            try:
+                mf = MaterialFile.objects.get(id=mfid)
+                zf.writestr(mf.name, mf.mfile.read()) 
+                mf.mfile.close()
+            except:
+                print "Error when getting material file %s" % mf.name
+
+        # add material text content
+        raw_content = material.text
+        try:
+            raw_content = raw_content.encode('utf-8')
+        except:
+            raw_content = raw_content.decode('utf-8').encode('utf-8')
+        zf.writestr(ZIP_HTML_FILE, raw_content)
+
+        # generate material json
+        persons = models.getMaterialPersons(material.id)
+        try: 
+            author_ids = persons['author'].split(',')
+        except:
+            author_ids = []
+        author_names = models.getPersonName(author_ids)
+        index_content = {
+            'title': material.title,
+            'url': MOD_SOURCE_URL % material.material_id,
+            'authors': author_names,
+            'version': material.version,
+            'language': material.language,
+            }
+        index_content = json.dumps(index_content)
+        zf.writestr(ZIP_INDEX_MODULE, index_content)
+
+    elif mtype == MTYPE_COLLECTION:
+
+        # get list of all contained materials    
+        all_materials = getNestedMaterials(material)
+
+        # load materials into ZIP
+        for cid in range(len(all_materials)):
+            m_id = all_materials[cid][0]
+            m_version = all_materials[cid][1]
+            m_title = all_materials[cid][2]
+            if m_version is None:
+                m_version = getMaterialLatestVersion(m_id)
+            mfids = listMaterialFiles(m_id, m_version)
+            m_object = Material.objects.get(material_id=m_id)
+            for mfid in mfids:
+                try:
+                    mf = MaterialFile.objects.get(id=mfid)
+                    zf.writestr(m_id+'/'+mf.name, mf.mfile.read())
+                    mf.mfile.close()
+                except:
+                    print 'Error when reading material file: ' + mf.name
+            zf.writestr(m_id+'/'+ZIP_HTML_FILE, m_object.text)
+
+        # prepare some fields
+        editor_ids = models.getMaterialPersons(material.id)['editor']
+        editor_ids = editor_ids.split(',')
+        editors = models.getPersonName(editor_ids)
+        if isinstance(editors, str): editors = [editors,]
+        material_url = COL_SOURCE_URL % material.material_id
+
+        # generate collection.json
+        try:
+            index_content = json.loads(material.text)
+            index_content['id'] = material.material_id
+            index_content['title'] = material.title
+            index_content['version'] = str(material.version)
+            index_content['license'] = MATERIAL_LICENSE
+            index_content['url'] = material_url
+            index_content['editors'] = editors
+            index_content['language'] = material.language
+            index_content = json.dumps(index_content)
+        except:
+            # another way
+            index_content = '{"id":"%s",' % material.material_id
+            index_content += '"title":"%s",' %  material.title
+            index_content += '"version":"%s",' % str(material.version)
+            index_content += '"license":"%s",' % MATERIAL_LICENSE
+            index_content += '"url":"%s",' % material_url
+            index_content += '"editors":"%s",' % editors
+            index_content += '"language": "%s",' %  material.language
+            index_content += material.text[material.text.index('{')+1:]
+        zf.writestr(ZIP_INDEX_COLLECTION, index_content)
+        
+    zf.close()
+    return realpath(zf.filename)
