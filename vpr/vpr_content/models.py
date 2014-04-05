@@ -520,14 +520,19 @@ def refineMaterialContent(text):
             <strong class="emphasis" effect="bold"/>
         This also should remove Js and styling content.
     """
-    kill_list = (
-        '<em class="emphasis" effect="italics"/>',
-        '<strong class="emphasis" effect="bold"/>',
-        )
-    for piece in kill_list:
-        text = text.replace(piece, '')
+    def remove_emphasis(mbody):
+        kill_list = (
+            '<em class="emphasis" effect="italics"/>',
+            '<strong class="emphasis" effect="bold"/>',
+            )
+        for piece in kill_list:
+            mbody = mbody.replace(piece, '')
+        return mbody
         
-    return text
+    def correct_anchors(mbody):
+        return mbody.replace('href="/#', 'href="#')
+            
+    return correct_anchors(text)
 
 
 def get_material_info(mid, version):
