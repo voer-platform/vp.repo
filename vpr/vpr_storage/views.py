@@ -6,15 +6,15 @@ import json
 from datetime import datetime
 from os.path import realpath
 from shutil import rmtree
-from subprocess import Popen 
+from subprocess import Popen
 from zipfile import ZipFile, ZIP_DEFLATED
 
 from django.http import Http404, HttpResponse
 from django.template.defaultfilters import slugify
 
 from vpr_content.models import Material, MaterialFile, MaterialExport
-from vpr_content.models import listMaterialFiles, MaterialExport
-from vpr_content.models import getLatestMaterial, getMaterialLatestVersion
+from vpr_content.models import listMaterialFiles
+from vpr_content.models import getMaterialLatestVersion
 from vpr_content import models
 from vpr_api.decorators import api_log
 
@@ -84,11 +84,11 @@ def downloadFile(url, path):
         except:
             # log
             pass
-    else: 
+    else:
         # log
         pass
     return save_ok
-        
+
 
 def generateExportPath(material_id, material_version):
     """Return the full path of export file based on material ID and version"""
@@ -98,7 +98,7 @@ def generateExportPath(material_id, material_version):
 
 def storeMaterialExport(url, exp_obj):
     """Download and store export metadata into DB. Export object required"""
-    export_path = generateExportPath(exp_obj.material_id, exp_obj.version)              
+    export_path = generateExportPath(exp_obj.material_id, exp_obj.version)
     attempt = 3
     while attempt > 0:
         if downloadFile(url, export_path):
@@ -107,11 +107,10 @@ def storeMaterialExport(url, exp_obj):
             exp_obj.name = ''
             exp_obj.save()
             break
-        elif attemp == 1:
+        elif attempt == 1:
             # delete the export object in case of 3-time failed
             exp_obj.delete()
         attempt -= 1
-
 
 
 def isExportProcessing(export_obj):
@@ -120,22 +119,21 @@ def isExportProcessing(export_obj):
 
 
 def requestMaterialPDF(material):
-    """ Create the zip package and post it to vpt in order to receive the PDF 
+    """ Create the zip package and post it to vpt in order to receive the PDF
         genereated. After receiving the file exported, an entry of export
         material will be created (as MaterialExport). This returns:
             True: Export file is ready to get.
             False: Export file is not ready. Try again later.
     """
-    
     res_pending = 'PENDING'
     res_success = 'SUCCESS'
 
     ready = False
 
-    # check export status 
+    # check export status
     export_obj = MaterialExport.objects.filter(
-        material_id = material.material_id,
-        version = material.version)
+        material_id=material.material_id,
+        version=material.version)
 
     # in case of nothing have been saved
     if export_obj.count() == 0:
@@ -143,8 +141,8 @@ def requestMaterialPDF(material):
         try:
             values = json.loads(res.content)
             new_export = MaterialExport(
-                material_id = material.material_id,
-                version = material.version)
+                material_id=material.material_id,
+                version=material.version)
             if values['status'] == res_pending:
                 new_export.path = TASK_ID_PREFIX + values['task_id']
                 new_export.name = datetime.now().strftime(EXPORT_TIME_FORMAT)
@@ -157,7 +155,6 @@ def requestMaterialPDF(material):
                 export_obj.delete()
         except ValueError:
             pass
-            
     else:
         # check for the status if existed
         export_obj = export_obj[0]
@@ -167,21 +164,22 @@ def requestMaterialPDF(material):
             res = requests.get(EXPORT_URL+'?task_id='+task_id)
             try:
                 values = json.loads(res.content)
-                # download the PDF if done
+            except ValueError:
+                # non-json content returned
+                export_obj.delete()
+            else:
+                # download the PDF if done already
                 if values['status'] == res_success:
                     storeMaterialExport(values['url'], export_obj)
                     ready = True
                 elif values['status'] == res_pending:
                     # clear the object, prepare for retrying download
-                    if isExportExpired(export_obj.name): 
+                    if isExportExpired(export_obj.name):
                         export_obj.delete()
                 elif values['status'] != res_pending:
                     # failure, delete the export object
                     export_obj.delete()
-            except:
-                # non-json content returned
-                export_obj.delete()
-                
+
         elif export_obj.path:
             ready = True
     return ready
@@ -196,9 +194,8 @@ def isExportExpired(request_time):
     else:
         rq_time = request_time
     delta = datetime.now() - rq_time
-    print rq_time, datetime.now()
     return delta.total_seconds() > EXPORT_TIME_LIMIT
-        
+
 
 def writeFileToDir(dir_path, file_name, content):
     """ Write a file with given file name and content into specific directory
@@ -217,7 +214,7 @@ def buildZipPath(path):
 
 
 def buildZipCommand(path):
-    """ Build the external command for zipping material files 
+    """ Build the external command for zipping material files
     """
     #return 'zip -5 %s %s/*' % (buildZipPath(path), path)
     return 'zip -5 %s ./*' % buildZipPath(path)
@@ -258,11 +255,11 @@ def createMaterialDirectory(dir_path, material):
             writeFileToDir(dir_path, mf.name, mf.mfile.read())
             mf.mfile.close()
         except:
-            print "Error when getting material file %s" % mf.name
+            print "Error getting material file %s" % mf.name
 
     # generate material json
     persons = models.getMaterialPersons(material.id)
-    try: 
+    try:
         author_ids = persons['author'].split(',')
     except:
         author_ids = []
@@ -297,7 +294,7 @@ def zipMaterialExternal(material):
     elif mtype == MTYPE_COLLECTION:
         createDirectory(dir_path)
 
-        # get list of all contained materials    
+        # get list of all contained materials
         all_materials = getNestedMaterials(material)
 
         # load materials into ZIP
@@ -310,10 +307,14 @@ def zipMaterialExternal(material):
             createMaterialDirectory(m_path, m_object)
 
         # prepare some fields
-        editor_ids = models.getMaterialPersons(material.id)['editor']
-        editor_ids = editor_ids.split(',')
-        editors = models.getPersonName(editor_ids)
-        if isinstance(editors, str): editors = [editors,]
+        try:
+            editor_ids = models.getMaterialPersons(material.id)['editor']
+            editor_ids = editor_ids.split(',')
+            editors = models.getPersonName(editor_ids)
+        except KeyError:
+            editors = ['']
+        if isinstance(editors, str):
+            editors = [editors,]
         material_url = COL_SOURCE_URL % material.material_id
 
         # generate collection.json
@@ -324,23 +325,23 @@ def zipMaterialExternal(material):
             index_content['version'] = material.version
             index_content['license'] = MATERIAL_LICENSE
             index_content['url'] = material_url
-            index_content['editors'] = editors 
+            index_content['editors'] = editors
             index_content['language'] = material.language
             index_content = json.dumps(index_content)
         except:
             # another way
             index_content = '{"id":"%s",' % material.material_id
-            index_content += '"title":"%s",' %  material.title
+            index_content += '"title":"%s",' % material.title
             index_content += '"version":"%s",' % str(material.version)
             index_content += '"license":"%s",' % MATERIAL_LICENSE
             index_content += '"url":"%s",' % material_url
-            index_content += '"editors":"%s",' % editors 
+            index_content += '"editors":"%s",' % editors
             index_content += '"language":"%s",' % material.language
             index_content += material.text[material.text.index('{')+1:]
 
         with open(os.path.join(dir_path, ZIP_INDEX_COLLECTION), 'w') as mnf:
             mnf.write(index_content)
-        
+
     # zip the material files
     cmd = 'zip -r5 %s ./*' % buildZipPath(dir_path)
     process = Popen(cmd, shell=True, cwd=dir_path)
@@ -364,9 +365,9 @@ def getNestedMaterials(material):
         for node in nodes:
             materials.extend(extractMaterialInfo(node))
     except:
-        print 'Error when getting nested materials of ' + material.material_id
+        print 'Error getting nested materials of ' + material.material_id
     return materials
-    
+
 
 def extractMaterialInfo(node):
     """(recursively) Returns material IDs and version found"""
@@ -387,7 +388,7 @@ def extractMaterialInfo(node):
         print "Error when getting collection modules"
 
     return found
-        
+
 
 @api_log
 def getMaterialZip(request, *args, **kwargs):
@@ -600,6 +601,6 @@ def zipMaterialInternal(material):
             index_content += '"language": "%s",' %  material.language
             index_content += material.text[material.text.index('{')+1:]
         zf.writestr(ZIP_INDEX_COLLECTION, index_content)
-        
+
     zf.close()
     return realpath(zf.filename)
