@@ -167,7 +167,6 @@ def requestMaterialPDF(material):
             res = requests.get(EXPORT_URL+'?task_id='+task_id)
             try:
                 values = json.loads(res.content)
-                import pdb;pdb.set_trace()
                 # download the PDF if done
                 if values['status'] == res_success:
                     storeMaterialExport(values['url'], export_obj)
