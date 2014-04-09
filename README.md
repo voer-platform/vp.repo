@@ -9,6 +9,24 @@ Installation
 
     ```
     Python 2.5 to 2.7
+    MySQL or PostgreSQL
+    
+    ```
+    
+* Create database:
+    
+    ```
+    Name: vpr
+    User: vpr
+    Password: vpr
+    ```
+
+* Create & activate separate environment
+
+    ```
+    virtualenv vpr
+    cd vpr
+    source vpr/activate
     ```
 
 * Clone the VPR repository from GitHub, using `git`
@@ -31,12 +49,18 @@ Installation
     vp.repo/vpr/vpr/settings/prod.py   # Production instance
     ```
 
+* Initialize DB structure:
+
+    ```
+    python ./manage.py syncdb
+    ```
+
 Running Component
 -----------------
 
 * Go to the 'vp.repo/vpr/' directory, and run the Python script:
     
     ```
-    python ./manage.py
+    python ./manage.py runserver
     ```
     
