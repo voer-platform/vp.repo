@@ -167,6 +167,7 @@ def requestMaterialPDF(material):
             res = requests.get(EXPORT_URL+'?task_id='+task_id)
             try:
                 values = json.loads(res.content)
+                import pdb;pdb.set_trace()
                 # download the PDF if done
                 if values['status'] == res_success:
                     storeMaterialExport(values['url'], export_obj)
@@ -191,7 +192,7 @@ def isExportExpired(request_time):
     """ Check if the export has exceeded limit time or not.
         If yes: delete the export object.
     """
-    if isinstance(request_time, str):
+    if isinstance(request_time, str) or isinstance(request_time, unicode):
         rq_time = datetime.strptime(request_time, EXPORT_TIME_FORMAT)
     else:
         rq_time = request_time
