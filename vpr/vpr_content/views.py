@@ -55,6 +55,19 @@ def splitPath(path):
     return path
 
 
+def delete_cache_item(key):
+    """ Delete a single cache
+    """
+    try:
+        if isinstance(key, basestring):
+            cache.delete(key)
+        else:
+            cache.delete_many(key)
+    except:
+        raise
+        pass
+
+
 # CATEGORY CALLS
 
 class CategoryList(generics.ListCreateAPIView):
@@ -234,13 +247,12 @@ class PersonDetail(generics.RetrieveUpdateDestroyAPIView):
     """docstring for PersonDetail"""
     model = models.Person
     serializer_class = serializers.PersonSerializer
+    cache_def = 'get-person:%s-%s'
 
     def retrieve(self, request, *args, **kwargs):
         pid = kwargs.get('pk', None)
         do_count = (request.GET.get('count', None) == '1')
-        cache_key = 'get-person:%s-%s' % (
-            str(pid),
-            (do_count and 'count') or '')
+        cache_key = self.cache_def % (str(pid), (do_count and 'count') or '')
         result = cache.get(cache_key)
 
         if not result:
@@ -276,10 +288,16 @@ class PersonDetail(generics.RetrieveUpdateDestroyAPIView):
         """docstring for get"""
         response = self.update(request, *args, **kwargs)
 
+        # invalidate cache
+        pid = str(kwargs.get('pk', None))
+        delete_cache_item([
+            self.cache_def % (pid, ''),
+            self.cache_def % (pid, 'count')])
+
         # update the avatar if needed
         avatar = request.FILES.get('avatar', None)
         if avatar is not None:
-            self.object.avatar = avatar 
+            self.object.avatar = avatar
             self.object.save()
 
         return response
