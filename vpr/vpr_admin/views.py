@@ -195,10 +195,10 @@ def materialsView(request):
     page_data = {'current_page': page}
 
     # process with request for deletion
-    if request.method == "POST":    
+    if request.method == "POST":
         del_list = request.POST.getlist('check-delete')
-        models.Material.objects.filter(id=del_list).delete()
-        page_data['removed'] = del_list 
+        models.Material.objects.filter(pk__in=del_list).delete()
+        page_data['removed'] = del_list
 
     res = SearchQuerySet().models(models.Material)
     res = res.filter(**query)
