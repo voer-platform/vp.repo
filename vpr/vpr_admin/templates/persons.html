@@ -61,6 +61,7 @@
               <th>Fullname</th>
               <th>E-mail</th>
               <th>Biography</th>
+	      <th>Delete</th>
             </tr> 
             
             {% for person in persons %}
@@ -70,6 +71,7 @@
                 <td>{{ person.fullname }}</td>
                 <td>{{ person.email }}</td>
                 <td>{{ person.biography|safe }}</td>
+		<td style="text-align:center;"><input type="checkbox" name="check-delete" value="{{ person.pk }}"></td>
             </tr> 
             {% endfor %}
 
@@ -88,6 +90,9 @@
             {% endif %}
             </div>
 
+	    <div class="span4" style="text-align:right">
+	  	 <input class="btn btn-danger" type="submit" value="Delete" name="submit">
+            </div>
             {% comment %}
             <div class="span2 offset7" style="text-align:right">
                 <input class="btn btn-danger" type="submit" value="Delete" name="submit">
@@ -96,6 +101,7 @@
           </div>
 
           </form>
+
 
         </div>
 

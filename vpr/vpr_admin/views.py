@@ -283,7 +283,13 @@ def persons_view(request):
         page = 1
 
     page_data = {'current_page': page}
-
+    
+    # request for delete
+    if request.method == "POST":
+        del_list = request.POST.getlist('check-delete')
+        models.Person.objects.filter(pk__in=del_list).delete()
+        page_data['removed'] = del_list
+	
     #res = SearchQuerySet().models(models.Person)
     #res = res.filter(**query)
     #if not query.has_key('title'):
