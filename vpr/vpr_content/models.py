@@ -8,9 +8,9 @@ from django.db.models.signals import post_delete
 
 from hashlib import md5
 from datetime import datetime
-
 import json
 import time
+import re
 
 from vpr_api.models import APIClient
 from repository import MaterialBase
@@ -533,6 +533,35 @@ def refineMaterialContent(text):
         return mbody.replace('href="/#', 'href="#')
             
     return correct_anchors(text)
+
+
+def refine_title(material, dry=True):
+
+    def removeUselessChars(title):
+        title = title.strip()
+        regexes = (
+            re.compile('^["\( ]'),
+            re.compile('["]$'),
+            re.compile('\s*[\.]$'),
+            )
+        for rg in regexes:
+            title = rg.sub('', title).strip()
+        return title
+
+    print material.title
+    material.title = removeUselessChars(material.title)
+    print material.title
+    print ''
+    if not dry:
+        material.save()
+
+
+def refine_all_material_titles():
+    materials = Material.objects.filter(title__regex=r'(^["\( ])')
+    for material in materials:
+        #material.title = removeUselessChars(material.title)
+        #material.save()
+        refine_title(material)
 
 
 def get_material_info(mid, version):

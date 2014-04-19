@@ -84,6 +84,7 @@
           <div class="row-fluid">
             <div class="span3" style="margin-top:5px;">
             {% if page_total > 1 %}
+                {% with rg=request.GET %}
                 {% if current_page > 1 %}
                 <a href="{{ request.path }}?page={{ current_page|add:-1 }}&kw={{ rg.kw }}&filter_type={{ rg.filter_type }}">Previous</a>
                 {% endif %}
@@ -91,6 +92,7 @@
                 {% if current_page < page_total %}
                 <a href="{{ request.path }}?page={{ current_page|add:+1 }}&kw={{ rg.kw }}&filter_type={{ rg.filter_type }}">Next</a>
                 {% endif %}
+                {% endwith %}
             {% endif %}
             </div>
             <div class="span2 offset7" style="text-align:right">
