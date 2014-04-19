@@ -556,12 +556,12 @@ def refine_title(material, dry=True):
         material.save()
 
 
-def refine_all_material_titles():
+def refine_all_material_titles(dry=True):
     materials = Material.objects.filter(title__regex=r'(^["\( ])')
     for material in materials:
         #material.title = removeUselessChars(material.title)
         #material.save()
-        refine_title(material)
+        refine_title(material, dry)
 
 
 def get_material_info(mid, version):
