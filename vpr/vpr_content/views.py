@@ -363,9 +363,11 @@ class MaterialList(generics.ListCreateAPIView):
                 orgid.save()
 
             # (module/collection) create the zip package and post to vpt
-            if not request.DATA.get('export_later', 0):
-                #import pdb;pdb.set_trace()
-                requestMaterialPDF(self.object) 
+            try:
+                if not request.DATA.get('export_later', 0):
+                    requestMaterialPDF(self.object)
+            except:
+                pass
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -604,8 +606,11 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView, mixins.CreateModelMi
                     mfile.save()
 
                 # (module/collection) create the zip package and post to vpt
-                if not request.DATA.get('export-later', 0):
-                    requestMaterialPDF(self.object) 
+                try:
+                    if not request.DATA.get('export-later', 0):
+                        requestMaterialPDF(self.object)
+                except:
+                    pass
 
                 response = Response(serializer.data, status=status.HTTP_201_CREATED)
             else:

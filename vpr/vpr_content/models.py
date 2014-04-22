@@ -540,7 +540,7 @@ def refine_title(material, dry=True):
     def removeUselessChars(title):
         title = title.strip()
         regexes = (
-            re.compile('^["\( ]'),
+            re.compile('^["\(: ]'),
             re.compile('["]$'),
             re.compile('\s*[\.]$'),
             )
@@ -557,7 +557,7 @@ def refine_title(material, dry=True):
 
 
 def refine_all_material_titles(dry=True):
-    materials = Material.objects.filter(title__regex=r'(^["\( ])')
+    materials = Material.objects.filter(title__regex=r'(^["\(:])')
     for material in materials:
         #material.title = removeUselessChars(material.title)
         #material.save()
