@@ -71,7 +71,7 @@
                         <span class="label label-warning">
                     {% endif %}
                     {{ material.material_type }}</span>
-                    &nbsp;<a href="http://{{ web_url }}/m/{{ material.material_id }}">{{ material.title }}</a></td>
+                    &nbsp;<a href="http://{{ web_url }}{% if material.material_type == 1%}/m/{% else %}/c/{% endif %}{{ material.material_id }}">{{ material.title }}</a></td>
                 <td><a href="/1/materials/{{ material.material_id }}">{{ material.material_id }}</a></td>
                 <td>{{ material.modified|date:"y-m-d h:i" }}</td>
                 <td><a href="/dashboard/render/{{ material.material_id }}">{{ material.description|truncatewords:4 }}</a></td>
