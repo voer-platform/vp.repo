@@ -131,6 +131,7 @@ INSTALLED_APPS = (
     'vpr_storage',
     'vpr_admin',    
     'vpr_log',
+    'inspector',
     )
 
 # A sample logging configuration. The only tangible logging
