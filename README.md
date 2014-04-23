@@ -12,7 +12,13 @@ Installation
     MySQL or PostgreSQL
     
     ```
-    
+
+* Install some additional packages (these below commands are for Debian environment with MariaDB):
+
+    ```
+    apt-get install python-virtualenv python-dev mariadbserver libmariadbclient-dev git
+    ```
+
 * Create database:
     
     ```
