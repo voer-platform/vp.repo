@@ -486,12 +486,13 @@ def handlePersonAvatar(request, *args, **kwargs):
     delete = request.GET.get('delete', None) 
     try:
         person = models.Person.objects.get(id=pid)  
-        if not delete: 
+        if not delete:
             data = person.avatar.read()
             person.avatar.close()
             return HttpResponse(data, mimetype='image/jpeg')    # oh dear
         elif delete == '1':
-            person.avatar.delete() 
+            person.avatar.delete()
+            person.invalidate()
             return HttpResponse('Person avatar deleted', status=200)
     except:
         raise Http404

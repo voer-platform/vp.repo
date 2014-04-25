@@ -13,7 +13,7 @@ from rest_framework.views import APIView
 from hashlib import md5
 from datetime import datetime
 from rest_framework import mixins
-from haystack.query import SearchQuerySet 
+from haystack.query import SearchQuerySet
 from django.conf import settings
 from django.core.cache import cache
 from vpr_api.models import APIRecord
@@ -53,19 +53,6 @@ def splitPath(path):
     path = path.split('/')
     path = [item for item in path if len(item)>0]
     return path
-
-
-def delete_cache_item(key):
-    """ Delete a single cache
-    """
-    try:
-        if isinstance(key, basestring):
-            cache.delete(key)
-        else:
-            cache.delete_many(key)
-    except:
-        raise
-        pass
 
 
 # CATEGORY CALLS
@@ -288,17 +275,13 @@ class PersonDetail(generics.RetrieveUpdateDestroyAPIView):
         """docstring for get"""
         response = self.update(request, *args, **kwargs)
 
-        # invalidate cache
-        pid = str(kwargs.get('pk', None))
-        delete_cache_item([
-            self.cache_def % (pid, ''),
-            self.cache_def % (pid, 'count')])
-
         # update the avatar if needed
         avatar = request.FILES.get('avatar', None)
         if avatar is not None:
             self.object.avatar = avatar
             self.object.save()
+
+        self.object.invalidate()
 
         return response
 

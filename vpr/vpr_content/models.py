@@ -5,6 +5,7 @@ from django.db.models import DateTimeField, ImageField, ForeignKey
 from django.conf import settings
 from django.dispatch import receiver
 from django.db.models.signals import post_delete
+from django.core.cache import cache
 
 from hashlib import md5
 from datetime import datetime
@@ -54,12 +55,22 @@ class Person(models.Model):
     national = CharField(max_length=255, blank=True, null=True)
     biography = TextField(blank=True, null=True)
     client_id = IntegerField(default=0)
-    avatar = ImageField(upload_to="./mimgs/persons", blank=True, null=True) 
+    avatar = ImageField(upload_to="./mimgs/persons", blank=True, null=True)
+
+    def cache_key(self, count=''):
+        cache_def = 'get-person:%s-%s'
+        return cache_def % (str(self.id), str((count or '') and 'count'))
+
+    def invalidate(self):
+        try:
+            cache.delete_many([self.cache_key(), self.cache_key(True)])
+        except:
+            pass
 
 
 def assignSingleCat(material_rid, cat_id):
     mcat = MaterialCategory()
-    mcat.material_rid = material_rid 
+    mcat.material_rid = material_rid
     mcat.category_id = cat_id
     mcat.save()
     return mcat
