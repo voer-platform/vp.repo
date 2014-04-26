@@ -1,37 +1,34 @@
-#!/bin/sh
-
-FILE=`readlink -f $0`
-DIRNAME=`dirname $FILE`
-
-PIDFILE=$DIRNAME/server.pid
-
-echo $PIDFILE
-
-ADDRESS=127.0.0.1:8001
-LOGFILE=$DIRNAME/server.log
-LOGDIR=$(dirname $LOGFILE)
+#!/bin/bash
+ 
+NAME="VPR"
+DJANGODIR=<EDIT_THIS>/vp.repo/vpr
+SOCKFILE=<EDIT_THIS>/vp.repo/vpr/gunicorn.sock
+USER=voer
+GROUP=voer
 NUM_WORKERS=4
-case "$1" in
-    "stop" )
-        if [ -f $PIDFILE ]; then
-            kill `cat -- $PIDFILE`
-            rm -f -- $PIDFILE
-        fi
-    ;;
-    "" | "fg" )
-        if [ -f $PIDFILE ]; then
-            kill `cat -- $PIDFILE`
-            rm -f -- $PIDFILE
-        fi
+DJANGO_SETTINGS_MODULE=vpr.settings.prod
+DJANGO_WSGI_MODULE=vpr.wsgi
+ADDRESS=127.0.0.1:8001
 
-        if [ "$1" = "fg" ]; then
-            $DIRNAME/manage.py run_gunicorn --bind=$ADDRESS \
-                --workers=$NUM_WORKERS --log-level=debug \
-                --log-file=$LOGFILE 2>>$LOGFILE
-        else
-            $DIRNAME/manage.py run_gunicorn --bind=$ADDRESS \
-                --pid=$PIDFILE --workers=$NUM_WORKERS \
-                --log-level=debug --log-file=$LOGFILE \
-                2>>$LOGFILE --daemon
-        fi
-esac
+echo "Starting $NAME..."
+  
+# Activate the virtual environment
+cd $DJANGODIR
+source ../../bin/activate
+export DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE
+export PYTHONPATH=$DJANGODIR:$PYTHONPATH
+  
+# Create the run directory if it doesn't exist
+RUNDIR=$(dirname $SOCKFILE)
+test -d $RUNDIR || mkdir -p $RUNDIR
+   
+# Start your Django Unicorn
+# Programs meant to be run under supervisor should not daemonize themselves (do not use --daemon)
+exec gunicorn ${DJANGO_WSGI_MODULE}:application \
+    --name $NAME \
+    --workers $NUM_WORKERS \
+    --user=$USER --group=$GROUP \
+    --log-level=debug \
+    --bind=$ADDRESS
+    #--bind=unix:$SOCKFILE
+
