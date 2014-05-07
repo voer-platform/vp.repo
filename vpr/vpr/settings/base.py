@@ -180,6 +180,8 @@ INTERNAL_IPS = ('127.0.0.1',)
 
 LOGIN_URL = '/dashboard/login'
 
+SESSION_COOKIE_NAME = 'vpr_sessionid'
+
 # INDEX & SEARCHING -------------------
 
 # Old Haystack (1.2.7)

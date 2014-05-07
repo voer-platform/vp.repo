@@ -9,6 +9,7 @@ NUM_WORKERS=4
 DJANGO_SETTINGS_MODULE=vpr.settings.prod
 DJANGO_WSGI_MODULE=vpr.wsgi
 ADDRESS=127.0.0.1:8001
+TIMEOUT=120
 
 echo "Starting $NAME..."
   
@@ -28,7 +29,8 @@ exec gunicorn ${DJANGO_WSGI_MODULE}:application \
     --name $NAME \
     --workers $NUM_WORKERS \
     --user=$USER --group=$GROUP \
-    --log-level=debug \
+    --log-level=warning \
+    --timeout=$TIMEOUT \
     --bind=$ADDRESS
     #--bind=unix:$SOCKFILE
 
