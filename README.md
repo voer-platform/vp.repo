@@ -2,10 +2,29 @@ VOER Platform - Repository Component
 =======
 This is the repository component of the VOER Platform, which provides services for storing/getting/searching materials.
 
-Installation
-------------
+A - Install using Vagrant
+--------------------
 
-* Pre-requisites
+Before starting with this approach, ensure that you have [Vagrant](http://www.vagrantup.com/downloads.html) installed.
+
+1. **Download all files** inside [`vp.repo/vagrant/`](https://github.com/voer-platform/vp.repo/tree/master/vagrant) directory to a new local directory (e.g. 'vpr')
+
+2. **Initialize and run Vagrant** inside the local directory
+
+    ```
+    vagrant up
+    ```
+    
+3. **After huge number of steps running, the site would be ready to serve at address**
+
+    ```
+    http://127.0.0.1:8080
+    ```
+
+B - Typical Installation
+------------------------
+
+1. **Pre-requisites**
 
     ```
     Python 2.5 to 2.7
@@ -13,13 +32,13 @@ Installation
     
     ```
 
-* Install some additional packages (these below commands are for Debian environment with MariaDB):
+2. **Install some additional packages (these below commands are for Debian environment with MariaDB)**
 
     ```
     apt-get install python-virtualenv python-dev mariadbserver libmariadbclient-dev git
     ```
 
-* Create database:
+3. **Create database**
     
     ```
     Name: vpr
@@ -27,7 +46,7 @@ Installation
     Password: vpr
     ```
 
-* Create & activate separate environment
+4. **Create & activate separate environment**
 
     ```
     virtualenv vpr
@@ -35,37 +54,34 @@ Installation
     source vpr/activate
     ```
 
-* Clone the VPR repository from GitHub, using `git`
+5. **Clone the VPR repository from GitHub, using `git`**
 
     ```
     git clone git://github.com/voer-platform/vp.repo.git
     ```
     
-* Go to the `vp.repo/` directory, and run the script `install.sh`
+6. **Go to the `vp.repo/` directory, and run the script `install.sh`**
     
     ```
     cd vp.repo/
     bash ./install.sh
     ```
     
-* Configure the database running with component, inside:
+7. **Configure the database running with component, inside:**
     
     ```
     vp.repo/vpr/vpr/settings/dev.py    # Development instance
     vp.repo/vpr/vpr/settings/prod.py   # Production instance
     ```
 
-* Initialize DB structure:
+8. **Initialize DB structure**
 
     ```
     python ./manage.py syncdb
     ```
 
-Running Component
------------------
+9. **Running Component**
 
-* Go to the 'vp.repo/vpr/' directory, and run the Python script:
-    
     ```
     python ./manage.py runserver
     ```
