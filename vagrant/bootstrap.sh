@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+apt-get update -y
 apt-get install -y git python-virtualenv python-dev python-software-properties
 
 apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 0xcbcb082a1bb943db
