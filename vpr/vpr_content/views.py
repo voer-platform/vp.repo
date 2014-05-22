@@ -958,6 +958,60 @@ def get_most_faved(request, *args, **kwargs):
 @api_log
 @api_view(['GET'])
 @api_token_required
+def get_top_rated(request, *args, **kwargs):
+    """ Returns QuerySet of all material sorted by view count
+    """
+    per_page = settings.REST_FRAMEWORK['PAGINATE_BY']
+    sql = """
+        SELECT m.id, m.material_id, m.title, m.version, m.categories,
+               m.material_type, m.modified, avg(mr.rate) as avg_rate, count(mr.rate) AS rate_count
+        FROM vpr_content_material AS m
+        INNER JOIN vpr_content_materialrating AS mr
+        ON m.id = mr.material_id
+        GROUP BY mr.material_id
+        ORDER BY avg_rate DESC, rate_count DESC
+        LIMIT %d;
+        """ % per_page
+    cur = connection.cursor()
+    res = cur.execute(sql)
+
+    materials = []
+    for m in cur:
+
+        # getting categories
+        cids = models.restoreAssignedCategory(m[4])
+        categories = []
+        for ci in range(len(cids)):
+            categories.append((cids[ci], models.getCategoryName(cids[ci]))) 
+
+        # getting authors
+        pids = models.getMaterialPersons(m[0])['author'].split(',')
+        pnames = models.getPersonName(pids)
+        if not isinstance(pnames, list):
+            pnames = [pnames,] 
+        authors = []
+        for pi in range(len(pids)):
+            authors.append((pids[pi], pnames[pi])) 
+
+        s_material = {
+            'material_id': m[1],
+            'version': m[3],
+            'material_type': m[5],
+            'title': m[2],
+            'categories': categories, 
+            'rating': m[7],
+            'rating_count': m[8],
+            'author': authors,
+            'modified': m[6],
+            }
+        materials.append(s_material)
+
+    return Response(materials)
+
+
+@api_log
+@api_view(['GET'])
+@api_token_required
 def material_links_view(request, *args, **kwargs):
     mid = kwargs['mid'].lower()
     # temporarily bypass version for now, not really good

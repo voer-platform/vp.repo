@@ -38,6 +38,7 @@ urlpatterns += patterns('',
 urlpatterns += patterns('',
     url(r'^stats/materials/counter/?$', content_views.queryMaterialByViewCount, name='stats-most-viewed'),
     url(r'^stats/materials/favorites/?$', content_views.get_most_faved, name='stats-most-faved'),
+    url(r'^stats/materials/rates/?$', content_views.get_top_rated, name='stats-top-rated'),
     )
 
 # search & browse urls
