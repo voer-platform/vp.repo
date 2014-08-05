@@ -29,7 +29,7 @@ MIDDLEWARE_CLASSES += (
 ROOT_URLCONF = 'vpr.urls.dev'
 
 INSTALLED_APPS += (
-    'django_extensions',   
+    'django_extensions',
     'debug_toolbar',
     )
 

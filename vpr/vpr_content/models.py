@@ -114,10 +114,17 @@ class MaterialExport(models.Model):
     """ Model for storing export product of the Material
     """
     material_id = CharField(max_length=64)
+    export_format = ForeignKey('ExportFormat', blank=True, null=True)
     version = IntegerField(default=1)
     name = CharField(max_length=255, blank=True, null=True)
     path = CharField(max_length=255)
     file_type = CharField(max_length=32, blank=True, null=True)
+
+
+class ExportFormat(models.Model):
+    name = CharField(max_length=128)
+    description = TextField(blank=True, null=True)
+    base_path = CharField(max_length=256)
 
 
 class MaterialPerson(models.Model):

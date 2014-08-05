@@ -227,12 +227,16 @@ CACHE_COUNT_TIMEOUT = 30
 
 CACHE_EMPTY_QUERYSETS = True
 
-# VOER PLATFORM 
+# VOER PLATFORM
 
 EXPORT_DIR = os.path.join(PROJECT_DIR, 'mexports')
 IMAGES_DIR = os.path.join(PROJECT_DIR, 'mimgs')
 MATERIAL_FILE_DIR = os.path.join(PROJECT_DIR, 'mfiles')
 TEMP_DIR = os.path.join(PROJECT_DIR, 'tmp')
+EXPORT_MIMETYPES = {
+    'pdf': 'application/pdf',
+    'epub': 'application/epub+zip',
+    }
 
 MATERIAL_TYPES = ('undefined', 'module', 'collection')
 VPR_MATERIAL_ROLES = ('author', 'editor', 'licensor', 'maintainer', 'translator', 'contributor')
@@ -243,7 +247,7 @@ VOER_DEFAULT_LICENSE_URL = 'http://creativecommons.org/licenses/by/3.0/'
 
 VPW_URL = 'http://voer.edu.vn'
 
-# VPR LOG 
+# VPR LOG
 
 VPR_LOG_HANDLER = 'vpr_log.mongodb_handler.MongoDBHandler'
 

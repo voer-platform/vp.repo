@@ -18,7 +18,7 @@ from django.conf import settings
 from django.core.cache import cache
 from vpr_api.models import APIRecord
 from vpr_api.decorators import api_token_required, api_log
-from vpr_storage.views import zipMaterial, requestMaterialPDF
+from vpr_storage.views import zipMaterial, requestMaterialExport
 from material_views import MaterialComments, materialCounterView
 from material_views import materialRatesView, materialFavoriteView
 from search_views import GeneralSearch, facetSearchView, raise404
@@ -337,20 +337,13 @@ class MaterialList(generics.ListCreateAPIView):
                 mfile.mime_type = mimetypes.guess_type(
                     os.path.realpath(mfile.mfile.name))[0] or ''
                 mfile.save()
-            
+
             # add original record if having
             if request.DATA.get('original_id', ''):
                 orgid = models.OriginalID()
                 orgid.material_id = material_id
                 orgid.original_id = request.DATA.get('original_id')
                 orgid.save()
-
-            # (module/collection) create the zip package and post to vpt
-            try:
-                if not request.DATA.get('export_later', 0):
-                    requestMaterialPDF(self.object)
-            except:
-                pass
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

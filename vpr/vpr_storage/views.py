@@ -42,21 +42,26 @@ EXPORT_TIME_FORMAT = "%Y/%m/%d %H:%M"
 EXPORT_TIME_LIMIT = 300    # seconds
 
 
-def postZipFromPath(zip_path):
+def postZipFromPath(zip_path, export_format=''):
     """
     """
     res = None
     with open(zip_path, 'rb') as mzip:
-        files = {'file': (mzip.name.split('/')[-1], mzip.read())}
-        res = requests.post(EXPORT_URL, files=files, data={})
+        payload = {
+            'token': '',
+            'cid': '',
+            'output': export_format,
+            }
+        files = {'file': mzip}
+        res = requests.post(EXPORT_URL, files=files, data=payload)
         os.remove(mzip.name)
     return res
 
 
-def postMaterialZip(material):
+def postMaterialZip(material, export_format=''):
     """Load and send zip file to exporting service"""
     zip_path = zipMaterial(material)
-    return postZipFromPath(zip_path)
+    return postZipFromPath(zip_path, export_format)
 
 
 def zipMaterial(material):
@@ -90,15 +95,21 @@ def downloadFile(url, path):
     return save_ok
 
 
-def generateExportPath(material_id, material_version):
+def generateExportPath(material_id, material_version, export_format):
     """Return the full path of export file based on material ID and version"""
-    exp_path = '%s-%d.pdf' % (material_id, material_version)
-    return os.path.join(settings.EXPORT_DIR, exp_path)
+    export_type = export_format.name.lower()
+    sub_folder = datetime.now().strftime('%y%m')
+    exp_path = '%s-%d.%s' % (material_id, material_version, export_type)
+    return os.path.join(
+        settings.EXPORT_DIR, export_type, sub_folder, exp_path)
 
 
 def storeMaterialExport(url, exp_obj):
     """Download and store export metadata into DB. Export object required"""
-    export_path = generateExportPath(exp_obj.material_id, exp_obj.version)
+    export_path = generateExportPath(exp_obj.material_id, exp_obj.version,
+                                     exp_obj.export_format)
+    if not os.path.exists(os.path.dirname(export_path)):
+        os.makedirs(os.path.dirname(export_path))
     attempt = 3
     while attempt > 0:
         if downloadFile(url, export_path):
@@ -118,30 +129,31 @@ def isExportProcessing(export_obj):
     return export_obj.path[:len(TASK_ID_PREFIX)] == TASK_ID_PREFIX
 
 
-def requestMaterialPDF(material):
-    """ Create the zip package and post it to vpt in order to receive the PDF
-        genereated. After receiving the file exported, an entry of export
-        material will be created (as MaterialExport). This returns:
-            True: Export file is ready to get.
-            False: Export file is not ready. Try again later.
+def requestMaterialExport(material, export_format):
+    """ Request export material with given format
     """
     res_pending = 'PENDING'
     res_success = 'SUCCESS'
 
     ready = False
 
+    # get export format
+    exp_format = models.ExportFormat.objects.get(name=export_format)
+
     # check export status
     export_obj = MaterialExport.objects.filter(
         material_id=material.material_id,
+        export_format=exp_format,
         version=material.version)
 
     # in case of nothing have been saved
     if export_obj.count() == 0:
-        res = postMaterialZip(material)
+        res = postMaterialZip(material, export_format)
         try:
             values = json.loads(res.content)
             new_export = MaterialExport(
                 material_id=material.material_id,
+                export_format=exp_format,
                 version=material.version)
             if values['status'] == res_pending:
                 new_export.path = TASK_ID_PREFIX + values['task_id']
@@ -161,9 +173,11 @@ def requestMaterialPDF(material):
         if isExportProcessing(export_obj):
             # conversion not completed, ask again
             task_id = export_obj.path[3:]
+            print 'task id:', task_id
             res = requests.get(EXPORT_URL+'?task_id='+task_id)
             try:
                 values = json.loads(res.content)
+
             except ValueError:
                 # non-json content returned
                 export_obj.delete()
@@ -399,18 +413,19 @@ def getMaterialZip(request, *args, **kwargs):
     try:
         with open(zip_path, 'rb') as zf:
             zip_name = '%s-%d.zip' % (material.material_id, material.version)
-            response = HttpResponse(zf.read(), 
-                                    mimetype = 'application/zip')
+            response = HttpResponse(zf.read(),
+                                    mimetype='application/zip')
             response['content-disposition'] = 'attachment; filename='+zip_name
             return response
     except:
-       raise Http404 
+        raise Http404
 
 
 @api_log
-def getMaterialPDF(request, *args, **kwargs):
+def getMaterialExport(request, *args, **kwargs):
     """ Check and return the PDF file of given material if exist
     """
+    format_name = request.path.strip('/').split('/')[-1].lower()
     mid = kwargs.get('mid', None)
     version = kwargs.get('version', None)
     if version:
@@ -420,26 +435,29 @@ def getMaterialPDF(request, *args, **kwargs):
         # error will be raised in other cases
         version = getMaterialLatestVersion(mid)
     material = Material.objects.get(material_id=mid, version=version)
+    export_format, created = models.ExportFormat.objects.get_or_create(
+        name=format_name, description='', base_path=format_name)
 
     get_it = False
-    try: 
-        export_obj = MaterialExport.objects.get(material_id=mid, version=version)
+    try:
+        export_obj = MaterialExport.objects.get(
+            material_id=mid, export_format=export_format, version=version)
 
         if str(request.GET.get('refresh', None)) == '1':
             export_obj.delete()
-            get_it = requestMaterialPDF(material)
+            get_it = requestMaterialExport(material, export_format)
             raise IOError
 
         # check if exported file existing
         if isExportProcessing(export_obj):
-            get_it = requestMaterialPDF(material)
+            get_it = requestMaterialExport(material, export_format)
         elif not os.path.exists(export_obj.path):
             export_obj.delete()
             raise IOError
         else:
             get_it = True
     except (MaterialExport.DoesNotExist, IOError):
-        get_it = requestMaterialPDF(material)
+        get_it = requestMaterialExport(material, export_format)
     except:
         raise Http404
 
@@ -447,14 +465,17 @@ def getMaterialPDF(request, *args, **kwargs):
     if get_it:
         export_obj = MaterialExport.objects.get(pk=export_obj.id)
         # return the PDF content, this should be served be the web server
-        with open(export_obj.path, 'rb') as pdf: 
-            pdf_name = '%s-%d.pdf' % (mid, version)
+        with open(export_obj.path, 'rb') as pdf:
+            pdf_name = '%s-%d.%s' % (mid, version, format_name)
             data = pdf.read()
-            response = HttpResponse(data, mimetype='application/pdf')
+            response = HttpResponse(
+                data, mimetype=settings.EXPORT_MIMETYPES[format_name])
             try:
-                friendly_name = '%s.pdf' % material.title.encode('utf-8')
+                friendly_name = '%s.%s' % (
+                    material.title.encode('utf-8'),
+                    format_name)
             except UnicodeEncodeError:
-                friendly_name = '%s.pdf' % slugify(material.title)
+                friendly_name = '%s.%s' % slugify(material.title)
             except:
                 friendly_name = pdf_name
             response['content-disposition'] = 'attachment; filename="%s"' % friendly_name
