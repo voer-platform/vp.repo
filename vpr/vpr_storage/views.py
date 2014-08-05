@@ -445,19 +445,19 @@ def getMaterialExport(request, *args, **kwargs):
 
         if str(request.GET.get('refresh', None)) == '1':
             export_obj.delete()
-            get_it = requestMaterialExport(material, export_format)
+            get_it = requestMaterialExport(material, format_name)
             raise IOError
 
         # check if exported file existing
         if isExportProcessing(export_obj):
-            get_it = requestMaterialExport(material, export_format)
+            get_it = requestMaterialExport(material, format_name)
         elif not os.path.exists(export_obj.path):
             export_obj.delete()
             raise IOError
         else:
             get_it = True
     except (MaterialExport.DoesNotExist, IOError):
-        get_it = requestMaterialExport(material, export_format)
+        get_it = requestMaterialExport(material, format_name)
     except:
         raise Http404
 
