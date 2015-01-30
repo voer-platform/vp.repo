@@ -1,5 +1,8 @@
 VOER Platform - Repository Component
 =======
+[![Build Status](https://travis-ci.org/voer-platform/vp.repo.svg)](https://travis-ci.org/voer-platform/vp.repo)
+[![Coverage Status](https://coveralls.io/repos/voer-platform/vp.repo/badge.svg)](https://coveralls.io/r/voer-platform/vp.repo)
+
 This is the repository component of the VOER Platform, which provides services for storing/getting/searching materials.
 
 A - Install using Vagrant
