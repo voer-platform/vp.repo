@@ -2,9 +2,15 @@
 
 Django==1.4.5
 django_extensions==1.1.1
-PIL==1.1.7
 requests==1.2.3
+
+# Use Pillow instead
+# PIL==1.1.7
+Pillow
+
 mysql-python==1.2.5
+# psycopg2
+
 six==1.2.0
 South==0.7.6
 flup==1.0.3.dev-20110405

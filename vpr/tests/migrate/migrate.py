@@ -186,8 +186,16 @@ def migrateModule(module_path):
 
         # convert module into html and load the content
         convert2HTML(module_path)
-        with open(path.join(module_path, 'index.html')) as f1:
-            html = f1.read()
+
+        for index_name in ['index.html', 'index.cnxml.html']:
+            html_path = path.join(module_path, index_name)
+            if os.path.exists(html_path) and os.path.getsize(html_path) > 0:
+                break
+        with open(html_path) as f1:
+            html = f1.read().strip()
+        if not html:
+            print 'Importing failed: Module content empty'
+            return
 
         # remove some tags
         html = removeStrangeTag(html)

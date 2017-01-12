@@ -351,7 +351,7 @@ def parseContentNode(node):
         #res['url'] = 'http://www.voer.edu.vn/m/' + res['id']
         #res['license'] = "http://creativecommons.org/licenses/by/3.0/"
       except:
-        import pdb;pdb.set_trace()
+        raise
 
     return res
                 
